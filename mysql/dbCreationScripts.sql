@@ -7,7 +7,8 @@ create table users(
     userName varchar(255) NOT NULL,
     email varchar(255) NOT NULL UNIQUE,
     pswrd varchar(255) NOT NULL,
-    visbility varchar(255) NOT NULL
+    visibility varchar(255) NOT NULL,
+    classification varchar(255) NOT NULL
 );
 
 create table posts(

@@ -174,8 +174,51 @@ app.post("/login",function(req,res){
 app.route("/user")
   //Get User and Associated Posts
   .get(function(req,res){
+    if (!req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: "User ID Not Given."
+      })
+    }
+    //Get hidden posts if mod or admin
+    //Get private posts if mod, admin, or owner
+    var sQuery = "SELECT * FROM users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = ?";
+    connection.query(sQuery,[req.query.userID],function(err,results,fields){
+      if (err){
+        console.log(err);
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }
+      else{
+        if (results.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "There were no valid users with that ID."
+          })
 
+        }else{
+          //convert into a list
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "User Found",
+            username: results[0].userName,
+            posts: toPrep
+          })
+        }
+      }
   })
+})
   //Edit User Info
   .patch(function(req,res){
 
