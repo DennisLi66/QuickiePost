@@ -223,9 +223,52 @@ app.route("/user")
   .patch(function(req,res){
 
   })
-  //Delete User (and maybe posts)
+  //Delete User (and maybe posts) // Set a user to hidden
   .delete(function(req,res){
-
+    if (!req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: "User ID Not Given."
+      })
+    }
+    var uQuery =
+    `
+    Update posts
+    SET visibility = 'hidden'
+    WHERE userID = ?;
+    Update users
+    SET visibility = 'hidden'
+    WHERE userID = ?;
+    `;
+    connection.query(uQuery,[req.query.userID,req.query.userID],function(err,results,fields){
+      if (err){
+        console.log(err);
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }
+      else{
+        if (results.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "There were no valid users with that ID."
+          })
+        }else{
+          if (results.length === 0){
+            return res.status(200).json({
+              status: -1,
+              message: "There were no valid users with that ID."
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "User Updated."
+            })
+          }
+        }
+      }
+    })
   })
 
 app.listen(3001, function() {

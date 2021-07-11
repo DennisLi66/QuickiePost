@@ -3,7 +3,8 @@ truncate table users;
 truncate table posts;
 
 INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES
-("Kyle","kyle@hugs.com","SAMPLE_TEXT",'public',"admin")
+("Kyle","kyle@hugs.com","SAMPLE_TEXT",'public',"admin"),
+("Bott","bott@eeee.com","SAMPLE TEXT",'public','user')
 ;
 
 Insert Into posts (userID,title,content,visibility,subDate) VALUES
