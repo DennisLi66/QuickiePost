@@ -157,13 +157,46 @@ app.route("/post")
   })
   //Add Single POST
   .put(function(req,res){
-
+    //GET ID
+    //query string has a max length of 2048 characters
+    if (!req.query.title || !req.query.contents || !req.query.visibility){
+      return res.status(200).json({
+        status: -1,
+        message: "Not enough information provided."
+      })
+    }
+    else{
+      var iQuery =
+      `
+      INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
+      `;
+      //REPLACE WITH ACTUAL ID
+      connection.query(iQuery,[1,req.query.title,req.query.contents,req.query.visibility],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        }
+        else{
+          return res.status(200).json({
+            status: 0,
+            message: "Post Added."
+          })
+        }
+      })
+    }
   })
   //Edit Single POST
   .patch(function(req,res){
     //FIX THIS: Do Later, Im not sure how I want this
+    //check userID
+    //things can change - title, content, visibility
+    if (!req.query.title && !.req.query.content && !req.query.visibility){
+      
+    }
   })
-// Register Account
+// Register Account -- Requires Look up
 app.post("/register",function(req,res){
 
 })
@@ -197,7 +230,6 @@ app.route("/user")
             status: -1,
             message: "There were no valid users with that ID."
           })
-
         }else{
           //convert into a list
           var toPrep = {};
@@ -220,7 +252,7 @@ app.route("/user")
   })
 })
   //Edit User Info
-  .patch(function(req,res){
+  .patch(function(req,res){//right now only visibility is updatable, maybe pswrd, maybe classification
 
   })
   //Delete User (and maybe posts) // Set a user to hidden
@@ -249,13 +281,13 @@ app.route("/user")
         })
       }
       else{
-        if (results.length === 0){
+        if (results[0].length === 0){
           return res.status(200).json({
             status: -1,
             message: "There were no valid users with that ID."
           })
         }else{
-          if (results.length === 0){
+          if (results[0].length === 0){
             return res.status(200).json({
               status: -1,
               message: "There were no valid users with that ID."
