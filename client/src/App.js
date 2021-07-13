@@ -31,6 +31,20 @@ function App() {
     </div>
   );
   //Rerendering Functions
+  // function getPosts(){
+  //   var listOfPosts = [];
+  //   fetch(serverLocation + "/posts")
+  //     .then(response=>response.json())
+  //     .then(data => {
+  //         // console.log(data.contents);
+  //         for ( const key in data.contents){
+  //           // console.log(simplePost(data.contents[key]));
+  //           listOfPosts.push(simplePost(key,data.contents[key]))
+  //         }
+  //         console.log(listOfPosts);
+  //         return listOfPosts;
+  //     })
+  // }
   function getHome(){
     var listOfPosts = [];
     fetch(serverLocation + "/posts")
@@ -50,7 +64,28 @@ function App() {
           )
       })
   }
-  
+
+  React.useEffect(() => {
+    var listOfPosts = [];
+    var serverLocation = "http://localhost:3001";
+    fetch(serverLocation + "/posts")
+      .then(response=>response.json())
+      .then(data => {
+          // console.log(data.contents);
+          for ( const key in data.contents){
+            // console.log(simplePost(data.contents[key]));
+            listOfPosts.push(simplePost(key,data.contents[key]))
+          }
+          console.log(listOfPosts);
+          changeCode(
+            <div>
+           <h1> QuickiePost </h1>
+            {listOfPosts}
+            </div>
+          )
+      })
+  },[changeCode])
+
   return (
     <div className="App">
     <Navbar bg="light" expand="lg">
