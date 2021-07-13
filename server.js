@@ -47,6 +47,7 @@ connection.connect();
 
 // Get All Posts
 app.get("/posts",function(req,res){
+  //Should change to get username as well
   var sQuery = "SELECT * FROM posts WHERE visibility != 'hidden' AND visibility != 'private';"
   connection.query(sQuery,[],function(err,results,fields){
     if (err){
