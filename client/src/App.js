@@ -2,8 +2,9 @@
 import Navbar from 'react-bootstrap/Navbar'
 import Nav from 'react-bootstrap/Nav'
 import Card from "react-bootstrap/Card"
+// import Form from 'react-bootstrap/Form'
 // import ReactDOM from 'react-dom';
-// import Button from 'react-bootstrap/Button'
+import Button from 'react-bootstrap/Button'
 import './App.css';
 import React from "react";
 
@@ -31,20 +32,6 @@ function App() {
     </div>
   );
   //Rerendering Functions
-  // function getPosts(){
-  //   var listOfPosts = [];
-  //   fetch(serverLocation + "/posts")
-  //     .then(response=>response.json())
-  //     .then(data => {
-  //         // console.log(data.contents);
-  //         for ( const key in data.contents){
-  //           // console.log(simplePost(data.contents[key]));
-  //           listOfPosts.push(simplePost(key,data.contents[key]))
-  //         }
-  //         console.log(listOfPosts);
-  //         return listOfPosts;
-  //     })
-  // }
   function getHome(){
     var listOfPosts = [];
     fetch(serverLocation + "/posts")
@@ -63,6 +50,35 @@ function App() {
             </div>
           )
       })
+  }
+  function getSearchPage(){
+    changeCode(
+      <div>
+      <h1> Search for a Post </h1>
+      <form onSubmit={handleSearch}>
+      <label for='title'>Search for Title:</label>
+      <br></br>
+      <input name='title' id='title'></input>
+      <br></br>
+      <label for='content' id='content'>Search by Contents:</label>
+      <br></br>
+      <input name='content'></input>
+      <br></br>
+      <label for='username'>Search by Username:</label>
+      <br></br>
+      <input name='username'></input>
+      <br></br>
+      <label for='date'>Search By Date:</label>
+      <br></br>
+      <input name='date' type='date'></input>
+      <br></br><br></br>
+      <Button variant='dark' type="submit"> Submit </Button>
+      </form>
+      </div>
+    )
+  }
+  function handleSearch(event){
+    event.preventDefault();
   }
 
   React.useEffect(() => {
@@ -100,10 +116,13 @@ function App() {
       navbarScroll
     >
       <Nav.Link
+      onClick={getHome}
       >Home</Nav.Link>
       <Nav.Link>Register</Nav.Link>
       <Nav.Link>Login</Nav.Link>
-      <Nav.Link>Search</Nav.Link>
+      <Nav.Link
+      onClick={getSearchPage}
+      >Search</Nav.Link>
     </Nav>
   </Navbar.Collapse>
 </Navbar>
