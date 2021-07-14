@@ -60,17 +60,17 @@ function App() {
       <br></br>
       <input name='title' id='title'></input>
       <br></br>
-      <label for='content' id='content'>Search by Contents:</label>
+      <label for='content'>Search by Contents:</label>
       <br></br>
-      <input name='content'></input>
+      <input name='content'  id='content'></input>
       <br></br>
       <label for='username'>Search by Username:</label>
       <br></br>
-      <input name='username'></input>
+      <input name='username' id='username'></input>
       <br></br>
       <label for='date'>Search By Date:</label>
       <br></br>
-      <input name='date' type='date'></input>
+      <input name='date' type='date' id='sDate'></input>
       <br></br><br></br>
       <Button variant='dark' type="submit"> Submit </Button>
       </form>
@@ -79,6 +79,45 @@ function App() {
   }
   function handleSearch(event){
     event.preventDefault();
+    var title = document.getElementById("title").value;
+    var content = document.getElementById("content").value;
+    var username = document.getElementById("username").value;
+    var sDate = document.getElementById("sDate").value;
+    var url = serverLocation + "/?";
+    var isBig = false;
+    if (title){
+      console.log("Title: " + title);
+      isBig = true;
+      url += "title=" + title;
+    }
+    if (content){
+      console.log("Content: " + content );
+      if (isBig){
+        url += "&content=" + content;
+      }else{
+        isBig = true;
+        url += "content=" + content;
+      }
+    }
+    if (username){
+      console.log("Username: " + username);
+      if (isBig){
+        url += "&username=" + username;
+      }else{
+        isBig = true;
+        url += "username=" + username;
+      }
+    }
+    if (sDate){
+      console.log("sdate: " + sDate);
+      if (isBig){
+        url += "&sdate=" + sDate
+      }else{
+        url += "sDate=" + sDate;
+      }
+    }
+    url = encodeURI(url);
+    console.log(url);
   }
 
   React.useEffect(() => {
