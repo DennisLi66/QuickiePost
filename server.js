@@ -48,7 +48,13 @@ connection.connect();
 // Get All Posts
 app.get("/posts",function(req,res){
   //Should change to get username as well
-  var sQuery = "SELECT * FROM posts WHERE visibility != 'hidden' AND visibility != 'private';"
+  var sQuery =
+  `SELECT * from posts
+  LEFT JOIN
+  (select userid,username from users) uzers
+  on uzers.userID = posts.userID
+  WHERE visibility != 'hidden' AND visibility != 'private';
+  `
   connection.query(sQuery,[],function(err,results,fields){
     if (err){
       return res.status(200).json({
@@ -74,6 +80,179 @@ app.get("/posts",function(req,res){
     }
   })
 })
+app.get("/search",function(req,res){
+  var title = req.query.title;
+  var content = req.query.content;
+  var sdate = req.query.sdate;
+  var username = req.query.username;
+  if (!title && !content && !sdate && !username){
+    return res.status(200).json({
+      status: -1,
+      message: "No valid search information included."
+    })
+  }
+  else if (title){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND title = ?;
+    `;
+    connection.query(sQuery,[title],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (content){ //FIX THIS change to containing
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND content LIKE ?;
+    `;
+    connection.query(sQuery,['%' + content + '%'],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (sdate){ //FIX THIS check that days works properly
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND DATE(subDate) = ?;
+    `;
+    connection.query(sQuery,[sdate],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (username){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND username = ?;
+    `;
+    connection.query(sQuery,[username],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }
+})
 app.route("/post")
   //Retrieve Single Post
   .get(function(req,res){
@@ -83,7 +262,12 @@ app.route("/post")
         message: "Post ID Not Given."
       })
     }
-    var sQuery = "SELECT * FROM posts WHERE postID = ?";
+    var sQuery =
+    `SELECT * FROM posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE postID = ?`;
     connection.query(sQuery,[req.query.postid],function(err,results,fields){
       if (err){
         console.log(err);
