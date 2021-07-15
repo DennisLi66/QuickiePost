@@ -69,7 +69,7 @@ app.get("/posts",function(req,res){
           title: results[i].title,
           userID: results[i].userID,
           content: results[i].content,
-          subDate: results[i].subDate
+          subDate: results[i].subDate, username: results[i].username
         }
       }
       return res.status(200).json({
@@ -100,7 +100,7 @@ app.get("/search",function(req,res){
     on uzers.userID = posts.userID
     WHERE visibility != 'hidden' AND visibility != 'private'
     AND title = ?
-    AND content LIKE ?;
+    AND content LIKE ?
     AND DATE(subDate) = ?;
     `;
     connection.query(sQuery,[title,'%' + content + '%',sdate],function(err,results,fields){
@@ -117,7 +117,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -142,7 +142,7 @@ app.get("/search",function(req,res){
     on uzers.userID = posts.userID
     WHERE visibility != 'hidden' AND visibility != 'private'
     AND title = ?
-    AND content LIKE ?;
+    AND content LIKE ?
     AND username = ?;
     `;
     connection.query(sQuery,[title,'%' + content + '%',username],function(err,results,fields){
@@ -159,7 +159,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -201,7 +201,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -225,8 +225,8 @@ app.get("/search",function(req,res){
     (select userid,username from users) uzers
     on uzers.userID = posts.userID
     WHERE visibility != 'hidden' AND visibility != 'private'
-    AND content LIKE ?;
-    AND DATE(subDate) = ?;
+    AND content LIKE ?
+    AND DATE(subDate) = ?
     AND username = ?;
     `;
     connection.query(sQuery,['%' + content + '%',sdate,username],function(err,results,fields){
@@ -243,7 +243,254 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }
+  else if (title && content){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND title = ?
+    AND content LIKE ?;
+    `;
+    connection.query(sQuery,[title,'%' + content + '%'],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (title && sdate){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND title = ?
+    AND DATE(subDate) = ?;
+    `;
+    connection.query(sQuery,[title,sdate],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (title && username){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND title = ?
+    AND username = ?;
+    `;
+    connection.query(sQuery,[title,username],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (content && username){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND content LIKE ?
+    AND username = ?;
+    `;
+    connection.query(sQuery,['%' + content + '%',username],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (content && sdate){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND content LIKE ?
+    AND DATE(subDate) = ?;
+    `;
+    connection.query(sQuery,['%' + content + '%',sdate],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Posts Returned.",
+            contents: toPrep
+          })
+        }else{
+          return res.status(200).json({
+            status: 1,
+            message: "No values returned."
+          })
+        }
+      }
+    })
+  }else if (username && sdate){
+    var sQuery =
+    `
+    SELECT * from posts
+    LEFT JOIN
+    (select userid,username from users) uzers
+    on uzers.userID = posts.userID
+    WHERE visibility != 'hidden' AND visibility != 'private'
+    AND DATE(subDate) = ?;
+    AND username = ?;
+    `;
+    connection.query(sQuery,[sdate,username],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }else{
+        if (results.length > 0){
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -284,7 +531,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -300,7 +547,7 @@ app.get("/search",function(req,res){
         }
       }
     })
-  }else if (content){ //FIX THIS change to containing
+  }else if (content){
     var sQuery =
     `
     SELECT * from posts
@@ -324,7 +571,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -340,7 +587,7 @@ app.get("/search",function(req,res){
         }
       }
     })
-  }else if (sdate){ //FIX THIS check that days works properly
+  }else if (sdate){
     var sQuery =
     `
     SELECT * from posts
@@ -364,7 +611,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -404,7 +651,7 @@ app.get("/search",function(req,res){
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
@@ -827,7 +1074,7 @@ app.route("/user")
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate
+              subDate: results[i].subDate, username: results[i].username
             }
           }
           return res.status(200).json({
