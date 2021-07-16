@@ -83,7 +83,7 @@ app.get("/posts",function(req,res){
 app.get("/search",function(req,res){
   var title = req.query.title;
   var content = req.query.content;
-  var sdate = req.query.sdate;
+  var sdate = req.query.sDate;
   var username = req.query.username;
   if (!title && !content && !sdate && !username){
     return res.status(200).json({
