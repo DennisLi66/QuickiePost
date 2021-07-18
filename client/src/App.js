@@ -92,11 +92,11 @@ function App() {
         <br></br>
         <label htmlFor="pswrd">Password</label>
         <br></br>
-        <input name="pswrd" type="password" id="pswrd" minlength="8" required></input>
+        <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
         <br></br>
         <label htmlFor="confPswrd">Confirm Password</label>
         <br></br>
-        <input name="confPswrd" type="password" id="confPswrd" minlength="8" required></input>
+        <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
         <br></br>        <br></br>
         <Button variant='dark' type="submit"> Register </Button>
       </form>
@@ -112,7 +112,7 @@ function App() {
         <br></br>
         <label htmlFor="pswrd" >Password</label>
         <br></br>
-        <input name="pswrd" type="password" id="pswrd" minlength="8" required></input>
+        <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
                 <br></br>        <br></br>
                 <Button variant='dark' type="submit"> Login </Button>
       </form>
@@ -202,6 +202,14 @@ function App() {
   }
   function handleRegistration(event){
     event.preventDefault();
+    var email = document.getElementById("userEmail").value;
+    var username = document.getElementById("username").value;
+    var pswrd = document.getElementById("pswrd").value;
+    var confPswrd = document.getElementById("confPswrd").value;
+    console.log(email);
+    console.log(username);
+    console.log(pswrd);
+    console.log(confPswrd);
   }
   function handleLogin(event){
     event.preventDefault();

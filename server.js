@@ -1039,7 +1039,45 @@ app.route("/post")
   })
 // Register Account -- Requires Look up
 app.post("/register",function(req,res){
-
+  var email = req.body.email;
+  var pswrd = req.body.pswrd;
+  var username = req.body.username;
+  console.log(req.body)
+  // console.log(email,pswrd,username)
+  //checking for uniqueness already occurs
+  //encrypt password
+  if (!email || !pswrd || !username){
+    return res.status(200).json({
+      status: -1,
+      message: "Not Enough Data Included."
+    })
+  }
+  else{
+  bcrypt.hash(pswrd,15,function(e2rr,hash){
+    if (e2rr){
+      return res.status(200).json({
+        status: -1,
+        message: e2rr
+      })
+    }
+    else{
+      var iQuery = "INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES (?,?,?,?,?)";
+      connection.query(iQuery,[username,email,hash,'public','user'],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        }else{
+          return res.status(200).json({
+            status: 0,
+            message: "Insertion Performed."
+          })
+        }
+      })
+    }
+  })
+}
 })
 app.post("/login",function(req,res){
 
