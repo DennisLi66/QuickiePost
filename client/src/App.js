@@ -206,10 +206,62 @@ function App() {
     var username = document.getElementById("username").value;
     var pswrd = document.getElementById("pswrd").value;
     var confPswrd = document.getElementById("confPswrd").value;
-    console.log(email);
-    console.log(username);
-    console.log(pswrd);
-    console.log(confPswrd);
+    if (!(pswrd === confPswrd)){
+      changeCode(
+        <div>
+        <div className="errorMsg">Your passwords did not match.</div>
+        <form onSubmit={handleRegistration}>
+          <h1> Registration Page</h1>
+          <label htmlFor='userEmail'>Email</label>
+          <br></br>
+          <input type="email" name="userEmail" id="userEmail" required></input>
+          <br></br>
+          <label htmlFor="username">Username</label>
+          <br></br>
+          <input name="username" id="username" required></input>
+          <br></br>
+          <label htmlFor="pswrd">Password</label>
+          <br></br>
+          <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+          <br></br>
+          <label htmlFor="confPswrd">Confirm Password</label>
+          <br></br>
+          <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+          <br></br>        <br></br>
+          <Button variant='dark' type="submit"> Register </Button>
+        </form>
+        </div>
+      )
+    }
+    else{
+      const requestSetup = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({email: email, username: username,pswrd:pswrd})
+      };
+      fetch(serverLocation+"/register",requestSetup)
+        .then(response => response.json())
+        .then(data => {
+          // console.log(data);
+          changeCode(
+            <div>
+            <div className='confMsg'>You have been registered.</div>
+            <form onSubmit={handleLogin}>
+              <h1> Login Page </h1>
+              <label htmlFor="userInfo">Username/Email</label>
+              <br></br>
+              <input name="userInfo" id="userInfo" required></input>
+              <br></br>
+              <label htmlFor="pswrd" >Password</label>
+              <br></br>
+              <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                      <br></br>        <br></br>
+                      <Button variant='dark' type="submit"> Login </Button>
+            </form>
+            </div>
+          )
+        })
+    }
   }
   function handleLogin(event){
     event.preventDefault();

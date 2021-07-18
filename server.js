@@ -1042,8 +1042,6 @@ app.post("/register",function(req,res){
   var email = req.body.email;
   var pswrd = req.body.pswrd;
   var username = req.body.username;
-  console.log(req.body)
-  // console.log(email,pswrd,username)
   //checking for uniqueness already occurs
   //encrypt password
   if (!email || !pswrd || !username){
