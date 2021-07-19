@@ -7,7 +7,7 @@ import Card from "react-bootstrap/Card"
 import Button from 'react-bootstrap/Button'
 import './App.css';
 import React from "react";
-
+import Cookies from 'universal-cookie';
 //things ill Need
 //simple navbar
 //onload produce Posts
@@ -27,6 +27,7 @@ function App() {
   }
   //Variables
   var serverLocation = "http://localhost:3001";
+  const cookies = new Cookies();
   const [code,changeCode] = React.useState(
     <div>
     <h1> QuickiePost </h1>
@@ -242,8 +243,6 @@ function App() {
       fetch(serverLocation+"/register",requestSetup)
         .then(response => response.json())
         .then(data => {
-          // console.log(data);
-          //FIX THIS add error pages
           if (data.status === 0){
             changeCode(
               <div>
@@ -369,9 +368,22 @@ function App() {
             </div>
           )
         }else if (data.status === 0){//No Error
-          //Set Cookie
+          cookies.set('name',data.username,{path:'/'});
+          cookies.set('id',data.userID,{path:'/'});
+          // console.log(cookies.get('name'));
+          // cookies.remove('id',{path:'/'})
+          // cookies.remove('name',{path:'/'})
+          getHome();
+          changeNavToLoggedIn();
         }
       });
+  }
+
+  function logOut(){
+
+  }
+  function changeNavToLoggedIn(){
+    
   }
   React.useEffect(() => {
     var listOfPosts = [];
