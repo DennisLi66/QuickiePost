@@ -1038,6 +1038,7 @@ app.route("/post")
   }
   })
 // Register Account -- Requires Look up
+//FIX THIS: have message for duplicate entries
 app.post("/register",function(req,res){
   var email = req.body.email;
   var pswrd = req.body.pswrd;
@@ -1078,7 +1079,57 @@ app.post("/register",function(req,res){
 }
 })
 app.post("/login",function(req,res){
-
+  var email = req.body.email;
+  var pswrd = req.body.pswrd;
+  if (!email || !pswrd){
+    return res.status(200).json({
+      status: -1,
+      message: "Not enough information."
+    })
+  }
+  else{
+    var sQuery = "select * from users WHERE email = ?"
+    connection.query(sQuery,[email],function(e3rr,results,fields){
+      if (e3rr){
+        return res.status(200).json({
+          status: -1,
+          message: e3rr
+        })
+      }
+      else{
+        if (results.length === 0){
+          return res.status(200).json({
+            status: -2,
+            message: "That combination did not exist."
+          })
+        }else{
+          //uncrypt password and check
+          var resPass = results[0].pswrd;
+          bcrypt.compare(pswrd,resPass,function(err3,rresult){
+            if (err3){
+              return res.status(200).json({
+                status: -1,
+                message: err3
+              })
+            }
+            else if (rresult){
+              return res.status(200).json({
+                status: 0,
+                message: "Confirmation.",
+                userID: results[0].userID
+              })
+            }
+            else{
+              return res.status(200).json({
+                status: -2,
+                message: "That combination did not exist."
+              })
+            }
+          })
+        }
+      }
+    })
+  }
 })
 
 app.route("/user")

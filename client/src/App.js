@@ -106,9 +106,9 @@ function App() {
     changeCode(
       <form onSubmit={handleLogin}>
         <h1> Login Page </h1>
-        <label htmlFor="userInfo">Username/Email</label>
+        <label htmlFor='userEmail'>Email</label>
         <br></br>
-        <input name="userInfo" id="userInfo" required></input>
+        <input type="email" name="userEmail" id="userEmail" required></input>
         <br></br>
         <label htmlFor="pswrd" >Password</label>
         <br></br>
@@ -248,9 +248,9 @@ function App() {
             <div className='confMsg'>You have been registered.</div>
             <form onSubmit={handleLogin}>
               <h1> Login Page </h1>
-              <label htmlFor="userInfo">Username/Email</label>
+              <label htmlFor='userEmail'>Email</label>
               <br></br>
-              <input name="userInfo" id="userInfo" required></input>
+              <input type="email" name="userEmail" id="userEmail" required></input>
               <br></br>
               <label htmlFor="pswrd" >Password</label>
               <br></br>
