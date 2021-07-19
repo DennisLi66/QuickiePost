@@ -15,3 +15,11 @@ code {
 .displayPost{
   color: black
 }
+
+.errMsg{
+  background-color: red
+}
+
+.confMsg{
+  background-color: green
+}

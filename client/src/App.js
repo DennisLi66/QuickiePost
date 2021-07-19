@@ -113,8 +113,8 @@ function App() {
         <label htmlFor="pswrd" >Password</label>
         <br></br>
         <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                <br></br>        <br></br>
-                <Button variant='dark' type="submit"> Login </Button>
+        <br></br><br></br>
+        <Button variant='dark' type="submit"> Login </Button>
       </form>
     )
   }
@@ -243,28 +243,135 @@ function App() {
         .then(response => response.json())
         .then(data => {
           // console.log(data);
-          changeCode(
-            <div>
-            <div className='confMsg'>You have been registered.</div>
-            <form onSubmit={handleLogin}>
-              <h1> Login Page </h1>
-              <label htmlFor='userEmail'>Email</label>
-              <br></br>
-              <input type="email" name="userEmail" id="userEmail" required></input>
-              <br></br>
-              <label htmlFor="pswrd" >Password</label>
-              <br></br>
-              <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br>        <br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-            </form>
-            </div>
-          )
+          //FIX THIS add error pages
+          if (data.status === 0){
+            changeCode(
+              <div>
+              <div className='confMsg'>You have been registered.</div>
+              <form onSubmit={handleLogin}>
+                <h1> Login Page </h1>
+                <label htmlFor='userEmail'>Email</label>
+                <br></br>
+                <input type="email" name="userEmail" id="userEmail" required></input>
+                <br></br>
+                <label htmlFor="pswrd" >Password</label>
+                <br></br>
+                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br><br></br>
+                <Button variant='dark' type="submit"> Login </Button>
+              </form>
+              </div>
+            )
+          }
+          else if (data.status === -1){//Various Error
+            changeCode(
+              <div>
+              <div className="errMsg">There was an error. Please try again.</div>
+              <form onSubmit={handleRegistration}>
+                <h1> Registration Page</h1>
+                <label htmlFor='userEmail'>Email</label>
+                <br></br>
+                <input type="email" name="userEmail" id="userEmail" required></input>
+                <br></br>
+                <label htmlFor="username">Username</label>
+                <br></br>
+                <input name="username" id="username" required></input>
+                <br></br>
+                <label htmlFor="pswrd">Password</label>
+                <br></br>
+                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br>
+                <label htmlFor="confPswrd">Confirm Password</label>
+                <br></br>
+                <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+                <br></br>        <br></br>
+                <Button variant='dark' type="submit"> Register </Button>
+              </form>
+              </div>
+            )
+          }else if (data.status === -2){//Email Already Eists
+            changeCode(
+              <div>
+              <div className="errMsg">An account with that email already exists.</div>
+              <form onSubmit={handleRegistration}>
+                <h1> Registration Page</h1>
+                <label htmlFor='userEmail'>Email</label>
+                <br></br>
+                <input type="email" name="userEmail" id="userEmail" required></input>
+                <br></br>
+                <label htmlFor="username">Username</label>
+                <br></br>
+                <input name="username" id="username" required></input>
+                <br></br>
+                <label htmlFor="pswrd">Password</label>
+                <br></br>
+                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br>
+                <label htmlFor="confPswrd">Confirm Password</label>
+                <br></br>
+                <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+                <br></br>        <br></br>
+                <Button variant='dark' type="submit"> Register </Button>
+              </form>
+              </div>
+            )
+          }
         })
     }
   }
   function handleLogin(event){
     event.preventDefault();
+    var email = document.getElementById("userEmail").value;
+    var pswrd = document.getElementById("pswrd").value;
+    const requestSetup = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({email: email, pswrd:pswrd})
+    };
+    fetch(serverLocation+"/login",requestSetup)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        if (data.status === -2){ //Invalid Combination
+          changeCode(
+            <div>
+              <div className="errMsg">That was not an existing email/password combination.</div>
+              <form onSubmit={handleLogin}>
+                <h1> Login Page </h1>
+                <label htmlFor='userEmail'>Email</label>
+                <br></br>
+                <input type="email" name="userEmail" id="userEmail" required></input>
+                <br></br>
+                <label htmlFor="pswrd" >Password</label>
+                <br></br>
+                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br><br></br>
+                <Button variant='dark' type="submit"> Login </Button>
+              </form>
+            </div>
+          )
+        }else if (data.status === -1){///Other Error
+          changeCode(
+            <div>
+              <div className="errMsg">There was an error. Please try again.</div>
+              <form onSubmit={handleLogin}>
+                <h1> Login Page </h1>
+                <label htmlFor='userEmail'>Email</label>
+                <br></br>
+                <input type="email" name="userEmail" id="userEmail" required></input>
+                <br></br>
+                <label htmlFor="pswrd" >Password</label>
+                <br></br>
+                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br><br></br>
+                <Button variant='dark' type="submit"> Login </Button>
+              </form>
+            </div>
+          )
+        }else if (data.status === 0){//No Error
+          //Set Cookie
+        }
+      });
   }
   React.useEffect(() => {
     var listOfPosts = [];

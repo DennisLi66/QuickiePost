@@ -1062,12 +1062,21 @@ app.post("/register",function(req,res){
     else{
       var iQuery = "INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES (?,?,?,?,?)";
       connection.query(iQuery,[username,email,hash,'public','user'],function(err,results,fields){
-        if (err){
+        if (err && err.sqlState === '23000'){
+          console.log("Already Exists");
+          return res.status(200).json({
+            status: -2,
+            message: "Email already in Use."
+          })
+        }
+        else if (err){
+          console.log(err);
           return res.status(200).json({
             status: -1,
             message: err
           })
-        }else{
+        }
+        else{
           return res.status(200).json({
             status: 0,
             message: "Insertion Performed."
@@ -1116,7 +1125,8 @@ app.post("/login",function(req,res){
               return res.status(200).json({
                 status: 0,
                 message: "Confirmation.",
-                userID: results[0].userID
+                userID: results[0].userID,
+                username: results[0].userName
               })
             }
             else{
