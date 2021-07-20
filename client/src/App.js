@@ -9,8 +9,7 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
-//simple navbar
-//onload produce Posts
+//FIX THIS: Automatically Remove Cookies Over Time
 
 function App() {
   //Set up Functions
@@ -26,40 +25,19 @@ function App() {
     )
   }
   //Variables
-  var serverLocation = "http://localhost:3001";
+  const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
+  const id = cookies.get("id");
   const [code,changeCode] = React.useState(
     <div>
     <h1> QuickiePost </h1>
     </div>
   );
-  const [navbar,changeNavBar] = React.useState(
-    <Navbar bg="light" expand="lg">
-  <Navbar.Brand
-  onClick={getHome}
-  >QuickiePost</Navbar.Brand>
-  <Navbar.Toggle aria-controls="navbarScroll" />
-  <Navbar.Collapse id="navbarScroll">
-    <Nav
-      className="mr-auto my-2 my-lg-0"
-      style={{ maxHeight: '100px' }}
-      navbarScroll
-    >
-      <Nav.Link
-      onClick={getHome}
-      >Home</Nav.Link>
-      <Nav.Link
-      onClick={getRegistrationPage}
-      >Register</Nav.Link>
-      <Nav.Link
-      onClick={getLoginPage}
-      >Login</Nav.Link>
-      <Nav.Link
-      onClick={getSearchPage}
-      >Search</Nav.Link>
-    </Nav>
-  </Navbar.Collapse>
-    </Navbar>
+  const [navBarLoggedOut,changeLoggedOut] = React.useState(
+    false
+  )
+  const [navBarLoggedIn,changeLoggedIn] = React.useState(
+    true
   )
   //Rerendering Functions
   function getHome(){
@@ -150,7 +128,7 @@ function App() {
   function getMyPosts(){
 
   }
-
+  //always have both navbars, but change which one is hidden! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   function handleSearch(event){
     event.preventDefault();
     var title = document.getElementById("title").value;
@@ -401,90 +379,31 @@ function App() {
         }else if (data.status === 0){//No Error
           cookies.set('name',data.username,{path:'/'});
           cookies.set('id',data.userID,{path:'/'});
-          // console.log(cookies.get('name'));
-          // cookies.remove('id',{path:'/'})
-          // cookies.remove('name',{path:'/'})
-          changeNavToLoggedIn();
+          changeLoggedIn(true);
+          changeLoggedOut(false);
           getHome();
         }
       });
   }
 
+  //navbar
+
+  //log out
   function logOut(){
     cookies.remove("name",{path:'/'});
     cookies.remove("id",{path:'/'});
-    changeNavToLoggedOut()
+    changeLoggedOut(true);
+    changeLoggedIn(false);
     getHome();
   }
-  function changeNavToLoggedIn(){
-    changeNavBar(
-      <Navbar bg="light" expand="lg">
-    <Navbar.Brand
-    onClick={getHome}
-    >QuickiePost</Navbar.Brand>
-    <Navbar.Toggle aria-controls="navbarScroll" />
-    <Navbar.Collapse id="navbarScroll">
-      <Nav
-        className="mr-auto my-2 my-lg-0"
-        style={{ maxHeight: '100px' }}
-        navbarScroll
-      >
-        <Nav.Link
-        onClick={getHome}
-        >Home</Nav.Link>
-        <Nav.Link
-        onClick={getSearchPage}
-        >Search</Nav.Link>
-        <Nav.Link
-        onClick={getMyPosts}
-        >My Posts</Nav.Link>
-        <Nav.Link
-        onClick={logOut}
-        >Log Out</Nav.Link>
-      </Nav>
-    </Navbar.Collapse>
-      </Navbar>
-    )
-  }
-  function changeNavToLoggedOut(){
-    changeNavBar(
-      <Navbar bg="light" expand="lg">
-    <Navbar.Brand
-    onClick={getHome}
-    >QuickiePost</Navbar.Brand>
-    <Navbar.Toggle aria-controls="navbarScroll" />
-    <Navbar.Collapse id="navbarScroll">
-      <Nav
-        className="mr-auto my-2 my-lg-0"
-        style={{ maxHeight: '100px' }}
-        navbarScroll
-      >
-        <Nav.Link
-        onClick={getHome}
-        >Home</Nav.Link>
-        <Nav.Link
-        onClick={getRegistrationPage}
-        >Register</Nav.Link>
-        <Nav.Link
-        onClick={getLoginPage}
-        >Login</Nav.Link>
-        <Nav.Link
-        onClick={getSearchPage}
-        >Search</Nav.Link>
-      </Nav>
-    </Navbar.Collapse>
-      </Navbar>
-    )
-  }
+  //
   React.useEffect(() => {
     var listOfPosts = [];
     var serverLocation = "http://localhost:3001";
     fetch(serverLocation + "/posts")
       .then(response=>response.json())
       .then(data => {
-          // console.log(data.contents);
           for ( const key in data.contents){
-            // console.log(simplePost(data.contents[key]));
             listOfPosts.push(simplePost(key,data.contents[key]))
           }
           console.log(listOfPosts);
@@ -496,10 +415,71 @@ function App() {
           )
       })
   },[changeCode])
+  React.useEffect(() => {
+    if (id){
+      console.log("Logged In");
+      changeLoggedIn(true);
+      changeLoggedOut(false);
+    }
+    else{
+      console.log("Not Logged In.")
+    }
+  },[id,changeLoggedIn,changeLoggedOut])
 
   return (
     <div className="App">
-    {navbar}
+    <Navbar bg="light" expand="lg" className='loggedInBar' hidden={navBarLoggedOut}>
+  <Navbar.Brand
+  onClick={getHome}
+  >QuickiePost</Navbar.Brand>
+  <Navbar.Toggle aria-controls="navbarScroll" />
+  <Navbar.Collapse id="navbarScroll">
+    <Nav
+      className="mr-auto my-2 my-lg-0"
+      style={{ maxHeight: '100px' }}
+      navbarScroll
+    >
+      <Nav.Link
+      onClick={getHome}
+      >Home</Nav.Link>
+      <Nav.Link
+      onClick={getSearchPage}
+      >Search</Nav.Link>
+      <Nav.Link
+      onClick={getMyPosts}
+      >My Posts</Nav.Link>
+      <Nav.Link
+      onClick={logOut}
+      >Log Out</Nav.Link>
+    </Nav>
+  </Navbar.Collapse>
+    </Navbar>
+    <Navbar bg="light" expand="lg" className='loggedOutBar' hidden={navBarLoggedIn}>
+  <Navbar.Brand
+  onClick={getHome}
+  >QuickiePost</Navbar.Brand>
+  <Navbar.Toggle aria-controls="navbarScroll" />
+  <Navbar.Collapse id="navbarScroll">
+    <Nav
+      className="mr-auto my-2 my-lg-0"
+      style={{ maxHeight: '100px' }}
+      navbarScroll
+    >
+      <Nav.Link
+      onClick={getHome}
+      >Home</Nav.Link>
+      <Nav.Link
+      onClick={getRegistrationPage}
+      >Register</Nav.Link>
+      <Nav.Link
+      onClick={getLoginPage}
+      >Login</Nav.Link>
+      <Nav.Link
+      onClick={getSearchPage}
+      >Search</Nav.Link>
+    </Nav>
+  </Navbar.Collapse>
+    </Navbar>
     {code}
     </div>
   );
