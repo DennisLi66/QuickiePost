@@ -21,5 +21,6 @@ code {
 }
 
 .confMsg{
-  background-color: green
+  background-color: green;
+  color: white
 }

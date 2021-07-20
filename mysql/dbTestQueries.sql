@@ -32,3 +32,5 @@ WHERE userID = 3;
 -- on uzers.userID = posts.userID
 -- WHERE visibility != 'hidden' AND visibility != 'private'
 -- and subDate < Date(2021-07-30) -- and subDate > 2021-07-01
+
+SELECT * FROM users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = 3;

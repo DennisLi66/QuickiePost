@@ -10,6 +10,8 @@ import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
 //FIX THIS: Automatically Remove Cookies Over Time
+//Make Cookies look Nicer
+//ADD comments and likes to posts
 
 function App() {
   //Set up Functions
@@ -125,10 +127,38 @@ function App() {
       </form>
     )
   }
-  function getMyPosts(){
+  function getWritePost(){
+    //have something navigate down from the top
+  }
+  function getMyPosts(){ //change visibility possible here
+    var listOfPosts = [];
+    fetch(serverLocation + "/user?userID=" + cookies.get("id"))
+      .then(response=>response.json())
+      .then(data => {
+        console.log(data);
+        for ( const key in data.posts){
+          // console.log(data.posts[key]);
+          if (data.posts[key].content){
+            listOfPosts.push(simplePost(key,data.posts[key]))
+          }
+        }
+        if (listOfPosts.length === 0){
+          listOfPosts = (
+            <div> You either haven't written any posts, or they've all been deleted.</div>
+          )
+        }
+        changeCode(
+          <div>
+          <h1> QuickiePost - Your Posts </h1>
+          {listOfPosts}
+          </div>
+        )
+      })
+  }
+  function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
 
   }
-  //always have both navbars, but change which one is hidden! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   function handleSearch(event){
     event.preventDefault();
     var title = document.getElementById("title").value;
@@ -386,15 +416,30 @@ function App() {
       });
   }
 
-  //navbar
-
   //log out
   function logOut(){
     cookies.remove("name",{path:'/'});
     cookies.remove("id",{path:'/'});
     changeLoggedOut(true);
     changeLoggedIn(false);
-    getHome();
+    var listOfPosts = [];
+    fetch(serverLocation + "/posts")
+      .then(response=>response.json())
+      .then(data => {
+          // console.log(data.contents);
+          for ( const key in data.contents){
+            // console.log(simplePost(data.contents[key]));
+            listOfPosts.push(simplePost(key,data.contents[key]))
+          }
+          console.log(listOfPosts);
+          changeCode(
+            <div>
+            <div className='confMsg'> You have been logged out. </div>
+           <h1> QuickiePost </h1>
+            {listOfPosts}
+            </div>
+          )
+      })
   }
   //
   React.useEffect(() => {
@@ -435,7 +480,7 @@ function App() {
   <Navbar.Toggle aria-controls="navbarScroll" />
   <Navbar.Collapse id="navbarScroll">
     <Nav
-      className="mr-auto my-2 my-lg-0"
+      className="mr-auto my-2 my-lg-0 container-fluid"
       style={{ maxHeight: '100px' }}
       navbarScroll
     >
@@ -448,6 +493,12 @@ function App() {
       <Nav.Link
       onClick={getMyPosts}
       >My Posts</Nav.Link>
+      <Nav.Link
+      onClick={getProfile}
+      >My Profile</Nav.Link>
+      <Nav.Link
+      onClick={getWritePost}
+      >Write Post</Nav.Link>
       <Nav.Link
       onClick={logOut}
       >Log Out</Nav.Link>
