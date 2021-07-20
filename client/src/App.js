@@ -33,6 +33,34 @@ function App() {
     <h1> QuickiePost </h1>
     </div>
   );
+  const [navbar,changeNavBar] = React.useState(
+    <Navbar bg="light" expand="lg">
+  <Navbar.Brand
+  onClick={getHome}
+  >QuickiePost</Navbar.Brand>
+  <Navbar.Toggle aria-controls="navbarScroll" />
+  <Navbar.Collapse id="navbarScroll">
+    <Nav
+      className="mr-auto my-2 my-lg-0"
+      style={{ maxHeight: '100px' }}
+      navbarScroll
+    >
+      <Nav.Link
+      onClick={getHome}
+      >Home</Nav.Link>
+      <Nav.Link
+      onClick={getRegistrationPage}
+      >Register</Nav.Link>
+      <Nav.Link
+      onClick={getLoginPage}
+      >Login</Nav.Link>
+      <Nav.Link
+      onClick={getSearchPage}
+      >Search</Nav.Link>
+    </Nav>
+  </Navbar.Collapse>
+    </Navbar>
+  )
   //Rerendering Functions
   function getHome(){
     var listOfPosts = [];
@@ -118,6 +146,9 @@ function App() {
         <Button variant='dark' type="submit"> Login </Button>
       </form>
     )
+  }
+  function getMyPosts(){
+
   }
 
   function handleSearch(event){
@@ -373,17 +404,77 @@ function App() {
           // console.log(cookies.get('name'));
           // cookies.remove('id',{path:'/'})
           // cookies.remove('name',{path:'/'})
-          getHome();
           changeNavToLoggedIn();
+          getHome();
         }
       });
   }
 
   function logOut(){
-
+    cookies.remove("name",{path:'/'});
+    cookies.remove("id",{path:'/'});
+    changeNavToLoggedOut()
+    getHome();
   }
   function changeNavToLoggedIn(){
-    
+    changeNavBar(
+      <Navbar bg="light" expand="lg">
+    <Navbar.Brand
+    onClick={getHome}
+    >QuickiePost</Navbar.Brand>
+    <Navbar.Toggle aria-controls="navbarScroll" />
+    <Navbar.Collapse id="navbarScroll">
+      <Nav
+        className="mr-auto my-2 my-lg-0"
+        style={{ maxHeight: '100px' }}
+        navbarScroll
+      >
+        <Nav.Link
+        onClick={getHome}
+        >Home</Nav.Link>
+        <Nav.Link
+        onClick={getSearchPage}
+        >Search</Nav.Link>
+        <Nav.Link
+        onClick={getMyPosts}
+        >My Posts</Nav.Link>
+        <Nav.Link
+        onClick={logOut}
+        >Log Out</Nav.Link>
+      </Nav>
+    </Navbar.Collapse>
+      </Navbar>
+    )
+  }
+  function changeNavToLoggedOut(){
+    changeNavBar(
+      <Navbar bg="light" expand="lg">
+    <Navbar.Brand
+    onClick={getHome}
+    >QuickiePost</Navbar.Brand>
+    <Navbar.Toggle aria-controls="navbarScroll" />
+    <Navbar.Collapse id="navbarScroll">
+      <Nav
+        className="mr-auto my-2 my-lg-0"
+        style={{ maxHeight: '100px' }}
+        navbarScroll
+      >
+        <Nav.Link
+        onClick={getHome}
+        >Home</Nav.Link>
+        <Nav.Link
+        onClick={getRegistrationPage}
+        >Register</Nav.Link>
+        <Nav.Link
+        onClick={getLoginPage}
+        >Login</Nav.Link>
+        <Nav.Link
+        onClick={getSearchPage}
+        >Search</Nav.Link>
+      </Nav>
+    </Navbar.Collapse>
+      </Navbar>
+    )
   }
   React.useEffect(() => {
     var listOfPosts = [];
@@ -408,32 +499,7 @@ function App() {
 
   return (
     <div className="App">
-    <Navbar bg="light" expand="lg">
-  <Navbar.Brand
-  onClick={getHome}
-  >QuickiePost</Navbar.Brand>
-  <Navbar.Toggle aria-controls="navbarScroll" />
-  <Navbar.Collapse id="navbarScroll">
-    <Nav
-      className="mr-auto my-2 my-lg-0"
-      style={{ maxHeight: '100px' }}
-      navbarScroll
-    >
-      <Nav.Link
-      onClick={getHome}
-      >Home</Nav.Link>
-      <Nav.Link
-      onClick={getRegistrationPage}
-      >Register</Nav.Link>
-      <Nav.Link
-      onClick={getLoginPage}
-      >Login</Nav.Link>
-      <Nav.Link
-      onClick={getSearchPage}
-      >Search</Nav.Link>
-    </Nav>
-  </Navbar.Collapse>
-</Navbar>
+    {navbar}
     {code}
     </div>
   );
