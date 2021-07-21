@@ -47,6 +47,14 @@ function App() {
         display: 'none'
     }
   )
+  const [mainBodyCSS,changeMainBodyCSS] = React.useState(
+    {
+    height: 'auto'
+    }
+  )
+  const [privacySwitchDescriptor,changePrivacySwitchDescriptor] = React.useState(
+    <div> This post can be seen by anyone. </div>
+  )
   //Rerendering Functions
   function getHome(){
     var listOfPosts = [];
@@ -138,16 +146,28 @@ function App() {
     changeWriteFormCSS(
       {
         height: 'auto',
+        transition: 'height 2s ease-in'
       }
     );
+    changeMainBodyCSS(
+      {
+        display: 'none',
+        transition: 'height 2s ease-in'
+      }
+    )
   }
   function hideWriteForm(){
     changeWriteFormCSS(
       {
-        height: 0,
-        display: 'none'
+        height: '0%',
+        display: 'none',
+        transition: 'height 2s ease-in'
       }
     )
+    changeMainBodyCSS({
+      height: 'auto',
+      transition: 'height 2s ease-in'
+    })
   }
   function getMyPosts(){ //change visibility possible here
     var listOfPosts = [];
@@ -434,6 +454,22 @@ function App() {
         }
       });
   }
+  function handleWritePost(event){
+    event.preventDefault();
+  }
+  function handlePrivacyChecked(){
+    var i = document.getElementById('privacySwitch').checked;
+    // console.log(i);
+    if (i){
+      changePrivacySwitchDescriptor(
+        <div> This post can only be seen by you or those you've linked with. </div>
+      )
+    }else{
+      changePrivacySwitchDescriptor(
+        <div> This post can be seen by anyone. </div>
+      )
+    }
+  }
 
   //log out
   function logOut(){
@@ -554,11 +590,31 @@ function App() {
       <br></br>
       <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
       <h1> Write a Post </h1>
-      <form>
-
+      <form onSubmit={handleWritePost}>
+        <label htmlFor='postTitle'>Title:</label>
+        <br></br>
+        <input name='postTitle' required></input>
+        <br></br>
+        <label htmlFor='postContent'>Content:</label>
+        <br></br>
+        <textarea className='noResize' rows='5' cols='50'
+         maxLength="200" name="postContent" required>
+        </textarea>
+        <br></br>
+        Private?
+        <br></br>
+        <label className="switch">
+        <input type="checkbox" id='privacySwitch'
+        onChange={handlePrivacyChecked}
+        ></input>
+        <span className="slider round"></span>
+        </label>
+        <br></br>
+        {privacySwitchDescriptor}
+        <Button variant='dark' type="submit"> Submit Post </Button>
       </form>
     </div>
-    <div className='mainBody'>
+    <div className='mainBody' style={mainBodyCSS}>
     {code}
     </div>
     </div>
