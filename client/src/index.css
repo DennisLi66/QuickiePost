@@ -20,7 +20,17 @@ code {
   background-color: red
 }
 
+.writeForm{
+  position:relative;
+}
+
 .confMsg{
   background-color: green;
   color: white
+}
+
+.exitButton{
+  position: absolute;
+  top: 0;
+  right: 0;
 }

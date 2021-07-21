@@ -41,6 +41,12 @@ function App() {
   const [navBarLoggedIn,changeLoggedIn] = React.useState(
     true
   )
+  const [writeFormCSS,changeWriteFormCSS] = React.useState(
+    {
+      height: 0,
+        display: 'none'
+    }
+  )
   //Rerendering Functions
   function getHome(){
     var listOfPosts = [];
@@ -127,8 +133,21 @@ function App() {
       </form>
     )
   }
-  function getWritePost(){
+  function showWriteForm(){
     //have something navigate down from the top
+    changeWriteFormCSS(
+      {
+        height: 'auto',
+      }
+    );
+  }
+  function hideWriteForm(){
+    changeWriteFormCSS(
+      {
+        height: 0,
+        display: 'none'
+      }
+    )
   }
   function getMyPosts(){ //change visibility possible here
     var listOfPosts = [];
@@ -497,7 +516,7 @@ function App() {
       onClick={getProfile}
       >My Profile</Nav.Link>
       <Nav.Link
-      onClick={getWritePost}
+      onClick={showWriteForm}
       >Write Post</Nav.Link>
       <Nav.Link
       onClick={logOut}
@@ -531,7 +550,17 @@ function App() {
     </Nav>
   </Navbar.Collapse>
     </Navbar>
+    <div className='writeForm' style={writeFormCSS}>
+      <br></br>
+      <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
+      <h1> Write a Post </h1>
+      <form>
+
+      </form>
+    </div>
+    <div className='mainBody'>
     {code}
+    </div>
     </div>
   );
 }
