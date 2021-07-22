@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 //FIX THIS: Automatically Remove Cookies Over Time
 //Make Cookies look Nicer
 //ADD comments and likes to posts
+//Use Session Tokens that only last for a day
 
 function App() {
   //Set up Functions
@@ -30,6 +31,7 @@ function App() {
   const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
   const id = cookies.get("id");
+  // console.log(id)
   const [code,changeCode] = React.useState(
     <div>
     <h1> QuickiePost </h1>
@@ -57,6 +59,7 @@ function App() {
   )
   //Rerendering Functions
   function getHome(){
+        hideWriteForm();
     var listOfPosts = [];
     fetch(serverLocation + "/posts")
       .then(response=>response.json())
@@ -66,7 +69,7 @@ function App() {
             // console.log(simplePost(data.contents[key]));
             listOfPosts.push(simplePost(key,data.contents[key]))
           }
-          console.log(listOfPosts);
+          // console.log(listOfPosts);
           changeCode(
             <div>
            <h1> QuickiePost </h1>
@@ -76,6 +79,7 @@ function App() {
       })
   }
   function getSearchPage(){
+        hideWriteForm();
     changeCode(
       <div>
       <h1> Search for a Post </h1>
@@ -102,6 +106,7 @@ function App() {
     )
   }
   function getRegistrationPage(){
+        hideWriteForm();
     changeCode(
       <form onSubmit={handleRegistration}>
         <h1> Registration Page</h1>
@@ -126,6 +131,7 @@ function App() {
     )
   }
   function getLoginPage(){
+    hideWriteForm();
     changeCode(
       <form onSubmit={handleLogin}>
         <h1> Login Page </h1>
@@ -170,6 +176,7 @@ function App() {
     })
   }
   function getMyPosts(){ //change visibility possible here
+        hideWriteForm();
     var listOfPosts = [];
     fetch(serverLocation + "/user?userID=" + cookies.get("id"))
       .then(response=>response.json())
@@ -456,6 +463,18 @@ function App() {
   }
   function handleWritePost(event){
     event.preventDefault();
+    var title = document.getElementById('postTitle').value;
+    var content = document.getElementById('postContent').value;
+    var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
+    const requestSetup = {
+        method: 'PUT',
+    }
+    fetch(serverLocation + "/post?title=" + title + "&contents="
+    + content + "&visibility=" + privacy + '&userID=' + cookies.get('id'),requestSetup)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+      });
   }
   function handlePrivacyChecked(){
     var i = document.getElementById('privacySwitch').checked;
@@ -593,12 +612,12 @@ function App() {
       <form onSubmit={handleWritePost}>
         <label htmlFor='postTitle'>Title:</label>
         <br></br>
-        <input name='postTitle' required></input>
+        <input name='postTitle' id="postTitle" autoComplete="off" required></input>
         <br></br>
         <label htmlFor='postContent'>Content:</label>
         <br></br>
         <textarea className='noResize' rows='5' cols='50'
-         maxLength="200" name="postContent" required>
+         maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
         </textarea>
         <br></br>
         Private?

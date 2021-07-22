@@ -788,8 +788,7 @@ app.route("/post")
       `
       INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
       `;
-      //REPLACE WITH ACTUAL ID
-      connection.query(iQuery,[1,req.query.title,req.query.contents,req.query.visibility],function(err,results,fields){
+      connection.query(iQuery,[userID,req.query.title,req.query.contents,req.query.visibility],function(err,results,fields){
         if (err){
           return res.status(200).json({
             status: -1,
@@ -1171,7 +1170,8 @@ app.route("/user")
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
-              subDate: results[i].subDate, username: results[i].username
+              subDate: results[i].subDate,
+              username: results[i].userName
             }
           }
           return res.status(200).json({
