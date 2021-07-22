@@ -769,7 +769,8 @@ app.route("/post")
   .put(function(req,res){
     //GET ID
     var userID = req.query.userID;
-    if (!userID){
+    var sessionID = req.query.sessionID;
+    if (!userID || !sessionID){
       return res.status(200).json({
         status: -1,
         message: "User Not Logged In."
@@ -784,22 +785,46 @@ app.route("/post")
       })
     }
     else{
-      var iQuery =
+      //search for valid session
+      var sQuery =
       `
-      INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
-      `;
-      connection.query(iQuery,[userID,req.query.title,req.query.contents,req.query.visibility],function(err,results,fields){
-        if (err){
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      LEFT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `
+
+      connection.query(sQuery,[userID,sessionID],function(errorr,resultss,fieldss){
+        if (errorr){
           return res.status(200).json({
             status: -1,
-            message: err
+            message: errorr
           })
         }
         else{
-          return res.status(200).json({
-            status: 0,
-            message: "Post Added."
-          })
+          var iQuery =
+          `
+          INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
+          `;
+          connection.query(iQuery,[userID,req.query.title,req.query.contents,req.query.visibility],function(err,results,fields){
+            if (err){
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            }
+            else{
+              return res.status(200).json({
+                status: 0,
+                message: "Post Added."
+              })
+            }
+          })  
         }
       })
     }

@@ -34,3 +34,18 @@ WHERE userID = 3;
 -- and subDate < Date(2021-07-30) -- and subDate > 2021-07-01
 
 SELECT * FROM users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = 3;
+
+Select * from sessions WHERE userID = 3 AND 
+(timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+;
+
+-- GET MOST RECENT VALID SESSION DATE
+SELECT * FROM
+(select userID,max(sessionDate) as high from sessions group by userID) a
+LEFT JOIN 
+(
+Select * from sessions WHERE userID = 3 AND sessionID = 'gKQ1oxZW0UXIbt5vvTHY' AND
+(timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+)
+sessions 
+ON sessions.userID = a.userID AND sessions.sessionDate = a.high

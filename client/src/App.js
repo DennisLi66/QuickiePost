@@ -12,7 +12,6 @@ import Cookies from 'universal-cookie';
 //FIX THIS: Automatically Remove Cookies Over Time
 //Make Cookies look Nicer
 //ADD comments and likes to posts
-//Use Session Tokens that only last for a day
 //INCLUDE Private posts for self users
 //Add fine tuning to posts after submission and in my posts
 
@@ -33,7 +32,7 @@ function App() {
   const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
   const id = cookies.get("id");
-  const sessionID = cookies.get("sessionId");
+  // const sessionID = cookies.get("sessionId");
   const expireTime = cookies.get("expireTime");
   // console.log(id)
   const [code,changeCode] = React.useState(
@@ -530,11 +529,12 @@ function App() {
     var title = document.getElementById('postTitle').value;
     var content = document.getElementById('postContent').value;
     var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
+    var sessionID = cookies.get('sessionID');
     const requestSetup = {
         method: 'PUT',
     }
     fetch(serverLocation + "/post?title=" + title + "&contents="
-    + content + "&visibility=" + privacy + '&userID=' + cookies.get('id'),requestSetup)
+    + content + "&visibility=" + privacy + '&userID=' + cookies.get('id') + "&sessionID=" + cookies.get(sessionID),requestSetup)
       .then(response => response.json())
       .then(data => {
         hideWriteForm();
