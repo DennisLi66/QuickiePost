@@ -10,7 +10,6 @@ create table users(
     visibility varchar(255) NOT NULL,
     classification varchar(255) NOT NULL
 );
-
 create table posts(
 	postID int NOT NULL auto_increment primary key,
     userID int,
@@ -19,7 +18,6 @@ create table posts(
     visibility varchar(255) NOT NULL,
     subDate datetime
 );
-
 create table editHistory(
 	postID int,
     title varchar(255),
@@ -27,3 +25,19 @@ create table editHistory(
     visibility varchar(255) NOT NULL,
     editDate datetime
 );
+create table likes (
+	postID int NOT NULL,
+    userID int NOT NULL,
+    UNIQUE KEY IDS (postID,userID)
+);
+create table comments(
+	postID int NOT NULL,
+    userID int NOT NULL,
+    comments varchar(255) NOT NULL,
+    unique key comments(postID,userID)
+);
+create table sessions(
+	sessionID varchar(255) NOT NULL,
+    userID int NOT NULL,
+	sessionDate datetime
+)

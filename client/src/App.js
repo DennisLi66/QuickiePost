@@ -13,6 +13,8 @@ import Cookies from 'universal-cookie';
 //Make Cookies look Nicer
 //ADD comments and likes to posts
 //Use Session Tokens that only last for a day
+//INCLUDE Private posts for self users
+//Add fine tuning to posts after submission and in my posts
 
 function App() {
   //Set up Functions
@@ -176,7 +178,7 @@ function App() {
     })
   }
   function getMyPosts(){ //change visibility possible here
-        hideWriteForm();
+    hideWriteForm();
     var listOfPosts = [];
     fetch(serverLocation + "/user?userID=" + cookies.get("id"))
       .then(response=>response.json())
@@ -204,7 +206,7 @@ function App() {
   function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
 
   }
-
+  //Event Handlers
   function handleSearch(event){
     event.preventDefault();
     var title = document.getElementById("title").value;
@@ -473,7 +475,30 @@ function App() {
     + content + "&visibility=" + privacy + '&userID=' + cookies.get('id'),requestSetup)
       .then(response => response.json())
       .then(data => {
-        console.log(data);
+        hideWriteForm();
+        var listOfPosts = [];
+        fetch(serverLocation + "/user?userID=" + cookies.get("id"))
+          .then(response=>response.json())
+          .then(data => {
+            console.log(data);
+            for ( const key in data.posts){
+              // console.log(data.posts[key]);
+              if (data.posts[key].content){
+                listOfPosts.push(simplePost(key,data.posts[key]))
+              }
+            }
+            if (listOfPosts.length === 0){
+              listOfPosts = (
+                <div> You either haven't written any posts, or they've all been deleted.</div>
+              )
+            }
+            changeCode(
+              <div>
+              <h1> QuickiePost - Your Posts </h1>
+              {listOfPosts}
+              </div>
+            )
+          })
       });
   }
   function handlePrivacyChecked(){
@@ -489,6 +514,7 @@ function App() {
       )
     }
   }
+  //Check Session Cookies
 
   //log out
   function logOut(){
