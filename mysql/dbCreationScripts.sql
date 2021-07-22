@@ -39,5 +39,6 @@ create table comments(
 create table sessions(
 	sessionID varchar(255) NOT NULL,
     userID int NOT NULL,
-	sessionDate datetime
+	sessionDate datetime NOT NULL,
+    timeduration varchar(255) -- 1 HOUR or PERMANENT
 )

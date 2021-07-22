@@ -1089,7 +1089,8 @@ app.post("/register",function(req,res){
 app.post("/login",function(req,res){
   var email = req.body.email;
   var pswrd = req.body.pswrd;
-  if (!email || !pswrd){
+  var rememberMe = req.body.rememberMe;
+  if (!email || !pswrd || !rememberMe){
     return res.status(200).json({
       status: -1,
       message: "Not enough information."
@@ -1121,12 +1122,58 @@ app.post("/login",function(req,res){
               })
             }
             else if (rresult){
-              return res.status(200).json({
-                status: 0,
-                message: "Confirmation.",
-                userID: results[0].userID,
-                username: results[0].userName
-              })
+              //Create a Session ID
+              var sessionID = randomatic('Aa0', 20);
+              if (rememberMe === 'hour'){
+                var iQuery =
+                `
+                INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"HOUR");
+                `
+                connection.query(iQuery,[sessionID,results[0].userID],function(err,rresults,fields){
+                  if (err){
+                    return res.status(200).json({
+                      status: -1,
+                      message: err
+                    })
+                  }
+                  else{
+                    return res.status(200).json({
+                      status: 0,
+                      message: "Confirmation.",
+                      userID: results[0].userID,
+                      username: results[0].userName,
+                      sessionID: sessionID
+                    })
+                  }
+                })
+              }else if (rememberMe === 'forever'){
+                var iQuery =
+                `
+                INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"FOREVER");
+                `
+                connection.query(iQuery,[sessionID,results[0].userID],function(err,rresults,fields){
+                  if (err){
+                    return res.status(200).json({
+                      status: -1,
+                      message: err
+                    })
+                  }
+                  else{
+                    return res.status(200).json({
+                      status: 0,
+                      message: "Confirmation.",
+                      userID: results[0].userID,
+                      username: results[0].userName,
+                      sessionID: sessionID
+                    })
+                  }
+                })
+              }else{
+                return res.status(200).json({
+                  status: -1,
+                  message: "Remember Me Not Included Properly."
+                })
+              }
             }
             else{
               return res.status(200).json({

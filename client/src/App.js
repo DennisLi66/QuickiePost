@@ -33,6 +33,8 @@ function App() {
   const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
   const id = cookies.get("id");
+  const sessionID = cookies.get("sessionId");
+  const expireTime = cookies.get("expireTime");
   // console.log(id)
   const [code,changeCode] = React.useState(
     <div>
@@ -61,7 +63,10 @@ function App() {
   )
   //Rerendering Functions
   function getHome(){
-        hideWriteForm();
+    hideWriteForm();
+    if (checkSessionID()){
+      return;
+    }
     var listOfPosts = [];
     fetch(serverLocation + "/posts")
       .then(response=>response.json())
@@ -81,7 +86,10 @@ function App() {
       })
   }
   function getSearchPage(){
-        hideWriteForm();
+    hideWriteForm();
+    if (checkSessionID()){
+      return;
+    }
     changeCode(
       <div>
       <h1> Search for a Post </h1>
@@ -108,7 +116,10 @@ function App() {
     )
   }
   function getRegistrationPage(){
-        hideWriteForm();
+    hideWriteForm();
+    if (checkSessionID()){
+      return;
+    }
     changeCode(
       <form onSubmit={handleRegistration}>
         <h1> Registration Page</h1>
@@ -134,6 +145,9 @@ function App() {
   }
   function getLoginPage(){
     hideWriteForm();
+    if (checkSessionID()){
+      return;
+    }
     changeCode(
       <form onSubmit={handleLogin}>
         <h1> Login Page </h1>
@@ -144,6 +158,13 @@ function App() {
         <label htmlFor="pswrd" >Password</label>
         <br></br>
         <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+        <br></br><br></br>
+        <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+        <label className="switch">
+        <input type="checkbox" id='rememberMe'
+        ></input>
+        <span className="slider round"></span>
+        </label>
         <br></br><br></br>
         <Button variant='dark' type="submit"> Login </Button>
       </form>
@@ -179,6 +200,9 @@ function App() {
   }
   function getMyPosts(){ //change visibility possible here
     hideWriteForm();
+    if (checkSessionID()){
+      return;
+    }
     var listOfPosts = [];
     fetch(serverLocation + "/user?userID=" + cookies.get("id"))
       .then(response=>response.json())
@@ -204,11 +228,16 @@ function App() {
       })
   }
   function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
-
+    if (checkSessionID()){
+      return;
+    }
   }
   //Event Handlers
   function handleSearch(event){
     event.preventDefault();
+    if (checkSessionID()){
+      return;
+    }
     var title = document.getElementById("title").value;
     var content = document.getElementById("content").value;
     var username = document.getElementById("username").value;
@@ -290,6 +319,9 @@ function App() {
   }
   function handleRegistration(event){
     event.preventDefault();
+    if (checkSessionID()){
+      return;
+    }
     var email = document.getElementById("userEmail").value;
     var username = document.getElementById("username").value;
     var pswrd = document.getElementById("pswrd").value;
@@ -343,6 +375,13 @@ function App() {
                 <label htmlFor="pswrd" >Password</label>
                 <br></br>
                 <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br><br></br>
+                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                <label className="switch">
+                <input type="checkbox" id='rememberMe'
+                ></input>
+                <span className="slider round"></span>
+                </label>
                 <br></br><br></br>
                 <Button variant='dark' type="submit"> Login </Button>
               </form>
@@ -407,12 +446,16 @@ function App() {
   }
   function handleLogin(event){
     event.preventDefault();
+    if (checkSessionID()){
+      return;
+    }
     var email = document.getElementById("userEmail").value;
     var pswrd = document.getElementById("pswrd").value;
+    var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
     const requestSetup = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({email: email, pswrd:pswrd})
+      body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
     };
     fetch(serverLocation+"/login",requestSetup)
       .then(response => response.json())
@@ -432,6 +475,13 @@ function App() {
                 <br></br>
                 <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
                 <br></br><br></br>
+                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                <label className="switch">
+                <input type="checkbox" id='rememberMe'
+                ></input>
+                <span className="slider round"></span>
+                </label>
+                <br></br><br></br>
                 <Button variant='dark' type="submit"> Login </Button>
               </form>
             </div>
@@ -450,6 +500,13 @@ function App() {
                 <br></br>
                 <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
                 <br></br><br></br>
+                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                <label className="switch">
+                <input type="checkbox" id='rememberMe'
+                ></input>
+                <span className="slider round"></span>
+                </label>
+                <br></br><br></br>
                 <Button variant='dark' type="submit"> Login </Button>
               </form>
             </div>
@@ -457,6 +514,8 @@ function App() {
         }else if (data.status === 0){//No Error
           cookies.set('name',data.username,{path:'/'});
           cookies.set('id',data.userID,{path:'/'});
+          cookies.set('sessionID',data.sessionID,{path:'/'})
+          cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
           changeLoggedIn(true);
           changeLoggedOut(false);
           getHome();
@@ -465,6 +524,9 @@ function App() {
   }
   function handleWritePost(event){
     event.preventDefault();
+    if (checkSessionID()){
+      return;
+    }
     var title = document.getElementById('postTitle').value;
     var content = document.getElementById('postContent').value;
     var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
@@ -502,6 +564,9 @@ function App() {
       });
   }
   function handlePrivacyChecked(){
+    if (checkSessionID()){
+      return;
+    }
     var i = document.getElementById('privacySwitch').checked;
     // console.log(i);
     if (i){
@@ -515,9 +580,48 @@ function App() {
     }
   }
   //Check Session Cookies
-
+  function checkSessionID(){
+    //really only necessary if sessionID exists and timelimit is over
+    //read sessionID and log out user if timeline is too old
+    // console.log(expireTime);
+    if (expireTime !== "forever" && Date.now() >= expireTime){
+      // console.log(Date.now() > expireTime);
+      // console.log(Date.now() < expireTime);
+      getExpiredHome();
+      return true;
+    }
+    return false;
+  }
+  function getExpiredHome(){
+    cookies.remove("sessionID",{path: '/'});
+    cookies.remove("expireTime",{path:"/"})
+    cookies.remove("name",{path:'/'});
+    cookies.remove("id",{path:'/'});
+    changeLoggedOut(true);
+    changeLoggedIn(false);
+    var listOfPosts = [];
+    fetch(serverLocation + "/posts")
+      .then(response=>response.json())
+      .then(data => {
+          // console.log(data.contents);
+          for ( const key in data.contents){
+            // console.log(simplePost(data.contents[key]));
+            listOfPosts.push(simplePost(key,data.contents[key]))
+          }
+          console.log(listOfPosts);
+          changeCode(
+            <div>
+            <div className='errMsg'> Your session has expired. </div>
+           <h1> QuickiePost </h1>
+            {listOfPosts}
+            </div>
+          )
+      })
+  }
   //log out
   function logOut(){
+    cookies.remove("sessionID",{path: '/'});
+    cookies.remove("expireTime",{path:"/"})
     cookies.remove("name",{path:'/'});
     cookies.remove("id",{path:'/'});
     changeLoggedOut(true);
@@ -541,7 +645,7 @@ function App() {
           )
       })
   }
-  //
+  //FIX THIS If SessionID is bad, remove later, just display offline producy
   React.useEffect(() => {
     var listOfPosts = [];
     var serverLocation = "http://localhost:3001";
@@ -561,7 +665,7 @@ function App() {
       })
   },[changeCode])
   React.useEffect(() => {
-    if (id){
+    if (id && (expireTime === "forever" || Date.now() < expireTime)){
       console.log("Logged In");
       changeLoggedIn(true);
       changeLoggedOut(false);
@@ -569,7 +673,7 @@ function App() {
     else{
       console.log("Not Logged In.")
     }
-  },[id,changeLoggedIn,changeLoggedOut])
+  },[expireTime,id,changeLoggedIn,changeLoggedOut])
 
   return (
     <div className="App">
