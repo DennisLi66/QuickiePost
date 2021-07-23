@@ -7,7 +7,7 @@ create table users(
     userName varchar(255) NOT NULL,
     email varchar(255) NOT NULL UNIQUE,
     pswrd varchar(255) NOT NULL,
-    visibility varchar(255) NOT NULL,
+    visibility varchar(255) NOT NULL, -- public hidden private
     classification varchar(255) NOT NULL
 );
 create table posts(
@@ -15,7 +15,7 @@ create table posts(
     userID int,
     title varchar(255),
     content text,
-    visibility varchar(255) NOT NULL,
+    visibility varchar(255) NOT NULL, -- public, hidden, private
     subDate datetime
 );
 create table editHistory(
@@ -34,11 +34,16 @@ create table comments(
 	postID int NOT NULL,
     userID int NOT NULL,
     comments varchar(255) NOT NULL,
-    unique key comments(postID,userID)
+    submissionDate datetime
 );
 create table sessions(
 	sessionID varchar(255) NOT NULL,
     userID int NOT NULL,
 	sessionDate datetime NOT NULL,
     timeduration varchar(255) -- 1 HOUR or PERMANENT
+);
+create table viewers( -- Tells us who can see whose content
+	posterID int NOT NULL,
+    viewerID int NOT NULL,
+    UNIQUE KEY IDS (posterID,viewerID)
 )

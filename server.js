@@ -49,11 +49,14 @@ connection.connect();
 app.get("/posts",function(req,res){
   //Should change to get username as well
   var sQuery =
-  `SELECT * from posts
+  `
+  SELECT * from posts
   LEFT JOIN
-  (select userid,username from users) uzers
+  (select userid,username,visibility from users) uzers
   on uzers.userID = posts.userID
-  WHERE visibility != 'hidden' AND visibility != 'private';
+  WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
+  AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
+  ORDER BY subDate DESC;
   `
   connection.query(sQuery,[],function(err,results,fields){
     if (err){
@@ -62,7 +65,7 @@ app.get("/posts",function(req,res){
         message: err
       })
     } else if (results){
-      console.log(results);
+      // console.log(results);
       var toPrep = {};
       for (let i = 0; i < results.length; i++){
         toPrep[i] = {
@@ -76,6 +79,73 @@ app.get("/posts",function(req,res){
         status: 0,
         message: "Request Received.",
         contents: toPrep
+      })
+    }
+  })
+})
+app.get("/myfeed",function(req,res){
+  //show my posts and posts Im allowed to view from friends
+  if (!req.query.userID || req.query.sessionID){
+    return res.status(200).json({
+      status: -1,
+      message: "Not Enough Information."
+    })
+  }
+  //check for valid sessions
+  var cQuery =
+  `
+  SELECT * FROM
+  (select userID,max(sessionDate) as high from sessions group by userID) a
+  RIGHT JOIN
+  (
+  Select * from sessions WHERE userID = ? AND sessionID = ? AND
+  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+  )
+  sessions
+  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+  `
+  var sQuery =
+  `
+  select * from posts
+  LEFT JOIN viewers ON
+  viewers.posterID = posts.userID
+  LEFT JOIN
+  (select userid,username,visibility from users) uzers
+  on uzers.userID = posts.userID
+  WHERE (viewers.viewerID = ? OR posts.userID = ?) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
+  ;
+  `;
+  connection.connect(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+    if (err1){
+      return res.status(200).json({
+        status: -1,
+        message: err1
+      })
+    }
+    else {
+      connection.query(sQuery,[req.query.userID,req.query.userID],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        } else if (results){
+          // console.log(results);
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate, username: results[i].username
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Request Received.",
+            contents: toPrep
+          })
+        }
       })
     }
   })
@@ -790,7 +860,7 @@ app.route("/post")
       `
       SELECT * FROM
       (select userID,max(sessionDate) as high from sessions group by userID) a
-      LEFT JOIN
+      RIGHT JOIN
       (
       Select * from sessions WHERE userID = ? AND sessionID = ? AND
       (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
@@ -824,7 +894,7 @@ app.route("/post")
                 message: "Post Added."
               })
             }
-          })  
+          })
         }
       })
     }

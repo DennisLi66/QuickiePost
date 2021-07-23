@@ -14,6 +14,7 @@ import Cookies from 'universal-cookie';
 //ADD comments and likes to posts
 //INCLUDE Private posts for self users
 //Add fine tuning to posts after submission and in my posts
+//change getPosts to SELECT posts where post != private and user != private
 
 function App() {
   //Set up Functions
@@ -230,6 +231,11 @@ function App() {
     if (checkSessionID()){
       return;
     }
+    //get all posts
+    //be able to set Visibility
+    //show role
+    //be able to delete Account
+    //show stats - likes, comments, amount of posts
   }
   //Event Handlers
   function handleSearch(event){

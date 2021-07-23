@@ -42,10 +42,33 @@ Select * from sessions WHERE userID = 3 AND
 -- GET MOST RECENT VALID SESSION DATE
 SELECT * FROM
 (select userID,max(sessionDate) as high from sessions group by userID) a
-LEFT JOIN 
+RIGHT JOIN 
 (
 Select * from sessions WHERE userID = 3 AND sessionID = 'gKQ1oxZW0UXIbt5vvTHY' AND
 (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
 )
 sessions 
 ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+;
+
+;
+SELECT * from posts
+  LEFT JOIN
+  (select userid,username,visibility from users) uzers
+  on uzers.userID = posts.userID
+  WHERE posts.visibility != 'hidden' AND posts.visibility != 'private' AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
+  ORDER BY subDate DESC;
+  
+  
+  
+  
+  
+  -- GET all my posts and the posts of the people im allied with
+select * from posts
+LEFT JOIN viewers ON
+viewers.posterID = posts.userID
+LEFT JOIN
+(select userid,username,visibility from users) uzers
+on uzers.userID = posts.userID
+WHERE (viewers.viewerID = 2 OR posts.userID = 2) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
+;
