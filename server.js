@@ -1455,6 +1455,56 @@ app.route("/like")
   })
   .delete(function(req,res){
     //check sessions and userID, then remove like
+    if (!req.query.userID || !req.query.sessionID || !req.query.postID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var dQuery =
+    `
+    DELETE FROM likes WHERE userID = ? AND postID = ?;
+    `;
+    connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+      if (err1){
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      }
+      else if (results1.length === 0){
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      }else{
+        connection.query(dQuery,[req.query.userID,req.query.postID],function(err2,results2,fields){
+          if (err2){
+            return res.status(200).json({
+              status: -1,
+              message: err2
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "Deletion Occured."
+            })
+          }
+        })
+      }
+    })
   })
 
 app.listen(3001, function() {
