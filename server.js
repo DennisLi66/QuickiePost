@@ -1299,7 +1299,7 @@ app.route("/user")
     var userID = req.query.userID;
     //Get hidden posts if mod or admin
     //Get private posts if mod, admin, or owner
-    var sQuery = "SELECT * FROM users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = ?";
+    var sQuery = "SELECT * FROM users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = ? ORDER BY subDate DESC";
     connection.query(sQuery,[req.query.userID],function(err,results,fields){
       if (err){
         console.log(err);
@@ -1389,6 +1389,72 @@ app.route("/user")
       }
     })
   }
+  })
+
+app.route("/comment")
+  .put(function(req,res){
+
+  })
+  .delete(function(req,res){})
+
+app.route("/like")
+  .put(function(req,res){
+    //check sessions and userID, then add like
+    if (!req.query.userID || !req.query.sessionID || !req.query.postID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var iQuery =
+    `
+    INSERT INTO likes (postID,userID) VALUES (?,?);
+    `;
+    connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+      if (err1){
+        return res.status(200).json({
+          message: err1,
+          status: -1
+        })
+      }
+      else if (results1.length === 0){
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      }
+      else{
+        connection.query(iQuery,[req.query.postID,req.query.userID],function(err2,results2,fields){
+          if (err2){
+            return res.status(200).json({
+              message: err2,
+              status: -1
+            })
+          }
+          else{
+            return res.status(200).json({
+              status: 0,
+              message: "Like Inserted."
+            })
+          }
+        })
+      }
+    })
+  })
+  .delete(function(req,res){
+    //check sessions and userID, then remove like
   })
 
 app.listen(3001, function() {

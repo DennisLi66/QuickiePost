@@ -84,3 +84,16 @@ WHERE (viewers.viewerID = 2 OR posts.userID = 2) AND uzers.visibility != 'hidden
   on uzers.userID = posts.userID
   WHERE (viewers.viewerID = 3 OR posts.userID = 3) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
   ORDER by subDate DESC
+  
+  
+  ;
+  
+    SELECT * FROM
+  (select userID,max(sessionDate) as high from sessions group by userID) a
+  RIGHT JOIN
+  (
+  Select * from sessions WHERE userID = 3 AND sessionID = 3 AND
+  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+  )
+  sessions
+  ON sessions.userID = a.userID AND sessions.sessionDate = a.high

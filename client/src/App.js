@@ -9,8 +9,6 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
-//FIX THIS: Automatically Remove Cookies Over Time
-//Make Cookies look Nicer
 //ADD comments and likes to posts
 //INCLUDE Private posts for self users
 //Add fine tuning to posts after submission and in my posts
@@ -174,6 +172,9 @@ function App() {
   }
   function showWriteForm(){
     //have something navigate down from the top
+    if (checkSessionID()){
+      return;
+    }  
     changeWriteFormCSS(
       {
         height: 'auto',
