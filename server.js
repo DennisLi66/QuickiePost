@@ -85,12 +85,14 @@ app.get("/posts",function(req,res){
 })
 app.get("/myfeed",function(req,res){
   //show my posts and posts Im allowed to view from friends
-  if (!req.query.userID || req.query.sessionID){
+  if (!req.query.userID || !req.query.sessionID){
     return res.status(200).json({
       status: -1,
       message: "Not Enough Information."
     })
   }
+  // console.log(req.query.userID);
+  // console.log(req.query.sessionID);
   //check for valid sessions
   var cQuery =
   `
@@ -113,16 +115,24 @@ app.get("/myfeed",function(req,res){
   (select userid,username,visibility from users) uzers
   on uzers.userID = posts.userID
   WHERE (viewers.viewerID = ? OR posts.userID = ?) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
+  ORDER by subDate DESC
   ;
   `;
-  connection.connect(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+  connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
     if (err1){
       return res.status(200).json({
         status: -1,
         message: err1
       })
     }
+    else if (results1.length === 0){
+      return res.status(200).json({
+        status: -1,
+        message: "No Valid Session."
+      })
+    }
     else {
+      console.log(req.query.userID);
       connection.query(sQuery,[req.query.userID,req.query.userID],function(err,results,fields){
         if (err){
           return res.status(200).json({
@@ -130,7 +140,7 @@ app.get("/myfeed",function(req,res){
             message: err
           })
         } else if (results){
-          // console.log(results);
+          console.log(results);
           var toPrep = {};
           for (let i = 0; i < results.length; i++){
             toPrep[i] = {

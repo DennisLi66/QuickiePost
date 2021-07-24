@@ -72,3 +72,15 @@ LEFT JOIN
 on uzers.userID = posts.userID
 WHERE (viewers.viewerID = 2 OR posts.userID = 2) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
 ;
+
+
+
+
+  select * from posts
+  LEFT JOIN viewers ON
+  viewers.posterID = posts.userID
+  LEFT JOIN
+  (select userid,username,visibility from users) uzers
+  on uzers.userID = posts.userID
+  WHERE (viewers.viewerID = 3 OR posts.userID = 3) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
+  ORDER by subDate DESC

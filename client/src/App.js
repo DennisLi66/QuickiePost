@@ -15,6 +15,8 @@ import Cookies from 'universal-cookie';
 //INCLUDE Private posts for self users
 //Add fine tuning to posts after submission and in my posts
 //change getPosts to SELECT posts where post != private and user != private
+//FIX THIS: upgrade simple posts when logged in to post comments
+//FIX THIS: Add a display if there are no posts
 
 function App() {
   //Set up Functions
@@ -33,7 +35,7 @@ function App() {
   const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
   const id = cookies.get("id");
-  // const sessionID = cookies.get("sessionId");
+  // const sessionID = cookies.get("sessionID");
   const expireTime = cookies.get("expireTime");
   // console.log(id)
   const [code,changeCode] = React.useState(
@@ -87,9 +89,9 @@ function App() {
   }
   function getSearchPage(){
     hideWriteForm();
-    if (checkSessionID()){
-      return;
-    }
+    // if (checkSessionID()){
+    //   return;
+    // }
     changeCode(
       <div>
       <h1> Search for a Post </h1>
@@ -117,9 +119,9 @@ function App() {
   }
   function getRegistrationPage(){
     hideWriteForm();
-    if (checkSessionID()){
-      return;
-    }
+    // if (checkSessionID()){
+    //   return;
+    // }
     changeCode(
       <form onSubmit={handleRegistration}>
         <h1> Registration Page</h1>
@@ -145,9 +147,9 @@ function App() {
   }
   function getLoginPage(){
     hideWriteForm();
-    if (checkSessionID()){
-      return;
-    }
+    // if (checkSessionID()){
+    //   return;
+    // }
     changeCode(
       <form onSubmit={handleLogin}>
         <h1> Login Page </h1>
@@ -198,6 +200,12 @@ function App() {
       transition: 'height 2s ease-in'
     })
   }
+  function showInDepthPost(){
+
+  }
+  function closeInDepthPost(){
+
+  }
   function getMyPosts(){ //change visibility possible here
     hideWriteForm();
     if (checkSessionID()){
@@ -227,6 +235,31 @@ function App() {
         )
       })
   }
+  function getMyFeed(){
+    hideWriteForm();
+    if (checkSessionID()){
+      return;
+    }
+    var listOfPosts = [];
+    var userSession = cookies.get("sessionID");
+    var userId = cookies.get("id");
+    fetch(serverLocation + "/myfeed?userID=" + userId + "&sessionID="+userSession)
+      .then(response=>response.json())
+      .then(data =>{
+        console.log(data);
+        for ( const key in data.contents){
+          // console.log(simplePost(data.contents[key]));
+          listOfPosts.push(simplePost(key,data.contents[key]))
+        }
+        console.log(listOfPosts);
+        changeCode(
+          <div>
+         <h1> QuickiePost - Your Feed</h1>
+          {listOfPosts}
+          </div>
+        )
+      })
+  }
   function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
     if (checkSessionID()){
       return;
@@ -240,9 +273,9 @@ function App() {
   //Event Handlers
   function handleSearch(event){
     event.preventDefault();
-    if (checkSessionID()){
-      return;
-    }
+    // if (checkSessionID()){
+    //   return;
+    // }
     var title = document.getElementById("title").value;
     var content = document.getElementById("content").value;
     var username = document.getElementById("username").value;
@@ -324,9 +357,9 @@ function App() {
   }
   function handleRegistration(event){
     event.preventDefault();
-    if (checkSessionID()){
-      return;
-    }
+    // if (checkSessionID()){
+    //   return;
+    // }
     var email = document.getElementById("userEmail").value;
     var username = document.getElementById("username").value;
     var pswrd = document.getElementById("pswrd").value;
@@ -451,9 +484,9 @@ function App() {
   }
   function handleLogin(event){
     event.preventDefault();
-    if (checkSessionID()){
-      return;
-    }
+    // if (checkSessionID()){
+    //   return;
+    // }
     var email = document.getElementById("userEmail").value;
     var pswrd = document.getElementById("pswrd").value;
     var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
@@ -596,6 +629,11 @@ function App() {
       getExpiredHome();
       return true;
     }
+    var expiry = cookies.get("expireTime");
+    if (!expiry || !cookies.get("sessionID") || !cookies.get("id") || (expiry !== "forever" && Date.now() >= expireTime)){
+      getExpiredHome();
+      return true;
+    }
     return false;
   }
   function getExpiredHome(){
@@ -697,6 +735,9 @@ function App() {
       <Nav.Link
       onClick={getHome}
       >Home</Nav.Link>
+      <Nav.Link
+      onClick={getMyFeed}
+      >My Feed</Nav.Link>
       <Nav.Link
       onClick={getSearchPage}
       >Search</Nav.Link>
