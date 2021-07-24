@@ -174,7 +174,7 @@ function App() {
     //have something navigate down from the top
     if (checkSessionID()){
       return;
-    }  
+    }
     changeWriteFormCSS(
       {
         height: 'auto',

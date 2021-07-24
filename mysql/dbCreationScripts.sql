@@ -31,9 +31,11 @@ create table likes (
     UNIQUE KEY IDS (postID,userID)
 );
 create table comments(
+	commentID int NOT NULL auto_increment primary key,
 	postID int NOT NULL,
     userID int NOT NULL,
     comments varchar(255) NOT NULL,
+    visiblity varchar(255),
     submissionDate datetime
 );
 create table sessions(
@@ -46,4 +48,9 @@ create table viewers( -- Tells us who can see whose content
 	posterID int NOT NULL,
     viewerID int NOT NULL,
     UNIQUE KEY IDS (posterID,viewerID)
+);
+create table commentLikes(
+	commentID int NOT NULL,
+    userID int NOT NULL,
+    UNIQUE KEY IDS (commentID,userID)
 )

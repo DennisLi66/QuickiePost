@@ -1393,9 +1393,62 @@ app.route("/user")
 
 app.route("/comment")
   .put(function(req,res){
-
+    if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information"
+      })
+    }
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var iQuery =
+    `
+    INSERT INTO comments (postID,userID,comments,submissionDate) VALUES (?,?,?,NOW());
+    `;
+    connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+      if (err1){
+        return res.status(200).json({
+          message: err1,
+          status: -1
+        })
+      }
+      else if (results1.length === 0){
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      }
+      else{
+        connection.query(iQuery,[req.query.postID,req.query.userID,req.query.content],function(err2,results2,fields){
+          if (err2){
+            return res.status(200).json({
+              message: err2,
+              status: -1
+            })
+          }
+          else{
+            return res.status(200).json({
+              status: 0,
+              message: "Comment Inserted."
+            })
+          }
+        })
+      }
+    })
   })
-  .delete(function(req,res){})
+  .delete(function(req,res){
+    //set comment to hidden
+  })
 
 app.route("/like")
   .put(function(req,res){
@@ -1505,6 +1558,13 @@ app.route("/like")
         })
       }
     })
+  })
+app.route("/likeComment")
+  .put(function(req,res){
+
+  })
+  .delete(function(req,res){
+
   })
 
 app.listen(3001, function() {
