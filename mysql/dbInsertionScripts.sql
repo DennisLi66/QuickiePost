@@ -17,3 +17,8 @@ INSERT INTO viewers (posterID,viewerID) VALUES
 (1,2),
 (2,1)
 ;
+
+Insert INTO likes (postID,userID) VALUES
+(1,1),
+(1,2) 
+;

@@ -50,15 +50,27 @@ app.get("/posts",function(req,res){
   //Should change to get username as well
   var sQuery =
   `
-  SELECT * from posts
+  SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, ifnull(totalComments,0) as totalComments, subDate FROM
+  ( SELECT * from posts
+    LEFT JOIN
+    (select userid as UID,username,visibility as uvisibility from users) uzers
+    on uzers.UID = posts.userID
+    WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
+    AND uzers.uvisibility != 'hidden' AND uzers.uvisibility != 'private'
+    ORDER BY subDate DESC
+    ) posts
+    LEFT JOIN
+  (SELECT count(*) as total, postID FROM likes GROUP BY postID) totalLikes
+  on totalLikes.postID = posts.postID
   LEFT JOIN
-  (select userid,username,visibility from users) uzers
-  on uzers.userID = posts.userID
-  WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
-  AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
-  ORDER BY subDate DESC;
+  (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
+  ON comments.postID = posts.postID
   `
-  connection.query(sQuery,[],function(err,results,fields){
+  var variables = [];
+  if (req.query.userID && req.query.sessionID){
+
+  }
+  connection.query(sQuery,variables,function(err,results,fields){
     if (err){
       return res.status(200).json({
         status: -1,
@@ -72,7 +84,10 @@ app.get("/posts",function(req,res){
           title: results[i].title,
           userID: results[i].userID,
           content: results[i].content,
-          subDate: results[i].subDate, username: results[i].username
+          subDate: results[i].subDate,
+          username: results[i].username,
+          totalLikes: results[i].totalLikes,
+          totalComments: results[i].totalComments
         }
       }
       return res.status(200).json({
@@ -1667,7 +1682,56 @@ app.route("/likeComment")
 
   })
   .delete(function(req,res){
-
+    if (!req.query.userID || !req.query.sessionID || !req.query.commentID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var dQuery =
+    `
+    DELETE FROM commentLikes WHERE userID = ? AND commentID = ?;
+    `;
+    connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+      if (err1){
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      }
+      else if (results1.length === 0){
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      }else{
+        connection.query(dQuery,[req.query.userID,req.query.sessionID],function(err2,results2,fields){
+          if (err2){
+            return res.status(200).json({
+              status: -1,
+              message: err2
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "Deletion Occured."
+            })
+          }
+        })
+      }
+    })
   })
 
 app.listen(3001, function() {

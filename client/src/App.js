@@ -15,6 +15,8 @@ import Cookies from 'universal-cookie';
 //change getPosts to SELECT posts where post != private and user != private
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
+//FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
+//FIX THIS ADD Pagination
 
 function App() {
   //Set up Functions
@@ -26,6 +28,9 @@ function App() {
         <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
         <Card.Body> {dict.content} </Card.Body>
         <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+        <Card.Body>
+        Likes: {dict.totalLikes} Comments: {dict.totalComments}
+        </Card.Body>
       </Card>
     )
   }
@@ -618,6 +623,9 @@ function App() {
         <div> This post can be seen by anyone. </div>
       )
     }
+  }
+  function handleLikedPost(){
+
   }
   //Check Session Cookies
   function checkSessionID(){
