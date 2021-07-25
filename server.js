@@ -68,9 +68,88 @@ app.get("/posts",function(req,res){
   `
   var variables = [];
   if (req.query.userID && req.query.sessionID){
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    sQuery =
+    `
+    SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, if(desig.userID is null,'Unliked','Liked') as Liked,  ifnull(totalComments,0) as totalComments, subDate FROM
+    ( SELECT * from posts
+    LEFT JOIN
+    (select userid as UID,username,visibility as uvisibility from users) uzers
+    on uzers.UID = posts.userID
+    WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
+    AND uzers.uvisibility != 'hidden' AND uzers.uvisibility != 'private'
+    ORDER BY subDate DESC
+    ) posts
+    LEFT JOIN
+    (SELECT count(*) as total, postID FROM likes GROUP BY postID) totalLikes
+    on totalLikes.postID = posts.postID
+    LEFT JOIN
+    (  select * from likes WHERE userID = ?) desig
+    on desig.postID = posts.postID
+    LEFT JOIN
+    (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
+    ON comments.postID = posts.postID;
+    `;
+    variables.push(req.query.userID);
+    connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+      if (err1){
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      }
+      else if (results1.length === 0){
+        return res.status(200).json({
+          status: -1,
+          message: "Not Valid Session."
+        })
+      }else{
+        connection.query(sQuery,variables,function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        } else if (results){
+          // console.log(results);
+          var toPrep = {};
+          for (let i = 0; i < results.length; i++){
+            toPrep[i] = {
+              title: results[i].title,
+              userID: results[i].userID,
+              content: results[i].content,
+              subDate: results[i].subDate,
+              username: results[i].username,
+              totalLikes: results[i].totalLikes,
+              totalComments: results[i].totalComments,
+              Liked: results[i].Liked
+            }
+          }
+          return res.status(200).json({
+            status: 0,
+            message: "Request Received.",
+            contents: toPrep
+          })
+        }
+      })
+      }
+    })
+
 
   }
-  connection.query(sQuery,variables,function(err,results,fields){
+  else{
+    connection.query(sQuery,variables,function(err,results,fields){
     if (err){
       return res.status(200).json({
         status: -1,
@@ -97,6 +176,7 @@ app.get("/posts",function(req,res){
       })
     }
   })
+  }
 })
 app.get("/myfeed",function(req,res){
   //show my posts and posts Im allowed to view from friends
@@ -1717,7 +1797,7 @@ app.route("/likeComment")
           message: "No Valid Session."
         })
       }else{
-        connection.query(dQuery,[req.query.userID,req.query.sessionID],function(err2,results2,fields){
+        connection.query(dQuery,[req.query.userID,req.query.commentID],function(err2,results2,fields){
           if (err2){
             return res.status(200).json({
               status: -1,
