@@ -22,3 +22,7 @@ Insert INTO likes (postID,userID) VALUES
 (1,1),
 (1,2) 
 ;
+
+INSERT INTO comments (postID,userID,comments,visibility,submissionDate) VALUES
+(1,1,"I love this post.",'public',NOW() - interval 20 minute),
+(1,2,"I love it too.",'public',NOW() - interval - 10 minute)

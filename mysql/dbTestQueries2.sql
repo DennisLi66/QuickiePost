@@ -47,3 +47,15 @@ on totalLikes.postID = posts.postID
 LEFT JOIN
 (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
 ON comments.postID = posts.postID
+;
+
+-- Get Specific Post, their likes, and comments --- NOT LOGGED IN
+SELECT commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, users.userName as commenterName,
+users.visibility as commenterVisibility, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
+posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility FROM comments
+left join users on users.userID = comments.userID
+right join posts on posts.postID = comments.postID
+left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes
+on totalLikes.postID = posts.postID
+left join (select * from users) uzers on uzers.userID = posts.userID 
+ORDER BY commentID

@@ -35,7 +35,7 @@ create table comments(
 	postID int NOT NULL,
     userID int NOT NULL,
     comments varchar(255) NOT NULL,
-    visiblity varchar(255),
+    visibility varchar(255),
     submissionDate datetime
 );
 create table sessions(

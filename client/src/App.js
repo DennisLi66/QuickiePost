@@ -21,6 +21,16 @@ import Cookies from 'universal-cookie';
 function App() {
   //Set up Functions
   function simplePost(key,dict){
+    var likeText;
+    if (dict.Liked && dict.Liked === "Liked"){
+      likeText = (
+        <div onClick={handleLikedPost}>Unlike</div>
+      );
+    }else{
+      likeText = (
+        <div onClick={handleUnlikedPost}>Like</div>
+      );
+    }
     return (
       <Card key={key}>
         <Card.Title> {dict.title} </Card.Title>
@@ -30,6 +40,10 @@ function App() {
         <Card.Subtitle> {dict.subDate} </Card.Subtitle>
         <Card.Body>
         Likes: {dict.totalLikes} Comments: {dict.totalComments}
+        {likeText}
+        <div onClick={()=>{showInDepthPost(dict.postID)}}>
+          Comment
+        </div>
         </Card.Body>
       </Card>
     )
@@ -38,7 +52,7 @@ function App() {
   const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
   const id = cookies.get("id");
-  // const sessionID = cookies.get("sessionID");
+  const sessionID = cookies.get("sessionID");
   const expireTime = cookies.get("expireTime");
   // console.log(id)
   const [code,changeCode] = React.useState(
@@ -63,6 +77,9 @@ function App() {
     height: 'auto'
     }
   )
+  const [inDepthPostCSS,changeInDepthCSS] = React.useState(
+
+  );
   const [privacySwitchDescriptor,changePrivacySwitchDescriptor] = React.useState(
     <div> This post can be seen by anyone. </div>
   )
@@ -206,11 +223,27 @@ function App() {
       transition: 'height 2s ease-in'
     })
   }
-  function showInDepthPost(){
+  function showInDepthPost(postID){
+    console.log(postID);
+    changeMainBodyCSS(
+      {
+        display: 'none',
+        transition: 'height 2s ease-in'
+      }
+    );
+    var sID = cookies.get("sessionID");
+    var id = cookies.get("id");
+    if (sID && id){
 
+    }else{
+      
+    }
   }
   function closeInDepthPost(){
-
+    changeMainBodyCSS({
+      height: 'auto',
+      transition: 'height 2s ease-in'
+    });
   }
   function getMyPosts(){ //change visibility possible here
     hideWriteForm();
@@ -627,6 +660,9 @@ function App() {
   function handleLikedPost(){
 
   }
+  function handleUnlikedPost(){
+
+  }
   //Check Session Cookies
   function checkSessionID(){
     //really only necessary if sessionID exists and timelimit is over
@@ -698,25 +734,26 @@ function App() {
           )
       })
   }
-  //FIX THIS If SessionID is bad, remove later, just display offline producy
+  //FIX THIS If SessionID, change server to accomadate being logged in
   React.useEffect(() => {
     var listOfPosts = [];
     var serverLocation = "http://localhost:3001";
-    fetch(serverLocation + "/posts")
-      .then(response=>response.json())
-      .then(data => {
-          for ( const key in data.contents){
-            listOfPosts.push(simplePost(key,data.contents[key]))
-          }
-          console.log(listOfPosts);
-          changeCode(
-            <div>
-           <h1> QuickiePost </h1>
-            {listOfPosts}
-            </div>
-          )
-      })
-  },[changeCode])
+      fetch(serverLocation + "/posts")
+        .then(response=>response.json())
+        .then(data => {
+            for ( const key in data.contents){
+              listOfPosts.push(simplePost(key,data.contents[key]))
+            }
+            // console.log(listOfPosts);
+            changeCode(
+              <div>
+             <h1> QuickiePost </h1>
+              {listOfPosts}
+              </div>
+            )
+        })
+
+  },[changeCode,simplePost,sessionID,id])
   React.useEffect(() => {
     if (id && (expireTime === "forever" || Date.now() < expireTime)){
       console.log("Logged In");
@@ -724,7 +761,9 @@ function App() {
       changeLoggedOut(false);
     }
     else{
-      console.log("Not Logged In.")
+      console.log("Not Logged In.");
+      changeLoggedIn(false);
+      changeLoggedOut(true);
     }
   },[expireTime,id,changeLoggedIn,changeLoggedOut])
 
@@ -818,6 +857,9 @@ function App() {
         {privacySwitchDescriptor}
         <Button variant='dark' type="submit"> Submit Post </Button>
       </form>
+    </div>
+    <div className='inDepthPost' style={inDepthPostCSS}>
+
     </div>
     <div className='mainBody' style={mainBodyCSS}>
     {code}

@@ -133,7 +133,8 @@ app.get("/posts",function(req,res){
               username: results[i].username,
               totalLikes: results[i].totalLikes,
               totalComments: results[i].totalComments,
-              Liked: results[i].Liked
+              Liked: results[i].Liked,
+              postID: results[i].postID
             }
           }
           return res.status(200).json({
@@ -166,7 +167,8 @@ app.get("/posts",function(req,res){
           subDate: results[i].subDate,
           username: results[i].username,
           totalLikes: results[i].totalLikes,
-          totalComments: results[i].totalComments
+          totalComments: results[i].totalComments,
+          postID: results[i].postID
         }
       }
       return res.status(200).json({
@@ -847,48 +849,77 @@ app.get("/search",function(req,res){
 app.route("/post")
   //Retrieve Single Post
   .get(function(req,res){
+    //Retrieve Amount of Likes and Comments
     if (!req.query.postID){
       return res.status(200).json({
         status: -1,
         message: "Post ID Not Given."
       })
     }
-    var sQuery =
-    `SELECT * FROM posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE postID = ?`;
-    connection.query(sQuery,[req.query.postid],function(err,results,fields){
-      if (err){
-        console.log(err);
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      }else{
-        if (results.length === 0){
+    else if (req.query.userID && req.query.sessionID){
+
+    }else{
+      var sQuery =
+      `
+      SELECT commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
+      users.visibility as commenterVisibility, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
+      posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility FROM comments
+      left join users on users.userID = comments.userID
+      right join posts on posts.postID = comments.postID
+      left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes
+      on totalLikes.postID = posts.postID
+      left join (select * from users) uzers on uzers.userID = posts.userID
+      WHERE posts.postID = ? AND posts.visibility != 'hidden' AND posts.visibility != 'private'
+      AND comments.visibility != 'hidden' AND comments.visibility != 'private'
+      ORDER BY commentID
+      `;
+      connection.query(sQuery,[req.query.postID],function(err,results,fields){
+        if (err){
+          console.log(err);
           return res.status(200).json({
-            status: -2,
-            message: "There was no post with that ID."
+            status: -1,
+            message: err
           })
         }else{
-          console.log(results[0].visibility);
-          if (results[0].visibility !== 'private' || results[0].visibility !== 'hidden'){
+          if (results.length === 0){
+            return res.status(200).json({
+              status: -2,
+              message: "There was no post with that ID."
+            })
+          }else{
+            var toPrep = {};
+            for (let i = 0; i < results.length; i++){
+              if (results[i].commentID && results[i].commenterVisibility !== 'hidden' && results[i].commenterVisibility !== 'private'
+            && results[i].commentVisibility !== 'private' && results[i].commentVisibility !== 'hidden'){
+                toPrep[i] = {
+                  commentID: results[i].commentID,
+                  commenterID: results[i].commenterID,
+                  commenterName: results[i].commenterName,
+                  comments: results[i].comments,
+                  commentVisibility: results[i].commentVisibility,
+                  commenterVisibility: results[i].commenterVisibility,
+                  commentDate: results[i].commentDate
+                }
+              }
+            }
             return res.status(200).json({
               status: 0,
+              message: "Here's your post!",
+              postID: results[0].postID,
+              totalLikes: results[0].totalLikes,
+              authorID: results[0].authorID,
               title: results[0].title,
-              userID: results[0].userID,
               content: results[0].content,
-              subDate: results[0].subDate
+              postVisibility: results[0].postVisibility,
+              postDate: results[0].postDate,
+              authorName: results[0].authorName,
+              authorVisibility: results[0].authorVisibility,
+              comments: toPrep
             })
           }
-          else{
-            //FIX THIS: return based on permissions
-          }
         }
-      }
-    })
+      })
+    }
   })
   //Change Post Visibility to Hidden
   .delete(function(req,res){
