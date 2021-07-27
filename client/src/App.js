@@ -17,21 +17,95 @@ import Cookies from 'universal-cookie';
 //FIX THIS: Add a display if there are no posts
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
 //FIX THIS ADD Pagination
-
+//FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post
 function App() {
+  //Variables
+  const serverLocation = "http://localhost:3001";
+  const cookies = new Cookies();
+  const id = cookies.get("id");
+  const sessionID = cookies.get("sessionID");
+  const expireTime = cookies.get("expireTime");
+  // console.log(id)
+
   //Set up Functions
+  const showInDepthPostStartUp = React.useCallback(
+    (postID) => {
+      console.log(postID);
+      changeMainBodyCSS(
+        {
+          display: 'none',
+          transition: 'height 2s ease-in'
+        }
+      );
+      changeInDepthCSS(
+        {
+          height: 'auto',
+          transition: 'height 2s ease-in'
+        }
+      );
+      if (sessionID && id){
+
+      }else{
+        var listOfComments = [];
+        fetch(serverLocation + "/post?postID=" + postID)
+          .then(response=>response.json())
+          .then(data => {
+            console.log(data);
+            changeInDepthCode(
+              <Card>
+                <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
+                <Card.Header>{data.title}</Card.Header>
+                <Card.Header> Author: {data.authorName} Date Written: {data.postDate}
+                <br></br>
+                Likes: {data.totalLikes} Like Button
+                </Card.Header>
+              </Card>
+            )
+          })
+      }
+    },[sessionID,id]
+  );
   function simplePost(key,dict){
-    var likeText;
-    if (dict.Liked && dict.Liked === "Liked"){
+  var likeText;
+  if (dict.Liked && dict.Liked === "Liked"){
+    likeText = (
+      <div onClick={handleLikedPost}>Unlike</div>
+    );
+  }else{
+    likeText = (
+      <div onClick={handleUnlikedPost}>Like</div>
+    );
+  }
+  return (
+    <Card key={key}>
+      <Card.Title> {dict.title} </Card.Title>
+      <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+      <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+      <Card.Body> {dict.content} </Card.Body>
+      <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+      <Card.Body>
+      Likes: {dict.totalLikes} Comments: {dict.totalComments}
+      {likeText}
+      <div onClick={()=>{showInDepthPost(dict.postID)}}>
+        Comment
+      </div>
+      </Card.Body>
+    </Card>
+  )
+}
+  const simplePostStartUp = React.useCallback(
+    (key,dict) => {
+      var likeText;
+      if (dict.Liked && dict.Liked === "Liked"){
       likeText = (
         <div onClick={handleLikedPost}>Unlike</div>
       );
-    }else{
+      }else{
       likeText = (
         <div onClick={handleUnlikedPost}>Like</div>
       );
-    }
-    return (
+      }
+      return (
       <Card key={key}>
         <Card.Title> {dict.title} </Card.Title>
         <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
@@ -41,25 +115,23 @@ function App() {
         <Card.Body>
         Likes: {dict.totalLikes} Comments: {dict.totalComments}
         {likeText}
-        <div onClick={()=>{showInDepthPost(dict.postID)}}>
+        <div onClick={()=>{showInDepthPostStartUp(dict.postID)}}>
           Comment
         </div>
         </Card.Body>
       </Card>
-    )
-  }
-  //Variables
-  const serverLocation = "http://localhost:3001";
-  const cookies = new Cookies();
-  const id = cookies.get("id");
-  const sessionID = cookies.get("sessionID");
-  const expireTime = cookies.get("expireTime");
-  // console.log(id)
+      )
+    },
+    [showInDepthPostStartUp]
+  )
+
+  //
   const [code,changeCode] = React.useState(
     <div>
     <h1> QuickiePost </h1>
     </div>
   );
+  const [inDepthCode,changeInDepthCode] = React.useState();
   const [navBarLoggedOut,changeLoggedOut] = React.useState(
     false
   )
@@ -83,7 +155,7 @@ function App() {
   const [privacySwitchDescriptor,changePrivacySwitchDescriptor] = React.useState(
     <div> This post can be seen by anyone. </div>
   )
-  //Rerendering Functions
+  //Rerendering Functions -GETEMS
   function getHome(){
     hideWriteForm();
     if (checkSessionID()){
@@ -192,6 +264,7 @@ function App() {
       </form>
     )
   }
+  //SHOWERS AND HIDERS
   function showWriteForm(){
     //have something navigate down from the top
     if (checkSessionID()){
@@ -217,7 +290,13 @@ function App() {
         display: 'none',
         transition: 'height 2s ease-in'
       }
-    )
+    );
+    changeInDepthCSS(
+      {
+        display: 'none',
+        transition: 'height 2s ease-in'
+      }
+    );
     changeMainBodyCSS({
       height: 'auto',
       transition: 'height 2s ease-in'
@@ -231,12 +310,31 @@ function App() {
         transition: 'height 2s ease-in'
       }
     );
-    var sID = cookies.get("sessionID");
-    var id = cookies.get("id");
-    if (sID && id){
+    changeInDepthCSS(
+      {
+        height: 'auto',
+        transition: 'height 2s ease-in'
+      }
+    );
+    if (sessionID && id){
 
     }else{
-      
+      var listOfComments = [];
+      fetch(serverLocation + "/post?postID=" + postID)
+        .then(response=>response.json())
+        .then(data => {
+          console.log(data);
+          changeInDepthCode(
+            <Card>
+              <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
+              <Card.Header>{data.title}</Card.Header>
+              <Card.Header> Author: {data.authorName} Date Written: {data.postDate}
+              <br></br>
+              Likes: {data.totalLikes} Like Button
+              </Card.Header>
+            </Card>
+          )
+        })
     }
   }
   function closeInDepthPost(){
@@ -244,7 +342,14 @@ function App() {
       height: 'auto',
       transition: 'height 2s ease-in'
     });
+    changeInDepthCSS(
+      {
+        display: 'none',
+        transition: 'height 2s ease-in'
+      }
+    );
   }
+  //LOGGED IN GETEMS
   function getMyPosts(){ //change visibility possible here
     hideWriteForm();
     if (checkSessionID()){
@@ -671,12 +776,17 @@ function App() {
     if (expireTime !== "forever" && Date.now() >= expireTime){
       // console.log(Date.now() > expireTime);
       // console.log(Date.now() < expireTime);
+      // console.log("Error1")
       getExpiredHome();
       return true;
     }
+    if ( !cookies.get("sessionID") || !cookies.get("id")){
+      return false;
+    }
     var expiry = cookies.get("expireTime");
-    if (!expiry || !cookies.get("sessionID") || !cookies.get("id") || (expiry !== "forever" && Date.now() >= expireTime)){
+    if (!expiry || (expiry !== "forever" && Date.now() >= expireTime)){
       getExpiredHome();
+      // console.log("Error2");
       return true;
     }
     return false;
@@ -742,7 +852,7 @@ function App() {
         .then(response=>response.json())
         .then(data => {
             for ( const key in data.contents){
-              listOfPosts.push(simplePost(key,data.contents[key]))
+              listOfPosts.push(simplePostStartUp(key,data.contents[key]))
             }
             // console.log(listOfPosts);
             changeCode(
@@ -753,7 +863,7 @@ function App() {
             )
         })
 
-  },[changeCode,simplePost,sessionID,id])
+  },[changeCode,simplePostStartUp,sessionID,id])
   React.useEffect(() => {
     if (id && (expireTime === "forever" || Date.now() < expireTime)){
       console.log("Logged In");
@@ -859,7 +969,7 @@ function App() {
       </form>
     </div>
     <div className='inDepthPost' style={inDepthPostCSS}>
-
+      {inDepthCode}
     </div>
     <div className='mainBody' style={mainBodyCSS}>
     {code}

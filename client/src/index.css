@@ -27,8 +27,12 @@ code {
 }
 
 .inDepthPost{
-  
+
 }
+.rightAlignHeader{
+  text-align: right
+}
+
 
 .confMsg{
   background-color: green;
