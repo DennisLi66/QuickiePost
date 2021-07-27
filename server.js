@@ -894,7 +894,7 @@ app.route("/post")
       WHERE posts.postID = ?
       AND posts.visibility != 'hidden' AND (posts.visibility != 'private' OR  postViewers.viewerID is not null)
       AND comments.visibility != 'hidden' AND (comments.visibility != 'private'  OR commentViewers.viewerID is not null)
-      ORDER BY commentID
+      ORDER BY comments.submissionDate
       `;
       connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
         if (err1){
@@ -975,7 +975,7 @@ app.route("/post")
       ON commentLikes.commentID = comments.commentID
       WHERE posts.postID = ?
       AND posts.visibility != 'hidden' AND posts.visibility != 'private'
-      ORDER BY commentID
+      ORDER BY comments.submissionDate
       `;
       connection.query(sQuery,[req.query.postID],function(err,results,fields){
         if (err){

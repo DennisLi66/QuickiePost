@@ -2,6 +2,7 @@
 import Navbar from 'react-bootstrap/Navbar'
 import Nav from 'react-bootstrap/Nav'
 import Card from "react-bootstrap/Card"
+import ListGroup from 'react-bootstrap/ListGroup'
 // import Form from 'react-bootstrap/Form'
 // import ReactDOM from 'react-dom';
 import Button from 'react-bootstrap/Button'
@@ -59,41 +60,18 @@ function App() {
                 <br></br>
                 Likes: {data.totalLikes} Like Button
                 </Card.Header>
+                <Card.Body> {data.content} </Card.Body>
+                <ListGroup>
+
+                </ListGroup>
               </Card>
             )
           })
       }
     },[sessionID,id]
   );
-  function simplePost(key,dict){
-  var likeText;
-  if (dict.Liked && dict.Liked === "Liked"){
-    likeText = (
-      <div onClick={handleLikedPost}>Unlike</div>
-    );
-  }else{
-    likeText = (
-      <div onClick={handleUnlikedPost}>Like</div>
-    );
-  }
-  return (
-    <Card key={key}>
-      <Card.Title> {dict.title} </Card.Title>
-      <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-      <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
-      <Card.Body> {dict.content} </Card.Body>
-      <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-      <Card.Body>
-      Likes: {dict.totalLikes} Comments: {dict.totalComments}
-      {likeText}
-      <div onClick={()=>{showInDepthPost(dict.postID)}}>
-        Comment
-      </div>
-      </Card.Body>
-    </Card>
-  )
-}
-  const simplePostStartUp = React.useCallback(
+
+  const simplePost = React.useCallback(
     (key,dict) => {
       var likeText;
       if (dict.Liked && dict.Liked === "Liked"){
@@ -332,6 +310,7 @@ function App() {
               <br></br>
               Likes: {data.totalLikes} Like Button
               </Card.Header>
+              <Card.Body> {data.content} </Card.Body>
             </Card>
           )
         })
@@ -852,7 +831,7 @@ function App() {
         .then(response=>response.json())
         .then(data => {
             for ( const key in data.contents){
-              listOfPosts.push(simplePostStartUp(key,data.contents[key]))
+              listOfPosts.push(simplePost(key,data.contents[key]))
             }
             // console.log(listOfPosts);
             changeCode(
@@ -863,7 +842,7 @@ function App() {
             )
         })
 
-  },[changeCode,simplePostStartUp,sessionID,id])
+  },[changeCode,simplePost,sessionID,id])
   React.useEffect(() => {
     if (id && (expireTime === "forever" || Date.now() < expireTime)){
       console.log("Logged In");
