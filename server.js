@@ -857,20 +857,124 @@ app.route("/post")
       })
     }
     else if (req.query.userID && req.query.sessionID){
-
-    }else{
+      var cQuery =
+      `
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      RIGHT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `;
       var sQuery =
       `
-      SELECT commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
-      users.visibility as commenterVisibility, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
-      posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility FROM comments
+      SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
+      users.visibility as commenterVisibility, ifnull(commentLikes,0) as commentLikes, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
+      posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility,
+      if (isLiked.userID is null, "Unliked","Liked") as postLiked, if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
+      FROM posts
+      left join comments on posts.postID = comments.postID
       left join users on users.userID = comments.userID
-      right join posts on posts.postID = comments.postID
       left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes
       on totalLikes.postID = posts.postID
       left join (select * from users) uzers on uzers.userID = posts.userID
-      WHERE posts.postID = ? AND posts.visibility != 'hidden' AND posts.visibility != 'private'
-      AND comments.visibility != 'hidden' AND comments.visibility != 'private'
+      left join (select count(*) as commentLikes, commentID from commentLikes group by commentID) commentLikes
+      ON commentLikes.commentID = comments.commentID
+      LEFT JOIN (select * from likes WHERE userID = ?) isLiked
+      ON isLiked.postID = posts.postID
+      LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked
+      on commentLiked.commentID = comments.commentID
+      LEFT JOIN (select * from viewers WHERE viewerID = ?) commentViewers
+      ON commentViewers.posterID = comments.userID
+      LEFT JOIN (select * from viewers where viewerID = ?) postViewers
+      ON postViewers.posterID = posts.userID
+      WHERE posts.postID = ?
+      AND posts.visibility != 'hidden' AND (posts.visibility != 'private' OR  postViewers.viewerID is not null)
+      AND comments.visibility != 'hidden' AND (comments.visibility != 'private'  OR commentViewers.viewerID is not null)
+      ORDER BY commentID
+      `;
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        }
+        else if (results.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }else{
+          connection.query(sQuery,[req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.postID],function(err,results,fields){
+            if (err){
+              console.log(err);
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            }else{
+              if (results.length === 0){
+                return res.status(200).json({
+                  status: -2,
+                  message: "There was no post with that ID."
+                })
+              }else{
+                var toPrep = {};
+                for (let i = 0; i < results.length; i++){
+                  if (results[i].commentID && results[i].commenterVisibility !== 'hidden' && results[i].commenterVisibility !== 'private'
+                && results[i].commentVisibility !== 'private' && results[i].commentVisibility !== 'hidden'){
+                    toPrep[i] = {
+                      commentID: results[i].commentID,
+                      commenterID: results[i].commenterID,
+                      commenterName: results[i].commenterName,
+                      comments: results[i].comments,
+                      commentLikes: results[i].commentLikes,
+                      commentVisibility: results[i].commentVisibility,
+                      commenterVisibility: results[i].commenterVisibility,
+                      commentDate: results[i].commentDate,
+                      commentLiked: results[i].commentLiked
+                    }
+                  }
+                }
+                return res.status(200).json({
+                  status: 0,
+                  message: "Here's your post!",
+                  postID: results[0].postID,
+                  totalLikes: results[0].totalLikes,
+                  authorID: results[0].authorID,
+                  title: results[0].title,
+                  content: results[0].content,
+                  postVisibility: results[0].postVisibility,
+                  postDate: results[0].postDate,
+                  authorName: results[0].authorName,
+                  authorVisibility: results[0].authorVisibility,
+                  likedPost: results[0].postLiked,
+                  comments: toPrep
+                })
+              }
+            }
+          })
+        }
+      })
+    }else{
+      var sQuery =
+      `
+      SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
+      users.visibility as commenterVisibility, ifnull(commentLikes,0) as commentLikes, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
+      posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility FROM posts
+      left join comments on posts.postID = comments.postID
+      left join users on users.userID = comments.userID
+      left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes
+      on totalLikes.postID = posts.postID
+      left join (select * from users) uzers on uzers.userID = posts.userID
+      left join (select count(*) as commentLikes, commentID from commentLikes group by commentID) commentLikes
+      ON commentLikes.commentID = comments.commentID
+      WHERE posts.postID = ?
+      AND posts.visibility != 'hidden' AND posts.visibility != 'private'
       ORDER BY commentID
       `;
       connection.query(sQuery,[req.query.postID],function(err,results,fields){
@@ -896,6 +1000,7 @@ app.route("/post")
                   commenterID: results[i].commenterID,
                   commenterName: results[i].commenterName,
                   comments: results[i].comments,
+                  commentLikes: results[i].commentLikes,
                   commentVisibility: results[i].commentVisibility,
                   commenterVisibility: results[i].commenterVisibility,
                   commentDate: results[i].commentDate
