@@ -180,8 +180,46 @@ function App() {
         }
       );
       var listOfComments = [];
-      if (sessionID && id){
-
+      if (cookies.get('sessionID') && cookies.get('id')){
+        fetch(serverLocation + "/post?postID=" + postID + "&sessionID" + cookies.get('sessionID') + "&id=" + cookies.get('id'))
+          .then(response=>response.json())
+          .then(data => {
+            console.log(data);
+            for (const key in data.comments){
+              var comment = data.comments[key];
+              var commentLikedText;
+              listOfComments.push(
+                <ListGroup.Item key={key}>
+                  <Card>
+                  <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
+                  <Card.Header> {comment.commentDate} </Card.Header>
+                  <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
+                  <Card.Footer> Likes: {comment.commentLikes}
+                  <br></br>
+                  <Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like Button</Button>
+                  </Card.Footer>
+                  </Card>
+                </ListGroup.Item>
+              )
+            }
+            var postLikedText;
+            changeInDepthCode(
+              <Card>
+                <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
+                <Card.Header><h1>{data.title}</h1></Card.Header>
+                <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
+                <br></br>
+                Likes: {data.totalLikes}
+                <br></br>
+                <Button onClick={() => {handlePostLike(data.postID)}}>Like Button</Button>
+                </Card.Header>
+                <Card.Body> {data.content} </Card.Body>
+                <ListGroup>
+                {listOfComments}
+                </ListGroup>
+              </Card>
+            );
+          })
       }else{
         fetch(serverLocation + "/post?postID=" + postID)
           .then(response=>response.json())
@@ -195,7 +233,7 @@ function App() {
                   <Card>
                   <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
                   <Card.Header> {comment.commentDate} </Card.Header>
-                  <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}></div> </Card.Body>
+                  <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
                   <Card.Footer> Likes: {comment.commentLikes}
                   <br></br>
                   <Button onClick={getLoginPage}>Like Button</Button>
@@ -222,7 +260,7 @@ function App() {
             )
           })
       }
-    },[sessionID,id,showUserProfile,getLoginPage,handlePostLike,handleCommentLike,showInDepthComment]
+    },[cookies,showUserProfile,getLoginPage,handlePostLike,handleCommentLike,showInDepthComment]
   );
   const simplePost = React.useCallback(
     (key,dict) => {
