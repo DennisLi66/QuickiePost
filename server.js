@@ -1623,6 +1623,12 @@ app.route("/user")
   })
 
 app.route("/comment")
+  .get(function(req,res){
+
+  })
+  .patch(function(req,res){
+    
+  })
   .put(function(req,res){
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content){
       return res.status(200).json({

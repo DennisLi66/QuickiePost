@@ -23,25 +23,134 @@ import Cookies from 'universal-cookie';
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
-  const cookies = new Cookies();
+  const cookies = React.useMemo(() => {return new Cookies()},[])
   var id = cookies.get("id");
   var sessionID = cookies.get("sessionID");
   var expireTime = cookies.get("expireTime");
   // console.log(id)
 
+  const handleLogin = React.useCallback(
+  (event) => {
+      event.preventDefault();
+      var email = document.getElementById("userEmail").value;
+      var pswrd = document.getElementById("pswrd").value;
+      var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
+      const requestSetup = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
+      };
+      fetch(serverLocation+"/login",requestSetup)
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          if (data.status === -2){ //Invalid Combination
+            changeCode(
+              <div>
+                <div className="errMsg">That was not an existing email/password combination.</div>
+                <form onSubmit={handleLogin}>
+                  <h1> Login Page </h1>
+                  <label htmlFor='userEmail'>Email</label>
+                  <br></br>
+                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <br></br>
+                  <label htmlFor="pswrd" >Password</label>
+                  <br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                  <br></br><br></br>
+                  <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                  <label className="switch">
+                  <input type="checkbox" id='rememberMe'
+                  ></input>
+                  <span className="slider round"></span>
+                  </label>
+                  <br></br><br></br>
+                  <Button variant='dark' type="submit"> Login </Button>
+                </form>
+              </div>
+            )
+          }else if (data.status === -1){///Other Error
+            changeCode(
+              <div>
+                <div className="errMsg">There was an error. Please try again.</div>
+                <form onSubmit={handleLogin}>
+                  <h1> Login Page </h1>
+                  <label htmlFor='userEmail'>Email</label>
+                  <br></br>
+                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <br></br>
+                  <label htmlFor="pswrd" >Password</label>
+                  <br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                  <br></br><br></br>
+                  <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                  <label className="switch">
+                  <input type="checkbox" id='rememberMe'
+                  ></input>
+                  <span className="slider round"></span>
+                  </label>
+                  <br></br><br></br>
+                  <Button variant='dark' type="submit"> Login </Button>
+                </form>
+              </div>
+            )
+          }else if (data.status === 0){//No Error
+            cookies.set('name',data.username,{path:'/'});
+            cookies.set('id',data.userID,{path:'/'});
+            cookies.set('sessionID',data.sessionID,{path:'/'})
+            cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+            changeLoggedIn(true);
+            changeLoggedOut(false);
+            changeCode(
+              <div>
+                  <h1> Congratulations! </h1>
+                  You now have a QuickiePost account.<br></br>
+                  Use the navigation bar to begin exploring.
+              </div>
+            )
+          }
+        });
+    },[cookies]
+  )
+  const getLoginPage = React.useCallback(
+    () => {
+    hideWriteForm();
+    changeCode(
+      <form onSubmit={handleLogin}>
+        <h1> Login Page </h1>
+        <label htmlFor='userEmail'>Email</label>
+        <br></br>
+        <input type="email" name="userEmail" id="userEmail" required></input>
+        <br></br>
+        <label htmlFor="pswrd" >Password</label>
+        <br></br>
+        <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+        <br></br><br></br>
+        <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+        <label className="switch">
+        <input type="checkbox" id='rememberMe'
+        ></input>
+        <span className="slider round"></span>
+        </label>
+        <br></br><br></br>
+        <Button variant='dark' type="submit"> Login </Button>
+      </form>
+    )
+  },[handleLogin]
+  )
 //Handler Set up
-const handleCommentLike = React.useCallback(
-  //change to unlike
-  (commentID) => {
-    console.log(commentID,sessionID,id)
-  },[sessionID,id]
-)
-const handlePostLike = React.useCallback(
-  (postID) => {
-    console.log(postID,sessionID,id);
-  },[sessionID,id]
-)
-  //Set up Functions
+  const handleCommentLike = React.useCallback(
+    //change to unlike
+    (commentID) => {
+      console.log(commentID,sessionID,id)
+    },[sessionID,id]
+  )
+  const handlePostLike = React.useCallback(
+    (postID) => {
+      console.log(postID,sessionID,id);
+    },[sessionID,id]
+  )
+    //Set up Functions
   const showInDepthComment = React.useCallback(
       (commentID) => {
         console.log(commentID,sessionID,id)
@@ -70,10 +179,10 @@ const handlePostLike = React.useCallback(
           transition: 'height 2s ease-in'
         }
       );
+      var listOfComments = [];
       if (sessionID && id){
 
       }else{
-        var listOfComments = [];
         fetch(serverLocation + "/post?postID=" + postID)
           .then(response=>response.json())
           .then(data => {
@@ -84,12 +193,12 @@ const handlePostLike = React.useCallback(
               listOfComments.push(
                 <ListGroup.Item key={key}>
                   <Card>
-                  <Card.Header>{comment.commenterName}</Card.Header>
+                  <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
                   <Card.Header> {comment.commentDate} </Card.Header>
-                  <Card.Body> {comment.comments} </Card.Body>
+                  <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}></div> </Card.Body>
                   <Card.Footer> Likes: {comment.commentLikes}
                   <br></br>
-                  <Button>Like Button</Button>
+                  <Button onClick={getLoginPage}>Like Button</Button>
                   </Card.Footer>
                   </Card>
                 </ListGroup.Item>
@@ -99,11 +208,11 @@ const handlePostLike = React.useCallback(
               <Card>
                 <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
                 <Card.Header><h1>{data.title}</h1></Card.Header>
-                <Card.Header> Author: {data.authorName} Date Written: {data.postDate}
+                <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
                 <br></br>
                 Likes: {data.totalLikes}
                 <br></br>
-                <Button>Like Button</Button>
+                <Button onClick={getLoginPage}>Like Button</Button>
                 </Card.Header>
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>
@@ -113,9 +222,8 @@ const handlePostLike = React.useCallback(
             )
           })
       }
-    },[sessionID,id]
+    },[sessionID,id,showUserProfile,getLoginPage,handlePostLike,handleCommentLike,showInDepthComment]
   );
-
   const simplePost = React.useCallback(
     (key,dict) => {
       var likeText;
@@ -257,30 +365,6 @@ const handlePostLike = React.useCallback(
         <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
         <br></br>        <br></br>
         <Button variant='dark' type="submit"> Register </Button>
-      </form>
-    )
-  }
-  function getLoginPage(){
-    hideWriteForm();
-    changeCode(
-      <form onSubmit={handleLogin}>
-        <h1> Login Page </h1>
-        <label htmlFor='userEmail'>Email</label>
-        <br></br>
-        <input type="email" name="userEmail" id="userEmail" required></input>
-        <br></br>
-        <label htmlFor="pswrd" >Password</label>
-        <br></br>
-        <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-        <br></br><br></br>
-        <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-        <label className="switch">
-        <input type="checkbox" id='rememberMe'
-        ></input>
-        <span className="slider round"></span>
-        </label>
-        <br></br><br></br>
-        <Button variant='dark' type="submit"> Login </Button>
       </form>
     )
   }
@@ -610,86 +694,6 @@ const handlePostLike = React.useCallback(
           }
         })
     }
-  }
-  function handleLogin(event){
-    event.preventDefault();
-    // if (checkSessionID()){
-    //   return;
-    // }
-    var email = document.getElementById("userEmail").value;
-    var pswrd = document.getElementById("pswrd").value;
-    var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
-    const requestSetup = {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
-    };
-    fetch(serverLocation+"/login",requestSetup)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        if (data.status === -2){ //Invalid Combination
-          changeCode(
-            <div>
-              <div className="errMsg">That was not an existing email/password combination.</div>
-              <form onSubmit={handleLogin}>
-                <h1> Login Page </h1>
-                <label htmlFor='userEmail'>Email</label>
-                <br></br>
-                <input type="email" name="userEmail" id="userEmail" required></input>
-                <br></br>
-                <label htmlFor="pswrd" >Password</label>
-                <br></br>
-                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                <br></br><br></br>
-                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                <label className="switch">
-                <input type="checkbox" id='rememberMe'
-                ></input>
-                <span className="slider round"></span>
-                </label>
-                <br></br><br></br>
-                <Button variant='dark' type="submit"> Login </Button>
-              </form>
-            </div>
-          )
-        }else if (data.status === -1){///Other Error
-          changeCode(
-            <div>
-              <div className="errMsg">There was an error. Please try again.</div>
-              <form onSubmit={handleLogin}>
-                <h1> Login Page </h1>
-                <label htmlFor='userEmail'>Email</label>
-                <br></br>
-                <input type="email" name="userEmail" id="userEmail" required></input>
-                <br></br>
-                <label htmlFor="pswrd" >Password</label>
-                <br></br>
-                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                <br></br><br></br>
-                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                <label className="switch">
-                <input type="checkbox" id='rememberMe'
-                ></input>
-                <span className="slider round"></span>
-                </label>
-                <br></br><br></br>
-                <Button variant='dark' type="submit"> Login </Button>
-              </form>
-            </div>
-          )
-        }else if (data.status === 0){//No Error
-          cookies.set('name',data.username,{path:'/'});
-          cookies.set('id',data.userID,{path:'/'});
-          cookies.set('sessionID',data.sessionID,{path:'/'})
-          cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-          sessionID = cookies.get("sessionID");
-          id = cookies.get("id");
-          changeLoggedIn(true);
-          changeLoggedOut(false);
-          getHome();
-        }
-      });
   }
   function handleWritePost(event){
     event.preventDefault();
