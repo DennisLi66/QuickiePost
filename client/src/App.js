@@ -19,17 +19,43 @@ import Cookies from 'universal-cookie';
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
 //FIX THIS ADD Pagination
 //FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post
+//change color of posts and comments to better differentiate them
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
   const cookies = new Cookies();
-  const id = cookies.get("id");
-  const sessionID = cookies.get("sessionID");
-  const expireTime = cookies.get("expireTime");
+  var id = cookies.get("id");
+  var sessionID = cookies.get("sessionID");
+  var expireTime = cookies.get("expireTime");
   // console.log(id)
 
+//Handler Set up
+const handleCommentLike = React.useCallback(
+  //change to unlike
+  (commentID) => {
+    console.log(commentID,sessionID,id)
+  },[sessionID,id]
+)
+const handlePostLike = React.useCallback(
+  (postID) => {
+    console.log(postID,sessionID,id);
+  },[sessionID,id]
+)
   //Set up Functions
-  const showInDepthPostStartUp = React.useCallback(
+  const showInDepthComment = React.useCallback(
+      (commentID) => {
+        console.log(commentID,sessionID,id)
+      },[sessionID,id]
+  )
+  const showUserProfile = React.useCallback(
+    (userID) => {
+      console.log(userID)
+      if (sessionID && id){
+
+      }
+    },[sessionID,id]
+  )
+  const showInDepthPost = React.useCallback(
     (postID) => {
       console.log(postID);
       changeMainBodyCSS(
@@ -51,18 +77,37 @@ function App() {
         fetch(serverLocation + "/post?postID=" + postID)
           .then(response=>response.json())
           .then(data => {
-            console.log(data);
+            // console.log(data);
+            for ( const key in data.comments){
+              var comment = data.comments[key];
+              // console.log(comment);
+              listOfComments.push(
+                <ListGroup.Item key={key}>
+                  <Card>
+                  <Card.Header>{comment.commenterName}</Card.Header>
+                  <Card.Header> {comment.commentDate} </Card.Header>
+                  <Card.Body> {comment.comments} </Card.Body>
+                  <Card.Footer> Likes: {comment.commentLikes}
+                  <br></br>
+                  <Button>Like Button</Button>
+                  </Card.Footer>
+                  </Card>
+                </ListGroup.Item>
+              )
+            }
             changeInDepthCode(
               <Card>
                 <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
-                <Card.Header>{data.title}</Card.Header>
+                <Card.Header><h1>{data.title}</h1></Card.Header>
                 <Card.Header> Author: {data.authorName} Date Written: {data.postDate}
                 <br></br>
-                Likes: {data.totalLikes} Like Button
+                Likes: {data.totalLikes}
+                <br></br>
+                <Button>Like Button</Button>
                 </Card.Header>
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>
-
+                {listOfComments}
                 </ListGroup>
               </Card>
             )
@@ -93,14 +138,14 @@ function App() {
         <Card.Body>
         Likes: {dict.totalLikes} Comments: {dict.totalComments}
         {likeText}
-        <div onClick={()=>{showInDepthPostStartUp(dict.postID)}}>
+        <div onClick={()=>{showInDepthPost(dict.postID)}}>
           Comment
         </div>
         </Card.Body>
       </Card>
       )
     },
-    [showInDepthPostStartUp]
+    [showInDepthPost]
   )
 
   //
@@ -217,9 +262,6 @@ function App() {
   }
   function getLoginPage(){
     hideWriteForm();
-    // if (checkSessionID()){
-    //   return;
-    // }
     changeCode(
       <form onSubmit={handleLogin}>
         <h1> Login Page </h1>
@@ -279,42 +321,6 @@ function App() {
       height: 'auto',
       transition: 'height 2s ease-in'
     })
-  }
-  function showInDepthPost(postID){
-    console.log(postID);
-    changeMainBodyCSS(
-      {
-        display: 'none',
-        transition: 'height 2s ease-in'
-      }
-    );
-    changeInDepthCSS(
-      {
-        height: 'auto',
-        transition: 'height 2s ease-in'
-      }
-    );
-    if (sessionID && id){
-
-    }else{
-      var listOfComments = [];
-      fetch(serverLocation + "/post?postID=" + postID)
-        .then(response=>response.json())
-        .then(data => {
-          console.log(data);
-          changeInDepthCode(
-            <Card>
-              <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
-              <Card.Header>{data.title}</Card.Header>
-              <Card.Header> Author: {data.authorName} Date Written: {data.postDate}
-              <br></br>
-              Likes: {data.totalLikes} Like Button
-              </Card.Header>
-              <Card.Body> {data.content} </Card.Body>
-            </Card>
-          )
-        })
-    }
   }
   function closeInDepthPost(){
     changeMainBodyCSS({
@@ -677,6 +683,8 @@ function App() {
           cookies.set('id',data.userID,{path:'/'});
           cookies.set('sessionID',data.sessionID,{path:'/'})
           cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+          sessionID = cookies.get("sessionID");
+          id = cookies.get("id");
           changeLoggedIn(true);
           changeLoggedOut(false);
           getHome();
@@ -802,6 +810,9 @@ function App() {
     cookies.remove("expireTime",{path:"/"})
     cookies.remove("name",{path:'/'});
     cookies.remove("id",{path:'/'});
+    sessionID = null;
+    expireTime = null;
+    id = null;
     changeLoggedOut(true);
     changeLoggedIn(false);
     var listOfPosts = [];
