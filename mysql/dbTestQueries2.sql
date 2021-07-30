@@ -64,6 +64,7 @@ WHERE posts.postID = 2
 AND posts.visibility != 'hidden' AND posts.visibility != 'private'
 ORDER BY commentID
 ;
+-- MAY NEED TO BE MORE SPECIFIED
 -- Get Specific Post, their likes, and comments ---  LOGGED IN will need to add viewers, if you liked a comment CHECK, if you liked post CHECK, and if youre able to view a private post or comment
 SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
 users.visibility as commenterVisibility, ifnull(commentLikes,0) as commentLikes, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
@@ -91,14 +92,36 @@ AND comments.visibility != 'hidden' AND (comments.visibility != 'private'  OR co
 ORDER BY commentID
 ;
 
--- Get comments by comment ID, and its parent post --Not Logged in
-select commentID, comments.postID as postID, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+-- Get comments by comment ID, and its parent 
+select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
 , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+,if (isLiked.userID is null, "Unliked","Liked") as postLiked
+,if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
 from comments LEFT JOIN (select userID,username,visibility from users) uzers
 on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
 LEFT JOIN (select userID, username,visibility from users) ucers
 ON posts.userID = ucers.userID
-WHERE comments.visibility != 'hidden' AND comments.visibility != 'private'
-AND posts.visibility != 'hidden' AND posts.visibility != 'private'
-AND ucers.visibility != 'hidden' AND ucers.visibility != 'private'
-AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
+LEFT JOIN (select * from viewers) commenterViewer
+ON commenterViewer.posterID = ucers.userID
+LEFT JOIN (select * from viewers) postViewer
+ON postViewer.posterID = uzers.userID
+LEFT JOIN (select * from likes WHERE userID = 1) isLiked -- variable
+ON isLiked.postID = posts.postID
+LEFT JOIN (SELECT * FROM commentLikes WHERE userID = 1) commentLiked 
+on commentLiked.commentID = comments.commentID
+WHERE 
+(
+comments.visibility != 'hidden' 
+AND posts.visibility != 'hidden'
+AND ucers.visibility != 'hidden'
+AND uzers.visibility != 'hidden'
+)
+AND posts.userID  = 1 OR
+(
+(comments.visibility != 'private' OR commenterViewer.viewerID = 1)
+AND (posts.visibility != 'private' OR postViewer.viewerID = 1)
+AND (ucers.visibility != 'private' or commenterViewer.viewerID = 1)
+AND (uzers.visibility != 'private' or postViewer.viewerID = 1)
+)
+
+

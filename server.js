@@ -1638,7 +1638,7 @@ app.route("/comment")
         //can pull not friendly private comments
         var sQuery =
         `
-        select commentID, comments.postID as postID, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+        select commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
         , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
         from comments LEFT JOIN (select userID,username,visibility from users) uzers
         on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
@@ -1668,6 +1668,7 @@ app.route("/comment")
             return res.status(200).json({
               status: 0,
               message: "Here's your comment.",
+              comment: results.comments,
               commentID: results.commentID,
               commenterID: results.commenterID,
               commentVisibility: results.commentVisibility,
@@ -1687,6 +1688,103 @@ app.route("/comment")
         })
       }else{
         //can pull friendly comments
+        var cQuery =
+        `
+        SELECT * FROM
+        (select userID,max(sessionDate) as high from sessions group by userID) a
+        RIGHT JOIN
+        (
+        Select * from sessions WHERE userID = ? AND sessionID = ? AND
+        (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+        )
+        sessions
+        ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+        `;
+        var sQuery =
+        `
+        select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+        , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+        ,if (isLiked.userID is null, "Unliked","Liked") as postLiked
+        ,if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
+        from comments LEFT JOIN (select userID,username,visibility from users) uzers
+        on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
+        LEFT JOIN (select userID, username,visibility from users) ucers
+        ON posts.userID = ucers.userID
+        LEFT JOIN (select * from viewers) commenterViewer
+        ON commenterViewer.posterID = ucers.userID
+        LEFT JOIN (select * from viewers) postViewer
+        ON postViewer.posterID = uzers.userID
+        LEFT JOIN (select * from likes WHERE userID = ?) isLiked -- variable
+        ON isLiked.postID = posts.postID
+        LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked
+        on commentLiked.commentID = comments.commentID
+        WHERE
+        (
+        comments.visibility != 'hidden'
+        AND posts.visibility != 'hidden'
+        AND ucers.visibility != 'hidden'
+        AND uzers.visibility != 'hidden'
+        )
+        AND posts.userID  = ? OR
+        (
+        (comments.visibility != 'private' OR commenterViewer.viewerID = ?)
+        AND (posts.visibility != 'private' OR postViewer.viewerID = ?)
+        AND (ucers.visibility != 'private' or commenterViewer.viewerID = ?)
+        AND (uzers.visibility != 'private' or postViewer.viewerID = ?)
+        )
+        AND comments.commentID = ?
+        `;
+        connection.query(cQuery,[userID,sessionID],function(err1,results1,fields){
+          if (err1){
+            return res.status(200).json({
+              status: -1,
+              message: err1
+            })
+          }else if (results1.length == 0){
+            return res.status(200).json({
+              status: -1,
+              message: "Session did not exist."
+            })
+          }else{
+            connection.query(sQuery,[userID,userID,userID,userID,userID,userID,userID,commentID],function(err2,results2,fields){
+              if (err2){
+                return res.status(200).json({
+                  status: -1,
+                  message: err2
+                })
+              }
+              else if (results2.length === 0){
+                return res.status(200).json({
+                  status: -1,
+                  message: err2
+                })
+              }else{
+                var results = results2[0];
+                return res.status(200).json({
+                  status: 0,
+                  message: "Here's your comment.",
+                  comment: results.comments,
+                  commentID: results.commentID,
+                  commenterID: results.commenterID,
+                  commentVisibility: results.commentVisibility,
+                  commentDate: results.commentDate,
+                  commenterUsername: results.commenterUsername,
+                  commenterVisibility: results.commenterVisibility,
+                  commentLiked: results.commentLiked,
+                  postLiked: results.postLiked,
+                  posterID: results.authorID,
+                  postID: results.postID,
+                  title: results.title,
+                  content: results.content,
+                  postVisibility: results.postVisibility,
+                  postDate: results.postDate,
+                  posterUsername: results.posterUsername,
+                  posterVisibility: results.posterVisibility
+                })
+              }
+            })
+          }
+        })
       }
     }
   })
