@@ -138,18 +138,6 @@ function App() {
     )
   },[handleLogin]
   )
-//Handler Set up
-  const handleCommentLike = React.useCallback(
-    //change to unlike
-    (commentID) => {
-      console.log(commentID,sessionID,id)
-    },[sessionID,id]
-  )
-  const handlePostLike = React.useCallback(
-    (postID) => {
-      console.log(postID,sessionID,id);
-    },[sessionID,id]
-  )
     //Set up Functions
   const showInDepthComment = React.useCallback(
       (commentID) => {
@@ -166,6 +154,19 @@ function App() {
   )
   const showInDepthPost = React.useCallback(
     (postID) => {
+      //define handleLike Functions here
+      function handlePostLike(postID){
+
+      }
+      function handlePostUnlike(postID){
+
+      }
+      function handleCommentLike(postID){
+
+      }
+      function handleCommentUnlike(postID){
+
+      }
       console.log(postID);
       changeMainBodyCSS(
         {
@@ -187,7 +188,10 @@ function App() {
             console.log(data);
             for (const key in data.comments){
               var comment = data.comments[key];
-              var commentLikedText;
+              var commentLikedText = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
+              if (data.commentLiked){
+                commentLikedText = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID)}>Unlike</Button>)
+              }
               listOfComments.push(
                 <ListGroup.Item key={key}>
                   <Card>
@@ -196,13 +200,16 @@ function App() {
                   <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
                   <Card.Footer> Likes: {comment.commentLikes}
                   <br></br>
-                  <Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like Button</Button>
+                  {commentLikedText}
                   </Card.Footer>
                   </Card>
                 </ListGroup.Item>
               )
             }
-            var postLikedText;
+            var postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
+            if (data.likedPost){
+              postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
+            }
             changeInDepthCode(
               <Card>
                 <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
@@ -211,7 +218,7 @@ function App() {
                 <br></br>
                 Likes: {data.totalLikes}
                 <br></br>
-                <Button onClick={() => {handlePostLike(data.postID)}}>Like Button</Button>
+                {postLikedText}
                 </Card.Header>
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>
@@ -260,7 +267,7 @@ function App() {
             )
           })
       }
-    },[cookies,showUserProfile,getLoginPage,handlePostLike,handleCommentLike,showInDepthComment]
+    },[cookies,showUserProfile,getLoginPage,showInDepthComment]
   );
   const simplePost = React.useCallback(
     (key,dict) => {

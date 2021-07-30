@@ -1624,10 +1624,74 @@ app.route("/user")
 
 app.route("/comment")
   .get(function(req,res){
-
+    var commentID = req.query.commentID;
+    if (!commentID){
+      return res.status(200).json({
+        status: -1,
+        message: "No Comment ID"
+      })
+    }
+    else{
+      var sessionID = req.query.sessionID;
+      var userID = req.query.userID;
+      if (!sessionID || !userID){
+        //can pull not friendly private comments
+        var sQuery =
+        `
+        select commentID, comments.postID as postID, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+        , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+        from comments LEFT JOIN (select userID,username,visibility from users) uzers
+        on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
+        LEFT JOIN (select userID, username,visibility from users) ucers
+        ON posts.userID = ucers.userID
+        WHERE comments.visibility != 'hidden' AND comments.visibility != 'private'
+        AND posts.visibility != 'hidden' AND posts.visibility != 'private'
+        AND ucers.visibility != 'hidden' AND ucers.visibility != 'private'
+        AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
+        AND commentID = ?
+        `
+        connection.query(sQuery,[commentID],function(err,result,fields){
+          if (err){
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          }
+          else if (result.length === 0){
+            return res.status(200).json({
+              status: -1,
+              message: "No such post."
+            })
+          }else{
+            // console.log(results);
+            results = result[0];
+            return res.status(200).json({
+              status: 0,
+              message: "Here's your comment.",
+              commentID: results.commentID,
+              commenterID: results.commenterID,
+              commentVisibility: results.commentVisibility,
+              commentDate: results.commentDate,
+              commenterUsername: results.commenterUsername,
+              commenterVisibility: results.commenterVisibility,
+              posterID: results.authorID,
+              postID: results.postID,
+              title: results.title,
+              content: results.content,
+              postVisibility: results.postVisibility,
+              postDate: results.postDate,
+              posterUsername: results.posterUsername,
+              posterVisibility: results.posterVisibility
+            })
+          }
+        })
+      }else{
+        //can pull friendly comments
+      }
+    }
   })
   .patch(function(req,res){
-    
+
   })
   .put(function(req,res){
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content){

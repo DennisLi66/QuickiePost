@@ -90,3 +90,15 @@ AND posts.visibility != 'hidden' AND (posts.visibility != 'private' OR  postView
 AND comments.visibility != 'hidden' AND (comments.visibility != 'private'  OR commentViewers.viewerID is not null)
 ORDER BY commentID
 ;
+
+-- Get comments by comment ID, and its parent post --Not Logged in
+select commentID, comments.postID as postID, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+, uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+from comments LEFT JOIN (select userID,username,visibility from users) uzers
+on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
+LEFT JOIN (select userID, username,visibility from users) ucers
+ON posts.userID = ucers.userID
+WHERE comments.visibility != 'hidden' AND comments.visibility != 'private'
+AND posts.visibility != 'hidden' AND posts.visibility != 'private'
+AND ucers.visibility != 'hidden' AND ucers.visibility != 'private'
+AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
