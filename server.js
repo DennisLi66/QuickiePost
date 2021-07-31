@@ -229,7 +229,7 @@ app.get("/myfeed",function(req,res){
       })
     }
     else {
-      console.log(req.query.userID);
+      // console.log(req.query.userID);
       connection.query(sQuery,[req.query.userID,req.query.userID],function(err,results,fields){
         if (err){
           return res.status(200).json({
@@ -237,7 +237,7 @@ app.get("/myfeed",function(req,res){
             message: err
           })
         } else if (results){
-          console.log(results);
+          // console.log(results);
           var toPrep = {};
           for (let i = 0; i < results.length; i++){
             toPrep[i] = {
@@ -849,8 +849,9 @@ app.get("/search",function(req,res){
 app.route("/post")
   //Retrieve Single Post
   .get(function(req,res){
+    console.log(req.query.postID)
     //Retrieve Amount of Likes and Comments
-    console.log(req.query.userID,req.query.sessionID,req.query.postID)
+    // console.log(req.query.userID,req.query.sessionID,req.query.postID)
     if (!req.query.postID){
       return res.status(200).json({
         status: -1,
@@ -870,6 +871,7 @@ app.route("/post")
       sessions
       ON sessions.userID = a.userID AND sessions.sessionDate = a.high
       `;
+      //FIX THIS THE QUERY BELOW NEEDS TO BE FIXED
       var sQuery =
       `
       SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,

@@ -192,7 +192,21 @@ function App() {
           })
       }
       function handleCommentLike(commentID){
-        showInDepthPost(postID);
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PUT',
+        }
+        fetch(serverLocation + "/likeComment?commentID=" + commentID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response =>response.json())
+          .then(data =>{
+            // console.log(data);
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showInDepthPost(postID);
+            }
+          })
       }
       function handleCommentUnlike(commentID){
         showInDepthPost(postID);
@@ -219,7 +233,7 @@ function App() {
             for (const key in data.comments){
               var comment = data.comments[key];
               var commentLikedText = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
-              if (data.commentLiked){
+              if (comment.commentLiked && comment.commentLiked === "Liked"){
                 commentLikedText = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID)}>Unlike</Button>)
               }
               listOfComments.push(
