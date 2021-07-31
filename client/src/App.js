@@ -167,7 +167,7 @@ function App() {
         fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
           .then(response =>response.json())
           .then(data =>{
-            console.log(data);
+            // console.log(data);
             if (data.status === -1){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
@@ -176,7 +176,20 @@ function App() {
           })
       }
       function handlePostUnlike(postID){
-        showInDepthPost(postID);
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'DELETE',
+        }
+        fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showInDepthPost(postID);
+            }
+          })
       }
       function handleCommentLike(commentID){
         showInDepthPost(postID);
@@ -225,7 +238,7 @@ function App() {
             }
             var postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
             console.log(data)
-            if (data.likedPost){
+            if (data.likedPost && data.likedPost === "Like"){
               postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
             }
             changeInDepthCode(
