@@ -850,6 +850,7 @@ app.route("/post")
   //Retrieve Single Post
   .get(function(req,res){
     //Retrieve Amount of Likes and Comments
+    console.log(req.query.userID,req.query.sessionID,req.query.postID)
     if (!req.query.postID){
       return res.status(200).json({
         status: -1,
@@ -903,7 +904,7 @@ app.route("/post")
             message: err1
           })
         }
-        else if (results.length === 0){
+        else if (results1.length === 0){
           return res.status(200).json({
             status: -1,
             message: "No Valid Session."

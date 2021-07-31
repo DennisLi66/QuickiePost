@@ -155,19 +155,35 @@ function App() {
   const showInDepthPost = React.useCallback(
     (postID) => {
       //define handleLike Functions here
+      // function handleInsertComment(){
+      //
+      // }
       function handlePostLike(postID){
-
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PUT',
+        }
+        fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response =>response.json())
+          .then(data =>{
+            console.log(data);
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showInDepthPost(postID);
+            }
+          })
       }
       function handlePostUnlike(postID){
-
+        showInDepthPost(postID);
       }
-      function handleCommentLike(postID){
-
+      function handleCommentLike(commentID){
+        showInDepthPost(postID);
       }
-      function handleCommentUnlike(postID){
-
+      function handleCommentUnlike(commentID){
+        showInDepthPost(postID);
       }
-      console.log(postID);
       changeMainBodyCSS(
         {
           display: 'none',
@@ -182,10 +198,11 @@ function App() {
       );
       var listOfComments = [];
       if (cookies.get('sessionID') && cookies.get('id')){
-        fetch(serverLocation + "/post?postID=" + postID + "&sessionID" + cookies.get('sessionID') + "&id=" + cookies.get('id'))
+        console.log(cookies.get('sessionID'))
+        fetch(serverLocation + "/post?postID=" + postID + "&sessionID=" + cookies.get('sessionID') + "&userID=" + cookies.get('id'))
           .then(response=>response.json())
           .then(data => {
-            console.log(data);
+            // console.log(data);
             for (const key in data.comments){
               var comment = data.comments[key];
               var commentLikedText = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
@@ -207,6 +224,7 @@ function App() {
               )
             }
             var postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
+            console.log(data)
             if (data.likedPost){
               postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
             }
@@ -222,6 +240,7 @@ function App() {
                 </Card.Header>
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>
+                <h2> Comments </h2>
                 {listOfComments}
                 </ListGroup>
               </Card>
@@ -261,6 +280,7 @@ function App() {
                 </Card.Header>
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>
+                <h2> Comments </h2>
                 {listOfComments}
                 </ListGroup>
               </Card>
