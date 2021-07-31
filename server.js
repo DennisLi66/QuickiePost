@@ -871,7 +871,7 @@ app.route("/post")
       sessions
       ON sessions.userID = a.userID AND sessions.sessionDate = a.high
       `;
-      //FIX THIS THE QUERY BELOW NEEDS TO BE FIXED
+      //FIX THIS THE QUERY BELOW NEEDS TO BE FIXED -- FIX THIS QUERY-- FIX THIS QUERY-- FIX THIS QUERY-- FIX THIS QUERY
       var sQuery =
       `
       SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
