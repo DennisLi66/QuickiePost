@@ -147,10 +147,24 @@ function App() {
   const showUserProfile = React.useCallback(
     (userID) => {
       console.log(userID)
+      var sessionID = cookies.get("sessionID");
+      var id = cookies.get("id");
       if (sessionID && id){
-
+        //check if owner
+      }else{
+        //ask for unlogged in posts
+        var sQuery =
+        `
+        `;
+        fetch()
+          .then()
+          .then(data => {
+            fetch()
+              .then()
+              .then()
+          })
       }
-    },[sessionID,id]
+    },[cookies]
   )
   const showInDepthPost = React.useCallback(
     (postID) => {
@@ -335,11 +349,11 @@ function App() {
       var likeText;
       if (dict.Liked && dict.Liked === "Liked"){
       likeText = (
-        <div onClick={handleLikedPost}>Unlike</div>
+        <div onClick={()=>{showInDepthPost(dict.postID)}}>Unlike</div>
       );
       }else{
       likeText = (
-        <div onClick={handleUnlikedPost}>Like</div>
+        <div onClick={()=>{showInDepthPost(dict.postID)}}>Like</div>
       );
       }
       return (
@@ -858,12 +872,6 @@ function App() {
         <div> This post can be seen by anyone. </div>
       )
     }
-  }
-  function handleLikedPost(){
-
-  }
-  function handleUnlikedPost(){
-
   }
   //Check Session Cookies
   function checkSessionID(){

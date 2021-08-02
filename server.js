@@ -2120,7 +2120,116 @@ app.route("/likeComment")
       }
     })
   })
+app.route("/commentsandposts")
+  .get(function(req,res){
+    //get comments of affiliated user
+    var sessionID = req.query.sessionID;
+    var userID = req.query.userID;
+    var profileID = req.query.profileID;
+    if (!profileID){
+      return res.status(200).json({
+        status: -1,
+        message: "Need User's Profile"
+      })
+    }
+    else if (!sessionID || !userID){
+      //only use commenterID
+      var sQuery1 =
+      `
+      select commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility, submissionDate, userName as username, users.visibility as userVisibility from comments
+      LEFT JOIN users ON users.userID = comments.userID
+      WHERE users.userID = ?
+      AND users.visibility != 'hidden' AND comments.visibility != 'private'
+      AND comments.visibility != 'hidden' AND users.visibility != 'private'
+      ;
+      `;
+      var sQuery2 =
+      `
+      select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts
+      LEFT JOIN users ON users.userID = posts.userID
+       WHERE users.userID = ?
+      AND users.visibility != 'hidden' AND posts.visibility != 'private'
+      AND posts.visibility != 'hidden' AND users.visibility != 'private'
+      ;
+      `;
+      var uQuery =
+      `
+      SELECT userID,userName, visibility FROM users WHERE users.userID = ?;
+      `
+      connection.query(uQuery,[profileID],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        }else if (results.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Profile."
+          })
+        }else{
+          connection.query(sQuery1,[profileID],function(err1,results1,fields){
+            if (err1){
+              return res.status(200).json({
+                status: -1,
+                message: err1
+              })
+            }
+            else{
+              connection.query(sQuery2,[profileID],function(err2,results2,fields){
+                if (err2){
+                  return res.status(200).json({
+                    status: -1,
+                    message: err2
+                  })
+                }
+                else{
+                  var commentsList = [];
+                  var postsList = [];
+                  for (let i = 0; i < results1.length; i++){
+                    var res1 = results1[i];
+                    commentsList.push({
+                      commentID: res1.commentID,
+                      postID: res1.postID,
+                      userID: res1.userID,
+                      comments: res1.comments,
+                      cVisibility: res1.commentVisibility,
+                      submissionDate: res1.submissionDate,
+                      username: res1.username,
+                      userVisibility: res1.userVisibility
+                    })
+                  }
+                  for (let i = 0; i < results2.length; i++){
+                    var res2 = results2[i];
+                    postsList.push({
+                      postID: res2.postID,
+                      userID: res2.userID,
+                      title: res2.title,
+                      content: res2.content,
+                      postVisibility: res2.postVisibility,
+                      subDate: res2.subDate,
+                      username: res2.username,
+                      userVisbility: res2.userVisibility
+                    })
+                  }
+                  return res.status(200).json({
+                    status: 0,
+                    message: "Profile Returned.",
+                    username: results[0].username,
+                    userID: results[0].userID,
+                    comments: commentsList,
+                    posts: postsList
+                  })
+                }
+              })
+            }
+          })
+        }
+      })
+    }else{
 
+    }
+  })
 app.listen(3001, function() {
   console.log("Server Started.")
 });
