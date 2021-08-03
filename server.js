@@ -2154,8 +2154,8 @@ app.route("/commentsandposts")
       `;
       var uQuery =
       `
-      SELECT userID,userName, visibility FROM users WHERE users.userID = ?;
-      `
+      SELECT userID,userName, visibility FROM users WHERE users.userID = ? AND users.visibility != 'hidden' AND users.visibility != 'private';
+      `;
       connection.query(uQuery,[profileID],function(err,results,fields){
         if (err){
           return res.status(200).json({
@@ -2227,7 +2227,114 @@ app.route("/commentsandposts")
         }
       })
     }else{
+      //logged in version
+      var sQuery1 =
+      `
+      select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts
+      LEFT JOIN users ON users.userID = posts.userID
+      LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
+       WHERE users.userID = 1
+      AND users.visibility != 'hidden'
+      AND posts.visibility != 'hidden'
+      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
+      ;
+      `;
+      var sQuery2 =
+      `
+      select commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility,
+      submissionDate, userName, users.visibility as userVisibility
+      from comments
+      LEFT JOIN users ON users.userID = comments.userID
+      LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
+      WHERE users.userID = 1
+      AND users.visibility != 'hidden'
+      AND comments.visibility != 'hidden'
+      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
+      ;
+      `;
+      var uQuery =
+      `
+      SELECT userID,userName, visibility FROM users WHERE users.userID = ?
+      AND users.visibility != 'hidden' AND
+      (users.visibility != 'private' OR users.userID = ?);
+      `;
+      var cQuery =
+      `
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      RIGHT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `;
+      connection.query(cQuery,[userID,sessionID],function(cErr,cResults,cFields){
+        if (cErr){
+          return res.status(200).json({
+            status: -1,
+            message: cErr
+          })
+        }
+        else if (cResults.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session"
+          })
+        }else{
+          connection.query(uQuery,[userID,userID],function(err1,results1,fields1){
+            if (err1){
+              return res.status(200).json({
+                status: -1,
+                message: err1
+              })
+            }
+            else if (results1.length === 0){
+              return res.status(200).json({
+                status: -1,
+                message: "No such account."
+              })
+            }else{
+              connection.query(sQuery,[],function(err2,results2,fields2){
+                if (err2){
+                  return res.status(200).json({
+                    status: -1,
+                    message: err2
+                  })
+                }else{
+                  var listOfPosts = [];
+                  for (let i = 0; i < results2.length; i++){
 
+                  }
+                  connection.query(sQuery2,[],function(err3,results3,fields3){
+                    if (err3){
+                      return res.status(200).json({
+                        status: -1,
+                        message: err3
+                      })
+                    }
+                    else{
+                      var listOfComments = [];
+                      for (let i = 0; i < results3.length; i++){
+
+                      }
+                      return res.status(200).json({
+                        status: 0,
+                        message: "Profile Returned.",
+                        username: results[0].username,
+                        userID: results[0].userID,
+                        comments: commentsList,
+                        posts: postsList
+                      })
+                    }
+                  })
+                }
+              })
+            }
+          })
+        }
+      })
     }
   })
 app.listen(3001, function() {

@@ -1,5 +1,5 @@
 use quickiePostsDB;
--- get comments and posts
+-- get comments and posts -- Non logged In
 select commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility, submissionDate, userName, users.visibility as userVisibility from comments 
 LEFT JOIN users ON users.userID = comments.userID
 WHERE users.userID = 1
@@ -11,4 +11,23 @@ LEFT JOIN users ON users.userID = posts.userID
  WHERE users.userID = 1
 AND users.visibility != 'hidden' AND posts.visibility != 'private'
 AND posts.visibility != 'hidden' AND users.visibility != 'private'
+;
+-- get comments and posts -- Logged In
+select commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility, 
+submissionDate, userName, users.visibility as userVisibility 
+from comments 
+LEFT JOIN users ON users.userID = comments.userID
+LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
+WHERE users.userID = 1
+AND users.visibility != 'hidden' 
+AND comments.visibility != 'hidden'
+AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
+;
+select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts 
+LEFT JOIN users ON users.userID = posts.userID
+LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
+ WHERE users.userID = 1
+AND users.visibility != 'hidden' 
+AND posts.visibility != 'hidden' 
+AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
 ;
