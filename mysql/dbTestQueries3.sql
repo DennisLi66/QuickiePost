@@ -23,11 +23,22 @@ AND users.visibility != 'hidden'
 AND comments.visibility != 'hidden'
 AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
 ;
-select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts 
+select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility, totalLikes from posts 
 LEFT JOIN users ON users.userID = posts.userID
 LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
+LEFT JOIN (select postID,count(*) as totalLikes from likes where postID = 1 group by postID) totalLikes ON totalLikes.postID = posts.postID
  WHERE users.userID = 1
 AND users.visibility != 'hidden' 
 AND posts.visibility != 'hidden' 
 AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
 ;
+
+
+      select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts
+      LEFT JOIN users ON users.userID = posts.userID
+      LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
+           LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+       WHERE users.userID = 1
+      AND users.visibility != 'hidden' AND posts.visibility != 'private'
+      AND posts.visibility != 'hidden' AND users.visibility != 'private'
+      ;

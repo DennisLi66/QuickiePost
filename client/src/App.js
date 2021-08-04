@@ -146,32 +146,102 @@ function App() {
   )
   const showUserProfile = React.useCallback(
     (userID) => {
-      console.log(userID)
+      function showComments(username,comments,start,end){
+
+      }
+      function showPosts(username,posts,start,end){
+
+      }
       var sessionID = cookies.get("sessionID");
       var id = cookies.get("id");
       if (sessionID && id){
         //check if owner
       }else{
         //ask for unlogged in posts
-        var sQuery =
-        `
-        `;
-        fetch()
-          .then()
+        fetch(serverLocation + "/commentsandposts?profileID=" + userID)
+          .then(response => response.json())
           .then(data => {
-            fetch()
-              .then()
-              .then()
+            console.log(data);
+            changeMainBodyCSS(
+              {
+                height: 'auto',
+                transition: 'height 2s ease-in'
+              }
+            );
+            changeInDepthCSS(
+              {
+                height: '0%',
+                display: 'none',
+                transition: 'height 2s ease-in'
+              }
+            );
+            changeWriteFormCSS(
+              {
+                height: '0%',
+                display: 'none',
+                transition: 'height 2s ease-in'
+              }
+            );
+            var listOfShownPosts = [];
+            for (let i = 0; i < (Math.min(10,data.posts.length)); i++){
+              var dict = data.posts[i];
+              listOfShownPosts.push(
+                <Card key={i}>
+                  <Card.Title> {dict.title} </Card.Title>
+                  <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+                  <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+                  <Card.Body> {dict.content} </Card.Body>
+                  <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+                  <Card.Body>
+                  Likes: {dict.totalLikes} Comments: {dict.totalComments}
+                  <div className='likeText' onClick={getLoginPage}>Like</div>
+                  </Card.Body>
+                </Card>
+              )
+            }
+            var paginationBar;
+            if (data.posts.length > 10){
+              var paginationSlots = [];
+              for (let i = 0; i < Math.ceil(data.posts.length / 10); i++){
+                paginationSlots.push(
+                  //FIX THIS: add more posts to be able to check this
+                  <li><div className="dropdown-item" onClick={() => {showPosts(data.username,data.posts,10 * i + 1,10*i+10)}}>{10 * i + 1} through {10*i+10}</div></li>
+                )
+              }
+              paginationBar = (
+                <ul className="nav nav-tabs">
+                  <li className="nav-item dropdown">
+                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                    <ul className="dropdown-menu">
+                      {paginationSlots}
+                    </ul>
+                  </li>
+                </ul>
+              )
+            }
+            changeCode(
+              <div>
+              <h1> {data.username}'s Profile </h1>
+              <ul className="nav nav-tabs justify-content-center">
+                <li className="nav-item">
+                  <div className="nav-link active" aria-current="page" onClick={() => {showPosts(data.username,data.posts,0,10)}}>{data.username}'s Posts</div>
+                </li>
+                <li className="nav-item">
+                  <div className="nav-link" onClick={()=>{showComments(data.username,data.comments,0,10)}}>{data.username}'s Comments</div>
+                </li>
+              </ul>
+              <div className='listOfStuffs'>
+                {listOfShownPosts}
+              </div>
+              {paginationBar}
+              </div>
+            );
           })
       }
-    },[cookies]
+    },[cookies,getLoginPage]
   )
   const showInDepthPost = React.useCallback(
     (postID) => {
-      //define handleLike Functions here
-      // function handleInsertComment(){
-      //
-      // }
       function handlePostLike(postID){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
@@ -251,6 +321,13 @@ function App() {
           transition: 'height 2s ease-in'
         }
       );
+      changeWriteFormCSS(
+        {
+          height: '0%',
+          display: 'none',
+          transition: 'height 2s ease-in'
+        }
+      );
       var listOfComments = [];
       if (cookies.get('sessionID') && cookies.get('id')){
         console.log(cookies.get('sessionID'))
@@ -317,7 +394,7 @@ function App() {
                   <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
                   <Card.Footer> Likes: {comment.commentLikes}
                   <br></br>
-                  <Button onClick={getLoginPage}>Like Button</Button>
+                  <Button onClick={getLoginPage}>Like</Button>
                   </Card.Footer>
                   </Card>
                 </ListGroup.Item>
@@ -331,7 +408,7 @@ function App() {
                 <br></br>
                 Likes: {data.totalLikes}
                 <br></br>
-                <Button onClick={getLoginPage}>Like Button</Button>
+                <Button onClick={getLoginPage}>Like</Button>
                 </Card.Header>
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>

@@ -127,3 +127,10 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+.linkText{
+  color: blue
+}
+.linkText:hover{
+  color: grey
+}

@@ -2145,8 +2145,11 @@ app.route("/commentsandposts")
       `;
       var sQuery2 =
       `
-      select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts
+      select posts.postID as postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username,
+      users.visibility as userVisibility,ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments from posts
       LEFT JOIN users ON users.userID = posts.userID
+                 LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
        WHERE users.userID = ?
       AND users.visibility != 'hidden' AND posts.visibility != 'private'
       AND posts.visibility != 'hidden' AND users.visibility != 'private'
@@ -2154,7 +2157,7 @@ app.route("/commentsandposts")
       `;
       var uQuery =
       `
-      SELECT userID,userName, visibility FROM users WHERE users.userID = ? AND users.visibility != 'hidden' AND users.visibility != 'private';
+      SELECT userID,username as username, visibility FROM users WHERE users.userID = ? AND users.visibility != 'hidden' AND users.visibility != 'private';
       `;
       connection.query(uQuery,[profileID],function(err,results,fields){
         if (err){
@@ -2209,7 +2212,9 @@ app.route("/commentsandposts")
                       postVisibility: res2.postVisibility,
                       subDate: res2.subDate,
                       username: res2.username,
-                      userVisbility: res2.userVisibility
+                      userVisbility: res2.userVisibility,
+                      totalLikes: res2.totalLikes,
+                      totalComments: res2.totalComments
                     })
                   }
                   return res.status(200).json({
@@ -2322,8 +2327,8 @@ app.route("/commentsandposts")
                       return res.status(200).json({
                         status: 0,
                         message: "Profile Returned.",
-                        username: results[0].username,
-                        userID: results[0].userID,
+                        username: results1[0].username,
+                        userID: results1[0].userID,
                         comments: commentsList,
                         posts: postsList
                       })
