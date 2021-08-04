@@ -264,7 +264,7 @@ function App() {
           for (let i = 0; i < Math.ceil(posts.length / 10); i++){
             paginationSlots.push(
               //FIX THIS: add more posts to be able to check this
-              <li><div className="dropdown-item" onClick={() => {showLoggedOffPosts(username,posts,10 * i + 1,10*i+10,comments)}}>{10 * i + 1} through {10*i+10}</div></li>
+              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedOffPosts(username,posts,10 * i + 1,10*i+10,comments)}}>{10 * i + 1} through {10*i+10}</div></li>
             )
           }
           paginationBar = (
@@ -296,10 +296,108 @@ function App() {
           </div>
         );
       }
+      function showLoggedInPosts(username,posts,start,end,comments){
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        var listOfShownPosts = [];
+        for (let i = start; i < (Math.min(end,posts.length)); i++){
+          var dict = posts[i];
+          var likeText = (<div className='likeText' onClick={() => {handlePostLike()}}>Like</div>);
+          if (dict.isLiked === "Liked"){
+            likeText = (<div className='likeText'onClick={() => {handlePostUnlike()}}>Unlike </div>);
+          }
+          listOfShownPosts.push(
+            <Card key={i}>
+              <Card.Title> {dict.title} </Card.Title>
+              <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+              <Card.Body> {dict.content} </Card.Body>
+              <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+              <Card.Body>
+              Likes: {dict.totalLikes} Comments: {dict.totalComments}
+              {likeText}
+              </Card.Body>
+            </Card>
+          )
+        }
+        var paginationBar;
+        if (posts.length > 10){
+          var paginationSlots = [];
+          for (let i = 0; i < Math.ceil(posts.length/10); i++){
+            paginationSlots.push(
+              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedInPosts(username,posts,10 * i + 1,10*i+10,comments)}}>{10 * i + 1} through {10*i+10}</div></li>
+            )
+          }
+          paginationBar = (
+            <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
+              </li>
+            </ul>
+          )
+        }
+        changeCode(
+          <div>
+          <h1> {username}'s Profile </h1>
+          <ul className="nav nav-tabs justify-content-center">
+            <li className="nav-item">
+              <div className="nav-link active" aria-current="page" onClick={() => {showLoggedInPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+            </li>
+          </ul>
+          <div className='listOfStuffs'>
+            {listOfShownPosts}
+          </div>
+          {paginationBar}
+          </div>
+        );
+      }
+      function showLoggedInComments(username,comments,start,end,posts){
+
+      }
+      function handlePostLike(){
+
+      }
+      function handlePostUnlike(){
+
+      }
+      function handleCommentLike(){
+
+      }
+      function handleCommentUnlike(){
+
+      }
       var sessionID = cookies.get("sessionID");
       var id = cookies.get("id");
       if (sessionID && id){
-        //check if owner
+        fetch(serverLocation + "/commentsandposts?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
+          .then(response => response.json())
+          .then(data=>{
+            console.log(data)
+            showLoggedInPosts(data.username,data.posts,0,10,data.comments)
+          })
       }else{
         //ask for unlogged in posts
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)

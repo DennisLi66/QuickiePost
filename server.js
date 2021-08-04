@@ -2304,7 +2304,7 @@ app.route("/commentsandposts")
                 message: "No such account."
               })
             }else{
-              connection.query(sQuery,[],function(err2,results2,fields2){
+              connection.query(sQuery1,[],function(err2,results2,fields2){
                 if (err2){
                   return res.status(200).json({
                     status: -1,
@@ -2313,7 +2313,19 @@ app.route("/commentsandposts")
                 }else{
                   var listOfPosts = [];
                   for (let i = 0; i < results2.length; i++){
-
+                    var res2 = results2[i];
+                    listOfPosts.push({
+                      postID: res2.postID,
+                      userID: res2.userID,
+                      title: res2.title,
+                      content: res2.content,
+                      postVisibility: res2.postVisibility,
+                      subDate: res2.subDate,
+                      username: res2.username,
+                      userVisbility: res2.userVisibility,
+                      totalLikes: res2.totalLikes,
+                      totalComments: res2.totalComments
+                    })
                   }
                   connection.query(sQuery2,[],function(err3,results3,fields3){
                     if (err3){
@@ -2325,15 +2337,17 @@ app.route("/commentsandposts")
                     else{
                       var listOfComments = [];
                       for (let i = 0; i < results3.length; i++){
+                        listOfComments.push({
 
+                        })
                       }
                       return res.status(200).json({
                         status: 0,
                         message: "Profile Returned.",
-                        username: results1[0].username,
+                        username: results1[0].userName,
                         userID: results1[0].userID,
-                        comments: commentsList,
-                        posts: postsList
+                        comments: listOfComments,
+                        posts: listOfPosts
                       })
                     }
                   })
