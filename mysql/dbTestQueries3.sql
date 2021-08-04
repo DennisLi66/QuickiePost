@@ -34,7 +34,7 @@ AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.us
 ;
 
 
-      select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts
+      select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility,totalLikes,totalComments from posts
       LEFT JOIN users ON users.userID = posts.userID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
            LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID

@@ -2136,8 +2136,10 @@ app.route("/commentsandposts")
       //only use commenterID
       var sQuery1 =
       `
-      select commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility, submissionDate, userName as username, users.visibility as userVisibility from comments
+      select comments.commentID as commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility, submissionDate, userName as username, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes from comments
       LEFT JOIN users ON users.userID = comments.userID
+      LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
+
       WHERE users.userID = ?
       AND users.visibility != 'hidden' AND comments.visibility != 'private'
       AND comments.visibility != 'hidden' AND users.visibility != 'private'
@@ -2148,7 +2150,7 @@ app.route("/commentsandposts")
       select posts.postID as postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username,
       users.visibility as userVisibility,ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments from posts
       LEFT JOIN users ON users.userID = posts.userID
-                 LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
        WHERE users.userID = ?
       AND users.visibility != 'hidden' AND posts.visibility != 'private'
@@ -2199,6 +2201,7 @@ app.route("/commentsandposts")
                       cVisibility: res1.commentVisibility,
                       submissionDate: res1.submissionDate,
                       username: res1.username,
+                      totalLikes: res1.totalLikes,
                       userVisibility: res1.userVisibility
                     })
                   }
