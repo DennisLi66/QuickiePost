@@ -317,9 +317,11 @@ function App() {
             transition: 'height 2s ease-in'
           }
         );
+        console.log(posts);
         var listOfShownPosts = [];
         for (let i = start; i < (Math.min(end,posts.length)); i++){
           var dict = posts[i];
+          //FIX THIS turn below into buttons
           var likeText = (<div className='likeText' onClick={() => {handlePostLike()}}>Like</div>);
           if (dict.isLiked === "Liked"){
             likeText = (<div className='likeText'onClick={() => {handlePostUnlike()}}>Unlike </div>);
@@ -395,7 +397,7 @@ function App() {
         fetch(serverLocation + "/commentsandposts?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
           .then(response => response.json())
           .then(data=>{
-            console.log(data)
+            // console.log(data)
             showLoggedInPosts(data.username,data.posts,0,10,data.comments)
           })
       }else{
@@ -498,7 +500,8 @@ function App() {
       );
       var listOfComments = [];
       if (cookies.get('sessionID') && cookies.get('id')){
-        console.log(cookies.get('sessionID'))
+        // console.log(cookies.get('sessionID'))
+        console.log(postID);
         fetch(serverLocation + "/post?postID=" + postID + "&sessionID=" + cookies.get('sessionID') + "&userID=" + cookies.get('id'))
           .then(response=>response.json())
           .then(data => {
@@ -1227,8 +1230,12 @@ function App() {
       console.log("Not Logged In.");
       changeLoggedIn(false);
       changeLoggedOut(true);
+      cookies.remove("sessionID",{path: '/'});
+      cookies.remove("expireTime",{path:"/"})
+      cookies.remove("name",{path:'/'});
+      cookies.remove("id",{path:'/'});
     }
-  },[expireTime,id,changeLoggedIn,changeLoggedOut])
+  },[expireTime,id,changeLoggedIn,changeLoggedOut,cookies])
 
   return (
     <div className="App">

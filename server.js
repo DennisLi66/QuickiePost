@@ -2238,14 +2238,17 @@ app.route("/commentsandposts")
       //logged in version
       var sQuery1 =
       `
-      select postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility from posts
+      select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility,
+      ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments, if(isLiked.userID is null,"Unliked","Liked") as Liked from posts
       LEFT JOIN users ON users.userID = posts.userID
-      LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
-       WHERE users.userID = 1
+      LEFT JOIN (select * from viewers where viewers.viewerID = ?) viewers ON users.userID = viewers.posterID
+      LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
+      LEFT JOIN (select * from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
+      WHERE users.userID = ?
       AND users.visibility != 'hidden'
       AND posts.visibility != 'hidden'
-      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
-      ;
+      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = ? or viewers.viewerID is not null);
       `;
       var sQuery2 =
       `
@@ -2291,7 +2294,7 @@ app.route("/commentsandposts")
             message: "No Valid Session"
           })
         }else{
-          connection.query(uQuery,[userID,userID],function(err1,results1,fields1){
+          connection.query(uQuery,[profileID,userID],function(err1,results1,fields1){
             if (err1){
               return res.status(200).json({
                 status: -1,
@@ -2304,7 +2307,7 @@ app.route("/commentsandposts")
                 message: "No such account."
               })
             }else{
-              connection.query(sQuery1,[],function(err2,results2,fields2){
+              connection.query(sQuery1,[userID,userID,profileID,userID],function(err2,results2,fields2){
                 if (err2){
                   return res.status(200).json({
                     status: -1,
@@ -2324,7 +2327,8 @@ app.route("/commentsandposts")
                       username: res2.username,
                       userVisbility: res2.userVisibility,
                       totalLikes: res2.totalLikes,
-                      totalComments: res2.totalComments
+                      totalComments: res2.totalComments,
+                      isLiked: res2.Liked
                     })
                   }
                   connection.query(sQuery2,[],function(err3,results3,fields3){
