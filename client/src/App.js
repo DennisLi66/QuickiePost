@@ -145,7 +145,8 @@ function App() {
       },[sessionID,id]
   )
   const showUserProfile = React.useCallback(
-    (userID) => {
+    //FIX THIS make use of memo elements
+    (userID,startPos = 0, endPos = 10, variation = "") => {
       function showLoggedOffComments(username,comments,start,end,posts){
         changeMainBodyCSS(
           {
@@ -317,14 +318,14 @@ function App() {
             transition: 'height 2s ease-in'
           }
         );
-        console.log(posts);
+        // console.log(posts);
         var listOfShownPosts = [];
         for (let i = start; i < (Math.min(end,posts.length)); i++){
           var dict = posts[i];
           //FIX THIS turn below into buttons
-          var likeText = (<div className='likeText' onClick={() => {handlePostLike()}}>Like</div>);
+          var likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,start,end)}}>Like</Button>);
           if (dict.isLiked === "Liked"){
-            likeText = (<div className='likeText'onClick={() => {handlePostUnlike()}}>Unlike </div>);
+            likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,start,end)}}>Unlike </Button>);
           }
           listOfShownPosts.push(
             <Card key={i}>
@@ -334,6 +335,7 @@ function App() {
               <Card.Subtitle> {dict.subDate} </Card.Subtitle>
               <Card.Body>
               Likes: {dict.totalLikes} Comments: {dict.totalComments}
+              <br></br>
               {likeText}
               </Card.Body>
             </Card>
@@ -379,11 +381,38 @@ function App() {
       function showLoggedInComments(username,comments,start,end,posts){
 
       }
-      function handlePostLike(){
-
+      function handlePostLike(postID,start,end){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PUT',
+        }
+        fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response =>response.json())
+          .then(data =>{
+            console.log(data);
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(userID,start,end,"posts");
+            }
+          })
       }
-      function handlePostUnlike(){
-
+      function handlePostUnlike(postID,start,end){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'DELETE',
+        }
+        fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(userID,start,end,"comments");
+            }
+          })
       }
       function handleCommentLike(){
 
@@ -398,14 +427,17 @@ function App() {
           .then(response => response.json())
           .then(data=>{
             // console.log(data)
-            showLoggedInPosts(data.username,data.posts,0,10,data.comments)
+            if (variation !== ""){
+
+            }
+            showLoggedInPosts(data.username,data.posts,startPos,endPos,data.comments)
           })
       }else{
         //ask for unlogged in posts
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)
           .then(response => response.json())
           .then(data => {
-            showLoggedOffPosts(data.username,data.posts,0,10,data.comments)
+            showLoggedOffPosts(data.username,data.posts,startPos,endPos,data.comments)
           })
       }
     },[cookies,getLoginPage]
