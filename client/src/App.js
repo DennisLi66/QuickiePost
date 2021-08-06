@@ -401,7 +401,10 @@ function App() {
         var listOfShownComments = [];
         for (let i = start; i < (Math.min(end,comments.length)); i++){
           var dict = comments[i];
-          console.log(dict)
+          var likeText = (<Button className='likeText' onClick={() => {handleCommentLike(comments[i].postID,start,end)}}>Like</Button>);
+          if (dict.Liked === "Liked"){
+            likeText = (<Button className='likeText'onClick={() => {handleCommentUnlike(comments[i].postID,start,end)}}>Unlike </Button>);
+          }
           listOfShownComments.push(
             <Card key={i}>
               <Card.Title> {dict.title} </Card.Title>
@@ -410,7 +413,8 @@ function App() {
               <Card.Subtitle> {dict.subDate} </Card.Subtitle>
               <Card.Body>
               Likes: {dict.totalLikes}
-              <div className='likeText' onClick={getLoginPage}>Like</div>
+              <br></br>
+              {likeText}
               </Card.Body>
             </Card>
           )
@@ -462,7 +466,6 @@ function App() {
         fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
           .then(response =>response.json())
           .then(data =>{
-            console.log(data);
             if (data.status === -1){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
@@ -486,11 +489,38 @@ function App() {
             }
           })
       }
-      function handleCommentLike(){
-
+      function handleCommentLike(commentID,start,end){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PUT',
+        }
+        fetch(serverLocation + "/likeComment?commentID=" + commentID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response =>response.json())
+          .then(data=>{
+            console.log(data)
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(userID,start,end,"comments");
+            }
+          })
       }
-      function handleCommentUnlike(){
-
+      function handleCommentUnlike(commentID,start,end){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'DELETE',
+        };
+        fetch(serverLocation + "/likeComment?commentID=" + commentID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response =>response.json())
+          .then(data=>{
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(userID,start,end,"comments");
+            }
+          })
       }
       var sessionID = cookies.get("sessionID");
       var id = cookies.get("id");
@@ -503,7 +533,7 @@ function App() {
               //FIX THIS
             }
             //check comments for when logged in FIX THIS
-            console.log(data);
+            // console.log(data);
             showLoggedInPosts(data.username,data.posts,startPos,endPos,data.comments)
           })
       }else{
