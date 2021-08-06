@@ -173,7 +173,6 @@ function App() {
           var dict = comments[i];
           listOfShownComments.push(
             <Card key={i}>
-              <Card.Title> {dict.title} </Card.Title>
               <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
               <Card.Body> {dict.comments} </Card.Body>
               <Card.Subtitle> {dict.subDate} </Card.Subtitle>
@@ -379,7 +378,80 @@ function App() {
         );
       }
       function showLoggedInComments(username,comments,start,end,posts){
-
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        var listOfShownComments = [];
+        for (let i = start; i < (Math.min(end,comments.length)); i++){
+          var dict = comments[i];
+          console.log(dict)
+          listOfShownComments.push(
+            <Card key={i}>
+              <Card.Title> {dict.title} </Card.Title>
+              <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+              <Card.Body> {dict.comments} </Card.Body>
+              <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+              <Card.Body>
+              Likes: {dict.totalLikes}
+              <div className='likeText' onClick={getLoginPage}>Like</div>
+              </Card.Body>
+            </Card>
+          )
+        }
+        var paginationBar;
+        if (posts.length > 10){
+          var paginationSlots = [];
+          for (let i = 0; i < Math.ceil(comments.length / 10); i++){
+            paginationSlots.push(
+              //FIX THIS: add more posts to be able to check this
+              <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,10*i+10,posts)}}>{10 * i + 1} through {10*i+10}</div></li>
+            )
+          }
+          paginationBar = (
+            <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
+              </li>
+            </ul>
+          )
+        }
+        changeCode(
+          <div>
+          <h1> {username}'s Profile </h1>
+          <ul className="nav nav-tabs justify-content-center">
+            <li className="nav-item">
+              <div className="nav-link" aria-current="page" onClick={() => {showLoggedInPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link active" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+            </li>
+          </ul>
+          <div className='listOfStuffs'>
+            {listOfShownComments}
+          </div>
+          {paginationBar}
+          </div>
+        )
       }
       function handlePostLike(postID,start,end){
         var sessionID = cookies.get('sessionID');
@@ -428,11 +500,14 @@ function App() {
           .then(data=>{
             // console.log(data)
             if (variation !== ""){
-
+              //FIX THIS
             }
+            //check comments for when logged in FIX THIS
+            console.log(data);
             showLoggedInPosts(data.username,data.posts,startPos,endPos,data.comments)
           })
       }else{
+        //FIX THIS, add login function so it can redirect you back onto right post
         //ask for unlogged in posts
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)
           .then(response => response.json())

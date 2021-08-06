@@ -2136,7 +2136,9 @@ app.route("/commentsandposts")
       //only use commenterID
       var sQuery1 =
       `
-      select comments.commentID as commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility, submissionDate, userName as username, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes from comments
+      select comments.commentID as commentID,postID,comments.userID as userID,comments,
+      comments.visibility as commentVisibility, submissionDate,
+      userName as username, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes from comments
       LEFT JOIN users ON users.userID = comments.userID
       LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
 
@@ -2215,7 +2217,7 @@ app.route("/commentsandposts")
                       postVisibility: res2.postVisibility,
                       subDate: res2.subDate,
                       username: res2.username,
-                      userVisbility: res2.userVisibility,
+                      userVisibility: res2.userVisibility,
                       totalLikes: res2.totalLikes,
                       totalComments: res2.totalComments
                     })
@@ -2252,15 +2254,17 @@ app.route("/commentsandposts")
       `;
       var sQuery2 =
       `
-      select commentID,postID,comments.userID as userID,comments,comments.visibility as commentVisibility,
-      submissionDate, userName, users.visibility as userVisibility
-      from comments
-      LEFT JOIN users ON users.userID = comments.userID
-      LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
-      WHERE users.userID = 1
+      select comments.commentID as commentID,comments.postID as postID,comments.userID as userID,comments.comments as comments,comments.visibility as commentVisibility,
+      comments.submissionDate as submissionDate, userName, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes,
+      if(isLiked.userID is null,"Unliked","Liked") as Liked
+      from comments LEFT JOIN users ON users.userID = comments.userID
+      LEFT JOIN (select * from viewers where viewers.viewerID = ?) viewers ON users.userID = viewers.posterID
+      LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
+      LEFT JOIN (select * from commentLikes WHERE userID = ?) isLiked ON isLiked.commentID = comments.commentID
+      WHERE users.userID = ?
       AND users.visibility != 'hidden'
       AND comments.visibility != 'hidden'
-      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
+      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = ? or viewers.viewerID = ?)
       ;
       `;
       var uQuery =
@@ -2325,13 +2329,13 @@ app.route("/commentsandposts")
                       postVisibility: res2.postVisibility,
                       subDate: res2.subDate,
                       username: res2.username,
-                      userVisbility: res2.userVisibility,
+                      userVisibility: res2.userVisibility,
                       totalLikes: res2.totalLikes,
                       totalComments: res2.totalComments,
                       isLiked: res2.Liked
                     })
                   }
-                  connection.query(sQuery2,[],function(err3,results3,fields3){
+                  connection.query(sQuery2,[userID,userID,profileID,userID,userID],function(err3,results3,fields3){
                     if (err3){
                       return res.status(200).json({
                         status: -1,
@@ -2341,8 +2345,18 @@ app.route("/commentsandposts")
                     else{
                       var listOfComments = [];
                       for (let i = 0; i < results3.length; i++){
+                        var com = results3[i];
                         listOfComments.push({
-
+                          commentID: com.commentID,
+                          postID: com.postID,
+                          userID: com.userID,
+                          comments: com.comments,
+                          commentVisibility: com.commentVisibility,
+                          submissionDate: com.submissionDate,
+                          username: com.userName,
+                          userVisibility: com.userVisibility,
+                          totalLikes: com.totalLikes,
+                          Liked: com.Liked
                         })
                       }
                       return res.status(200).json({

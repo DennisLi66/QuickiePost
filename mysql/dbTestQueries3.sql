@@ -54,12 +54,23 @@ AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.us
       
       
       
+-- need to add isLiked and viewership
+select comments.commentID as commentID,comments.postID as postID,comments.userID as userID,comments.comments as comments,comments.visibility as commentVisibility,
+comments.submissionDate as submissionDate, userName, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes,
+if(isLiked.userID is null,"Unliked","Liked") as Liked
+from comments LEFT JOIN users ON users.userID = comments.userID
+LEFT JOIN (select * from viewers where viewers.viewerID = 1) viewers ON users.userID = viewers.posterID
+LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
+LEFT JOIN (select * from commentLikes WHERE userID = 1) isLiked ON isLiked.commentID = comments.commentID
+WHERE users.userID = 1
+AND users.visibility != 'hidden'
+AND comments.visibility != 'hidden'
+AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
+
+      ;
       
       
-      
-      
-      
-      
+      ;
       
       
       
