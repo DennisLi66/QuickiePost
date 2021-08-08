@@ -994,11 +994,11 @@ app.route("/post")
               message: "There was no post with that ID."
             })
           }else{
-            var toPrep = {};
+            var toPrep = [];
             for (let i = 0; i < results.length; i++){
               if (results[i].commentID && results[i].commenterVisibility !== 'hidden' && results[i].commenterVisibility !== 'private'
             && results[i].commentVisibility !== 'private' && results[i].commentVisibility !== 'hidden'){
-                toPrep[i] = {
+                toPrep.push({
                   commentID: results[i].commentID,
                   commenterID: results[i].commenterID,
                   commenterName: results[i].commenterName,
@@ -1007,7 +1007,7 @@ app.route("/post")
                   commentVisibility: results[i].commentVisibility,
                   commenterVisibility: results[i].commenterVisibility,
                   commentDate: results[i].commentDate
-                }
+                })
               }
             }
             return res.status(200).json({

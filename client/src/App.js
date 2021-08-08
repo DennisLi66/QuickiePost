@@ -10,7 +10,9 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
+//Search needs to be reworked
 //INCLUDE Private posts for self users
+//add a highlight effect to the pagination bar
 //Make sure all appropirate functions check session
 //Add fine tuning to posts after submission and in my posts
 //change getPosts to SELECT posts where post != private and user != private
@@ -23,10 +25,14 @@ import Cookies from 'universal-cookie';
 //FIX THIS: ADD pagination and remembering paginatikn
 //NEED TO BE ABLE TO ADD COMMENTS
 //FIX UI
-//FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID
+//FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID AND YOUR ID
+//REDO QUERIES
+//FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
+//Account for not having any posts or comments
 //Add commenting to a post
 //rewrite post pages to include pagination
 //recheck queries
+//VIEWERSHIP ENABLEMENT
 //if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
 function App() {
   //Variables
@@ -153,13 +159,11 @@ function App() {
       },[sessionID,id]
   )
   const showUserProfile = React.useCallback(
-    //FIX THIS: add login handler?
     (userID,startPos = 0, endPos = 10, variation = "") => {
-      console.log(userID,startPos,endPos,variation);
+      // console.log(userID,startPos,endPos,variation);
       function cancelLogin(username,start,end,variation){
         showUserProfile(userID,start,end,variation)
       }
-      //FIX THIS: remove elementID traces later
       //Move start end and variation to hidden elements
       function innerHandleLogin(event,start,end,variation){
         event.preventDefault();
@@ -312,13 +316,13 @@ function App() {
             for (let i = 0; i < Math.ceil(comments.length / 10); i++){
               paginationSlots.push(
                 //FIX THIS: add more posts to be able to check this
-                <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,10*i+10,posts)}}>{10 * i + 1} through {10*i+10}</div></li>
+                <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
               )
             }
             paginationBar = (
               <ul className="nav nav-tabs">
                 <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
                   <ul className="dropdown-menu">
                     {paginationSlots}
                   </ul>
@@ -337,10 +341,11 @@ function App() {
                 <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
               </li>
             </ul>
+            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
             <div className='listOfStuffs'>
               {listOfShownComments}
             </div>
-            {paginationBar}
+            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
             </div>
           )
         }
@@ -359,7 +364,7 @@ function App() {
             <div className='listOfStuffs'>
               This user has no comments that you can view.
             </div>
-            {paginationBar}
+            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
             </div>
           )
         }
@@ -408,13 +413,13 @@ function App() {
           for (let i = 0; i < Math.ceil(posts.length / 10); i++){
             paginationSlots.push(
               //FIX THIS: add more posts to be able to check this
-              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedOffPosts(username,posts,10 * i + 1,10*i+10,comments)}}>{10 * i + 1} through {10*i+10}</div></li>
+              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedOffPosts(username,posts,10 * i + 1,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
             )
           }
           paginationBar = (
             <ul className="nav nav-tabs">
               <li className="nav-item dropdown">
-                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
                 <ul className="dropdown-menu">
                   {paginationSlots}
                 </ul>
@@ -433,10 +438,11 @@ function App() {
               <div className="nav-link" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
             </li>
           </ul>
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
           <div className='listOfStuffs'>
             {listOfShownPosts}
           </div>
-          {paginationBar}
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
           </div>
         );
       }
@@ -489,13 +495,13 @@ function App() {
           var paginationSlots = [];
           for (let i = 0; i < Math.ceil(posts.length/10); i++){
             paginationSlots.push(
-              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedInPosts(username,posts,10 * i + 1,10*i+10,comments)}}>{10 * i + 1} through {10*i+10}</div></li>
+              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedInPosts(username,posts,10 * i + 1,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
             )
           }
           paginationBar = (
             <ul className="nav nav-tabs">
               <li className="nav-item dropdown">
-                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
                 <ul className="dropdown-menu">
                   {paginationSlots}
                 </ul>
@@ -514,10 +520,11 @@ function App() {
               <div className="nav-link" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
             </li>
           </ul>
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
           <div className='listOfStuffs'>
             {listOfShownPosts}
           </div>
-          {paginationBar}
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
           </div>
         );
       }
@@ -570,13 +577,13 @@ function App() {
             for (let i = 0; i < Math.ceil(comments.length / 10); i++){
               paginationSlots.push(
                 //FIX THIS: add more posts to be able to check this
-                <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,10*i+10,posts)}}>{10 * i + 1} through {10*i+10}</div></li>
+                <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
               )
             }
             paginationBar = (
               <ul className="nav nav-tabs">
                 <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Dropdown</div>
+                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
                   <ul className="dropdown-menu">
                     {paginationSlots}
                   </ul>
@@ -595,10 +602,11 @@ function App() {
                 <div className="nav-link active" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
               </li>
             </ul>
+            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
             <div className='listOfStuffs'>
               {listOfShownComments}
             </div>
-            {paginationBar}
+            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
             </div>
           )
         }
@@ -617,7 +625,7 @@ function App() {
             <div className='listOfStuffs'>
               This user has no comments that you can view.
             </div>
-            {paginationBar}
+            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
             </div>
           )
         }
@@ -704,7 +712,6 @@ function App() {
             }
           })
       }else{
-        //FIX THIS, add login function so it can redirect you back onto right post
         //ask for unlogged in posts
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)
           .then(response => response.json())
@@ -722,7 +729,7 @@ function App() {
     },[cookies]
   )
   const showInDepthPost = React.useCallback(
-    (postID) => {
+    (postID,commentStart = 0, commentEnd = 10) => {
       function handlePostLike(postID){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
@@ -790,6 +797,25 @@ function App() {
             }
           })
       }
+      function displayInnerLogin(){}
+      function handleInnerLogin(){
+
+      }
+      function cancelInnerLogin(){
+
+      }
+      function displayCommentWriter(){
+
+      }
+      function cancelWritingComment(){
+
+      }
+      function handleWritingComment(){
+
+      }
+      function togglePrivacySlider(){
+
+      }
       changeMainBodyCSS(
         {
           display: 'none',
@@ -837,14 +863,16 @@ function App() {
                 </ListGroup.Item>
               )
             }
+            if (listOfComments.length === 0){
+              listOfComments = (<div> This post has no visible comments. </div>)
+            }
             var postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
-            console.log(data)
             if (data.likedPost && data.likedPost === "Liked"){
               postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
             }
             changeInDepthCode(
               <Card>
-                <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
+                <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
                 <Card.Header><h1>{data.title}</h1></Card.Header>
                 <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
                 <br></br>
@@ -864,8 +892,8 @@ function App() {
         fetch(serverLocation + "/post?postID=" + postID)
           .then(response=>response.json())
           .then(data => {
-            // console.log(data);
-            for ( const key in data.comments){
+            // Change to Pagination
+            for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
               var comment = data.comments[key];
               // console.log(comment);
               listOfComments.push(
@@ -882,9 +910,31 @@ function App() {
                 </ListGroup.Item>
               )
             }
+            if (listOfComments.length === 0){
+              listOfComments = (<div> This post has no visible comments. </div>)
+            }
+            var paginationBar;
+            if (data.comments.length > 10){
+              var paginationSlots = [];
+              for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
+                paginationSlots.push(
+                  //FIX THIS: add more posts to be able to check this
+                  <li><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
+                )
+              }
+              paginationBar = (
+               <ul className="nav nav-tabs">
+                <li className="nav-item dropdown">
+                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                  <ul className="dropdown-menu">
+                    {paginationSlots}
+                  </ul>
+                </li>
+              </ul>)
+            }
             changeInDepthCode(
               <Card>
-                <Card.Header className='rightAlignHeader'> <div onClick={closeInDepthPost}>Close</div> </Card.Header>
+                <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
                 <Card.Header><h1>{data.title}</h1></Card.Header>
                 <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
                 <br></br>
@@ -895,7 +945,9 @@ function App() {
                 <Card.Body> {data.content} </Card.Body>
                 <ListGroup>
                 <h2> Comments </h2>
+                <div className='centerAlignPaginationBar'> {paginationBar}  </div>
                 {listOfComments}
+                <div className='centerAlignPaginationBar'> {paginationBar}  </div>
                 </ListGroup>
               </Card>
             )
@@ -904,7 +956,6 @@ function App() {
     },[cookies,showUserProfile,getLoginPage,showInDepthComment]
   );
   const simplePost = React.useCallback(
-    //FIX THIS: Maybe COnvert Like and Comment Buttons to Indepth view button
     (key,dict) => {
       var likeText;
       // if (dict.Liked && dict.Liked === "Liked"){
@@ -992,7 +1043,9 @@ function App() {
             // console.log(simplePost(data.contents[key]));
             listOfPosts.push(simplePost(key,data.contents[key]))
           }
-          // console.log(listOfPosts);
+          if (listOfPosts.length === 0){
+            listOfPosts = (<div> There are no available posts. </div>)
+          }
           changeCode(
             <div>
            <h1> QuickiePost </h1>
@@ -1152,7 +1205,10 @@ function App() {
           // console.log(simplePost(data.contents[key]));
           listOfPosts.push(simplePost(key,data.contents[key]))
         }
-        console.log(listOfPosts);
+        // console.log(listOfPosts);
+        if (listOfPosts.length === 0){
+          listOfPosts = (<div>You do not have any posts in your feed.</div>)
+        }
         changeCode(
           <div>
          <h1> QuickiePost - Your Feed</h1>
@@ -1197,6 +1253,7 @@ function App() {
   function handleSearch(event){
     event.preventDefault();
     //FIX THIS: HANDLE SESSIONID AND ID
+    //FIX THIS: DOESNT EVEN WORK
     var title = document.getElementById("title").value;
     var content = document.getElementById("content").value;
     var username = document.getElementById("username").value;
@@ -1560,6 +1617,7 @@ function App() {
           )
       })
   }
+
   //FIX THIS If SessionID, change server to accomadate being logged in
   React.useEffect(() => {
     var listOfPosts = [];
@@ -1571,6 +1629,9 @@ function App() {
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
             // console.log(listOfPosts);
+            if (listOfPosts.length === 0){
+              listOfPosts = (<div> There are no posts to show.</div>)
+            }
             changeCode(
               <div>
              <h1> QuickiePost </h1>
