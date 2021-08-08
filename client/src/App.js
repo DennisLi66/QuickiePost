@@ -17,7 +17,6 @@ import Cookies from 'universal-cookie';
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
-//FIX THIS ADD Pagination
 //FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post
 //change color of posts and comments to better differentiate them
 //FIX THIS: LOGIN should redirect to previous page instead of home
@@ -25,10 +24,10 @@ import Cookies from 'universal-cookie';
 //NEED TO BE ABLE TO ADD COMMENTS
 //FIX UI
 //FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID
-//Finish my profile
 //Add commenting to a post
-//rewrite pages to include pagination
+//rewrite post pages to include pagination
 //recheck queries
+//if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
@@ -154,9 +153,121 @@ function App() {
       },[sessionID,id]
   )
   const showUserProfile = React.useCallback(
-    //FIX THIS make use of memo elements
     //FIX THIS: add login handler?
     (userID,startPos = 0, endPos = 10, variation = "") => {
+      console.log(userID,startPos,endPos,variation);
+      function cancelLogin(username,start,end,variation){
+        showUserProfile(userID,start,end,variation)
+      }
+      //FIX THIS: remove elementID traces later
+      //Move start end and variation to hidden elements
+      function innerHandleLogin(event,start,end,variation){
+        event.preventDefault();
+        var email = document.getElementById("userEmail").value;
+        var pswrd = document.getElementById("pswrd").value;
+        var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
+        const requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
+        };
+        fetch(serverLocation+"/login",requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            if (data.status === -2){ //Invalid Combination
+              changeCode(
+                <div>
+                <div className="errMsg">That was not an existing email/password combination.</div>
+                <Button onClick={()=>{showUserProfile(userID,start,end,variation)}}> Cancel </Button>
+                <br></br>
+                <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
+                  <h1> Login Page </h1>
+                  <label htmlFor='userEmail'>Email</label>
+                  <br></br>
+                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <br></br>
+                  <label htmlFor="pswrd" >Password</label>
+                  <br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                  <br></br><br></br>
+                  <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                  <label className="switch">
+                  <input type="checkbox" id='rememberMe'
+                  ></input>
+                  <span className="slider round"></span>
+                  </label>
+                  <br></br><br></br>
+                  <Button variant='dark' type="submit"> Login </Button>
+                </form>
+                </div>
+              )
+            }else if (data.status === -1){///Other Error
+              changeCode(
+                <div>
+                  <div className="errMsg">There was an error. Please try again.</div>
+                <Button onClick={()=>{showUserProfile(userID,start,end,variation)}}> Cancel </Button>
+                <br></br>
+                <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
+                  <h1> Login Page </h1>
+                  <label htmlFor='userEmail'>Email</label>
+                  <br></br>
+                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <br></br>
+                  <label htmlFor="pswrd" >Password</label>
+                  <br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                  <br></br><br></br>
+                  <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                  <label className="switch">
+                  <input type="checkbox" id='rememberMe'
+                  ></input>
+                  <span className="slider round"></span>
+                  </label>
+                  <br></br><br></br>
+                  <Button variant='dark' type="submit"> Login </Button>
+                </form>
+                </div>
+              )
+            }else if (data.status === 0){//No Error
+              cookies.set('name',data.username,{path:'/'});
+              cookies.set('id',data.userID,{path:'/'});
+              cookies.set('sessionID',data.sessionID,{path:'/'})
+              cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              changeLoggedIn(true);
+              changeLoggedOut(false);
+              showUserProfile(userID,start,end,variation);
+            }
+          });
+        // console.log(email,pswrd);
+      }
+      function innerLoginPage(username,start,end,variation){
+        changeCode(
+          <div>
+          <Button onClick={()=>{cancelLogin(username,start,end,variation)}}> Cancel </Button>
+          <br></br>
+          <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
+            <h1> Login Page </h1>
+            <label htmlFor='userEmail'>Email</label>
+            <br></br>
+            <input type="email" name="userEmail" id="userEmail" required></input>
+            <br></br>
+            <label htmlFor="pswrd" >Password</label>
+            <br></br>
+            <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+            <br></br><br></br>
+            <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+            <label className="switch">
+            <input type="checkbox" id='rememberMe'
+            ></input>
+            <span className="slider round"></span>
+            </label>
+            <br></br><br></br>
+            <Button variant='dark' type="submit"> Login </Button>
+          </form>
+          </div>
+        )
+      }
       function showLoggedOffComments(username,comments,start,end,posts){
         changeMainBodyCSS(
           {
@@ -190,7 +301,7 @@ function App() {
                 <Card.Body>
                 Likes: {dict.totalLikes}
                 <br></br>
-                <Button className='likeText' onClick={getLoginPage}>Like</Button>
+                <Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'comments')}}>Like</Button>
                 </Card.Body>
               </Card>
             )
@@ -286,7 +397,7 @@ function App() {
               <Card.Body>
               Likes: {dict.totalLikes} Comments: {dict.totalComments}
               <br></br>
-              <Button className='likeText' onClick={getLoginPage}>Like</Button>
+              <Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'posts')}}>Like</Button>
               </Card.Body>
             </Card>
           )
@@ -598,10 +709,17 @@ function App() {
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)
           .then(response => response.json())
           .then(data => {
-            showLoggedOffPosts(data.username,data.posts,startPos,endPos,data.comments)
+            console.log(data)
+            if (variation === "posts"){
+              showLoggedOffPosts(data.username,data.posts,startPos,endPos,data.comments);
+            }else if (variation === "comments"){
+              showLoggedOffComments(data.username,data.comments,startPos,endPos,data.posts)
+            }else{
+              showLoggedOffPosts(data.username,data.posts,startPos,endPos,data.comments);
+            }
           })
       }
-    },[cookies,getLoginPage]
+    },[cookies]
   )
   const showInDepthPost = React.useCallback(
     (postID) => {
@@ -1074,7 +1192,6 @@ function App() {
     //be able to set Visibility
     //show role
     //be able to delete Account
-    //show stats - likes, comments, amount of posts
   }
   //Event Handlers
   function handleSearch(event){
