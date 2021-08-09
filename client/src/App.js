@@ -160,7 +160,7 @@ function App() {
   )
   const showUserProfile = React.useCallback(
     (userID,startPos = 0, endPos = 10, variation = "") => {
-      // console.log(userID,startPos,endPos,variation);
+      //FIX THIS: Rework to single fetch
       function cancelLogin(username,start,end,variation){
         showUserProfile(userID,start,end,variation)
       }
@@ -763,7 +763,7 @@ function App() {
             }
           })
       }
-      function handleCommentLike(commentID){
+      function handleCommentLike(commentID,pos){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
         const requestSetup = {
@@ -776,11 +776,11 @@ function App() {
             if (data.status === -1){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
-              showInDepthPost(postID);
+              showInDepthPost(postID,commentStart,commentEnd);
             }
           })
       }
-      function handleCommentUnlike(commentID){
+      function handleCommentUnlike(commentID,pos){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
         const requestSetup = {
@@ -793,21 +793,119 @@ function App() {
             if (data.status === -1){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
-              showInDepthPost(postID);
+              showInDepthPost(postID,commentStart,commentEnd);
             }
           })
       }
-      function displayInnerLogin(){}
-      function handleInnerLogin(){
-
+      function displayInnerLogin(){
+        hideWriteForm();
+        changeCode(
+          <div>
+          <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+          <form onSubmit={handleInnerLogin}>
+            <h1> Login Page </h1>
+            <label htmlFor='userEmail'>Email</label>
+            <br></br>
+            <input type="email" name="userEmail" id="userEmail" required></input>
+            <br></br>
+            <label htmlFor="pswrd" >Password</label>
+            <br></br>
+            <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+            <br></br><br></br>
+            <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+            <label className="switch">
+            <input type="checkbox" id='rememberMe'
+            ></input>
+            <span className="slider round"></span>
+            </label>
+            <br></br><br></br>
+            <Button variant='dark' type="submit"> Login </Button>
+          </form>
+          </div>
+        )
       }
-      function cancelInnerLogin(){
-
+      function handleInnerLogin(event){
+        event.preventDefault();
+        var email = document.getElementById("userEmail").value;
+        var pswrd = document.getElementById("pswrd").value;
+        var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
+        const requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
+        };
+        fetch(serverLocation+"/login",requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -2){ //Invalid Combination
+              changeCode(
+                <div>
+                <div className="errMsg">That was not an existing email/password combination.</div>
+                <Button onClick={cancel}> Cancel </Button>
+                <br></br>
+                <form onSubmit={(event) => {handleInnerLogin(event)}}>
+                  <h1> Login Page </h1>
+                  <label htmlFor='userEmail'>Email</label>
+                  <br></br>
+                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <br></br>
+                  <label htmlFor="pswrd" >Password</label>
+                  <br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                  <br></br><br></br>
+                  <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                  <label className="switch">
+                  <input type="checkbox" id='rememberMe'
+                  ></input>
+                  <span className="slider round"></span>
+                  </label>
+                  <br></br><br></br>
+                  <Button variant='dark' type="submit"> Login </Button>
+                </form>
+                </div>
+              )
+            }else if (data.status === -1){///Other Error
+              changeCode(
+                <div>
+                  <div className="errMsg">There was an error. Please try again.</div>
+                <Button onClick={cancel}> Cancel </Button>
+                <br></br>
+                <form onSubmit={(event) => {handleInnerLogin(event)}}>
+                  <h1> Login Page </h1>
+                  <label htmlFor='userEmail'>Email</label>
+                  <br></br>
+                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <br></br>
+                  <label htmlFor="pswrd" >Password</label>
+                  <br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                  <br></br><br></br>
+                  <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+                  <label className="switch">
+                  <input type="checkbox" id='rememberMe'
+                  ></input>
+                  <span className="slider round"></span>
+                  </label>
+                  <br></br><br></br>
+                  <Button variant='dark' type="submit"> Login </Button>
+                </form>
+                </div>
+              )
+            }else if (data.status === 0){//No Error
+              cookies.set('name',data.username,{path:'/'});
+              cookies.set('id',data.userID,{path:'/'});
+              cookies.set('sessionID',data.sessionID,{path:'/'})
+              cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              changeLoggedIn(true);
+              changeLoggedOut(false);
+              showInDepthPost(postID,commentStart,commentEnd)
+            }
+          });
+      }
+      function cancel(){
+        showInDepthPost(postID,commentStart,commentEnd);
       }
       function displayCommentWriter(){
-
-      }
-      function cancelWritingComment(){
 
       }
       function handleWritingComment(){
@@ -840,11 +938,9 @@ function App() {
       if (detect){
         serverString = serverLocation + "/post?postID=" + postID + "&sessionID=" + cookies.get('sessionID') + "&userID=" + cookies.get('id')
       }
-      // console.log(serverString);
       fetch(serverString)
         .then(response=>response.json())
         .then(data => {
-          console.log(data.comments)
           var listOfComments = [];
           for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
             var comment = data.comments[key];
@@ -869,7 +965,6 @@ function App() {
               </ListGroup.Item>
             )
           }
-          console.log(listOfComments);
           if (listOfComments.length === 0){
             listOfComments = (<div> This post has no visible comments. </div>)
           }
@@ -879,7 +974,7 @@ function App() {
             for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
               paginationSlots.push(
                 //FIX THIS: add more posts to be able to check this
-                <li><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
+                <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
               )
             }
             paginationBar = (
@@ -899,6 +994,10 @@ function App() {
               postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
             }
           }
+          var writeCommentButton = (<Button onClick={() => {displayInnerLogin()}}>Add Comment</Button>);
+          if (detect){
+            writeCommentButton = (<Button onClick={() => {displayCommentWriter()}}>Add Comment</Button>)
+          }
           changeInDepthCode(
             <Card>
               <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
@@ -912,6 +1011,7 @@ function App() {
               <Card.Body> {data.content} </Card.Body>
               <ListGroup>
               <h2> Comments </h2>
+              {writeCommentButton}
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               {listOfComments}
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
@@ -971,6 +1071,10 @@ function App() {
     </div>
   );
   const [inDepthCode,changeInDepthCode] = React.useState();
+  const [inDepthPostCSS,changeInDepthCSS] = React.useState();
+  const [writeFormCode,changeWriteFormCode] = React.useState(
+
+  )
   const [navBarLoggedOut,changeLoggedOut] = React.useState(
     false
   )
@@ -988,9 +1092,6 @@ function App() {
     height: 'auto'
     }
   )
-  const [inDepthPostCSS,changeInDepthCSS] = React.useState(
-
-  );
   const [privacySwitchDescriptor,changePrivacySwitchDescriptor] = React.useState(
     <div> This post can be seen by anyone. </div>
   )
@@ -1092,6 +1193,36 @@ function App() {
         display: 'none',
         transition: 'height 2s ease-in'
       }
+    );
+    changeWriteFormCode(
+      <div>
+      <br></br>
+      <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
+      <h1> Write a Post </h1>
+      <form onSubmit={handleWritePost}>
+        <label htmlFor='postTitle'>Title:</label>
+        <br></br>
+        <input name='postTitle' id="postTitle" autoComplete="off" required></input>
+        <br></br>
+        <label htmlFor='postContent'>Content:</label>
+        <br></br>
+        <textarea className='noResize' rows='5' cols='50'
+         maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+        </textarea>
+        <br></br>
+        Private?
+        <br></br>
+        <label className="switch">
+        <input type="checkbox" id='privacySwitch'
+        onChange={handlePrivacyChecked}
+        ></input>
+        <span className="slider round"></span>
+        </label>
+        <br></br>
+        {privacySwitchDescriptor}
+        <Button variant='dark' type="submit"> Submit Post </Button>
+      </form>
+      </div>
     )
   }
   function hideWriteForm(){
@@ -1543,10 +1674,10 @@ function App() {
             // console.log(simplePost(data.contents[key]));
             listOfPosts.push(simplePost(key,data.contents[key]))
           }
-          console.log(listOfPosts);
+          // console.log(listOfPosts);
           changeCode(
             <div>
-            <div className='errMsg'> Your session has expired. </div>
+            <div className='errMsg'> You have been logged out. </div>
            <h1> QuickiePost </h1>
             {listOfPosts}
             </div>
@@ -1564,23 +1695,23 @@ function App() {
     id = null;
     changeLoggedOut(true);
     changeLoggedIn(false);
-    var listOfPosts = [];
     fetch(serverLocation + "/posts")
       .then(response=>response.json())
       .then(data => {
           // console.log(data.contents);
-          for ( const key in data.contents){
-            // console.log(simplePost(data.contents[key]));
-            listOfPosts.push(simplePost(key,data.contents[key]))
-          }
-          console.log(listOfPosts);
-          changeCode(
-            <div>
-            <div className='confMsg'> You have been logged out. </div>
-           <h1> QuickiePost </h1>
-            {listOfPosts}
-            </div>
-          )
+          // for ( const key in data.contents){
+          //   // console.log(simplePost(data.contents[key]));
+          //   listOfPosts.push(simplePost(key,data.contents[key]))
+          // }
+          // console.log(listOfPosts);
+          // changeCode(
+          //   <div>
+          //   <div className='confMsg'> You have been logged out. </div>
+          //  <h1> QuickiePost </h1>
+          //   {listOfPosts}
+          //   </div>
+          // )
+          getHome('exit');
       })
   }
 
@@ -1688,32 +1819,7 @@ function App() {
   </Navbar.Collapse>
     </Navbar>
     <div className='writeForm' style={writeFormCSS}>
-      <br></br>
-      <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
-      <h1> Write a Post </h1>
-      <form onSubmit={handleWritePost}>
-        <label htmlFor='postTitle'>Title:</label>
-        <br></br>
-        <input name='postTitle' id="postTitle" autoComplete="off" required></input>
-        <br></br>
-        <label htmlFor='postContent'>Content:</label>
-        <br></br>
-        <textarea className='noResize' rows='5' cols='50'
-         maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
-        </textarea>
-        <br></br>
-        Private?
-        <br></br>
-        <label className="switch">
-        <input type="checkbox" id='privacySwitch'
-        onChange={handlePrivacyChecked}
-        ></input>
-        <span className="slider round"></span>
-        </label>
-        <br></br>
-        {privacySwitchDescriptor}
-        <Button variant='dark' type="submit"> Submit Post </Button>
-      </form>
+    {writeFormCode}
     </div>
     <div className='inDepthPost' style={inDepthPostCSS}>
       {inDepthCode}
