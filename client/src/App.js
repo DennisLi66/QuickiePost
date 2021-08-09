@@ -906,12 +906,40 @@ function App() {
         showInDepthPost(postID,commentStart,commentEnd);
       }
       function displayCommentWriter(){
+        hideWriteForm();
+        var privacyText = "Anyone can view this comment.";
+        changeCode(
+          <div>
+          <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+          <form onSubmit={handleWritingComment}>
+          <h1>Add a Comment</h1>
 
+          <label htmlFor='commentContent'>Content:</label>
+          <br></br>
+          <textarea className='noResize' rows='5' cols='50'
+           maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+          </textarea>
+          <br></br>
+          Private?
+          <br></br>
+          <label className="switch">
+          <input type="checkbox" id='privacySwitch'
+          onChange={handlePrivacyToggled}
+          ></input>
+          <span className="slider round"></span>
+          </label>
+          <br></br>
+          {privacyText}
+          <br></br>
+          <Button variant='dark' type="submit"> Submit Comment </Button>
+          </form>
+          </div>
+        )
       }
       function handleWritingComment(){
 
       }
-      function togglePrivacySlider(){
+      function handlePrivacyToggled(){
 
       }
       changeMainBodyCSS(
