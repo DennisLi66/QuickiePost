@@ -28,11 +28,13 @@ import Cookies from 'universal-cookie';
 //FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID AND YOUR ID
 //REDO QUERIES
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
+//may need to add privacy to cookies
 //Account for not having any posts or comments
 //Add commenting to a post
 //rewrite post pages to include pagination
 //recheck queries
 //VIEWERSHIP ENABLEMENT
+//add better session check
 //if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
 function App() {
   //Variables
@@ -907,7 +909,6 @@ function App() {
       }
       function displayCommentWriter(){
         hideWriteForm();
-        var privacyText = "Anyone can view this comment.";
         changeCode(
           <div>
           <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
@@ -923,13 +924,13 @@ function App() {
           Private?
           <br></br>
           <label className="switch">
-          <input type="checkbox" id='privacySwitch'
+          <input type="checkbox" id='privacySwitch' value={'placeholder'}
           onChange={handlePrivacyToggled}
           ></input>
           <span className="slider round"></span>
           </label>
           <br></br>
-          {privacyText}
+          Anyone can view this comment.
           <br></br>
           <Button variant='dark' type="submit"> Submit Comment </Button>
           </form>
@@ -940,7 +941,40 @@ function App() {
 
       }
       function handlePrivacyToggled(){
+        var checked = document.getElementById('privacySwitch').checked;
+        console.log(checked);
+        if (checked){
+          hideWriteForm();
+          changeCode(
+            <div>
+            <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+            <form onSubmit={handleWritingComment}>
+            <h1>Add a Comment</h1>
 
+            <label htmlFor='commentContent'>Content:</label>
+            <br></br>
+            <textarea className='noResize' rows='5' cols='50'
+             maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+            </textarea>
+            <br></br>
+            Private?
+            <br></br>
+            <label className="switch">
+            <input type="checkbox" id='privacySwitch' value={'placeholder'}
+            onChange={handlePrivacyToggled} checked
+            ></input>
+            <span className="slider round"></span>
+            </label>
+            <br></br>
+            Only those you've allowed can view this comment.
+            <br></br>
+            <Button variant='dark' type="submit"> Submit Comment </Button>
+            </form>
+            </div>
+          )
+        }else{
+          displayCommentWriter();
+        }
       }
       changeMainBodyCSS(
         {
