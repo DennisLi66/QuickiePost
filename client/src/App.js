@@ -835,125 +835,91 @@ function App() {
           transition: 'height 2s ease-in'
         }
       );
-      var listOfComments = [];
-      if (cookies.get('sessionID') && cookies.get('id')){
-        // console.log(cookies.get('sessionID'))
-        console.log(postID);
-        fetch(serverLocation + "/post?postID=" + postID + "&sessionID=" + cookies.get('sessionID') + "&userID=" + cookies.get('id'))
-          .then(response=>response.json())
-          .then(data => {
-            // console.log(data);
-            for (const key in data.comments){
-              var comment = data.comments[key];
-              var commentLikedText = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
+      var detect = cookies.get("sessionID") && cookies.get("id");
+      var serverString = serverLocation + "/post?postID=" + postID;
+      if (detect){
+        serverString = serverLocation + "/post?postID=" + postID + "&sessionID=" + cookies.get('sessionID') + "&userID=" + cookies.get('id')
+      }
+      // console.log(serverString);
+      fetch(serverString)
+        .then(response=>response.json())
+        .then(data => {
+          console.log(data.comments)
+          var listOfComments = [];
+          for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
+            var comment = data.comments[key];
+            var likeButton = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);
+            if (detect){
+              likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
               if (comment.commentLiked && comment.commentLiked === "Liked"){
-                commentLikedText = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID)}>Unlike</Button>)
+                likeButton = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID)}>Unlike</Button>)
               }
-              listOfComments.push(
-                <ListGroup.Item key={key}>
-                  <Card>
-                  <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
-                  <Card.Header> {comment.commentDate} </Card.Header>
-                  <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
-                  <Card.Footer> Likes: {comment.commentLikes}
-                  <br></br>
-                  {commentLikedText}
-                  </Card.Footer>
-                  </Card>
-                </ListGroup.Item>
+            }
+            listOfComments.push(
+              <ListGroup.Item key={key}>
+                <Card>
+                <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
+                <Card.Header> {comment.commentDate} </Card.Header>
+                <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
+                <Card.Footer> Likes: {comment.commentLikes}
+                <br></br>
+                {likeButton}
+                </Card.Footer>
+                </Card>
+              </ListGroup.Item>
+            )
+          }
+          console.log(listOfComments);
+          if (listOfComments.length === 0){
+            listOfComments = (<div> This post has no visible comments. </div>)
+          }
+          var paginationBar;
+          if (data.comments.length > 10){
+            var paginationSlots = [];
+            for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
+              paginationSlots.push(
+                //FIX THIS: add more posts to be able to check this
+                <li><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
               )
             }
-            if (listOfComments.length === 0){
-              listOfComments = (<div> This post has no visible comments. </div>)
-            }
-            var postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
+            paginationBar = (
+             <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
+              </li>
+            </ul>)
+          }
+          var postLikedText = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);;
+          if (detect){
+            postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
             if (data.likedPost && data.likedPost === "Liked"){
               postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
             }
-            changeInDepthCode(
-              <Card>
-                <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
-                <Card.Header><h1>{data.title}</h1></Card.Header>
-                <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
-                <br></br>
-                Likes: {data.totalLikes}
-                <br></br>
-                {postLikedText}
-                </Card.Header>
-                <Card.Body> {data.content} </Card.Body>
-                <ListGroup>
-                <h2> Comments </h2>
-                {listOfComments}
-                </ListGroup>
-              </Card>
-            );
-          })
-      }else{
-        fetch(serverLocation + "/post?postID=" + postID)
-          .then(response=>response.json())
-          .then(data => {
-            // Change to Pagination
-            for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
-              var comment = data.comments[key];
-              // console.log(comment);
-              listOfComments.push(
-                <ListGroup.Item key={key}>
-                  <Card>
-                  <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
-                  <Card.Header> {comment.commentDate} </Card.Header>
-                  <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
-                  <Card.Footer> Likes: {comment.commentLikes}
-                  <br></br>
-                  <Button onClick={getLoginPage}>Like</Button>
-                  </Card.Footer>
-                  </Card>
-                </ListGroup.Item>
-              )
-            }
-            if (listOfComments.length === 0){
-              listOfComments = (<div> This post has no visible comments. </div>)
-            }
-            var paginationBar;
-            if (data.comments.length > 10){
-              var paginationSlots = [];
-              for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
-                paginationSlots.push(
-                  //FIX THIS: add more posts to be able to check this
-                  <li><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
-                )
-              }
-              paginationBar = (
-               <ul className="nav nav-tabs">
-                <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
-                  <ul className="dropdown-menu">
-                    {paginationSlots}
-                  </ul>
-                </li>
-              </ul>)
-            }
-            changeInDepthCode(
-              <Card>
-                <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
-                <Card.Header><h1>{data.title}</h1></Card.Header>
-                <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
-                <br></br>
-                Likes: {data.totalLikes}
-                <br></br>
-                <Button onClick={getLoginPage}>Like</Button>
-                </Card.Header>
-                <Card.Body> {data.content} </Card.Body>
-                <ListGroup>
-                <h2> Comments </h2>
-                <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-                {listOfComments}
-                <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-                </ListGroup>
-              </Card>
-            )
-          })
-      }
-    },[cookies,showUserProfile,getLoginPage,showInDepthComment]
+          }
+          changeInDepthCode(
+            <Card>
+              <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
+              <Card.Header><h1>{data.title}</h1></Card.Header>
+              <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
+              <br></br>
+              Likes: {data.totalLikes}
+              <br></br>
+              {postLikedText}
+              </Card.Header>
+              <Card.Body> {data.content} </Card.Body>
+              <ListGroup>
+              <h2> Comments </h2>
+              <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+              {listOfComments}
+              <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+              </ListGroup>
+            </Card>
+          );
+        })
+    },[cookies,showUserProfile,showInDepthComment]
   );
   const simplePost = React.useCallback(
     (key,dict) => {
