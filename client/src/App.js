@@ -270,7 +270,7 @@ function App() {
         )
       }
       //Merge Comments Together
-      function showLoggedOffComments(username,comments,start,end,posts){
+      function showComments(username,comments,start,end,posts){
         changeMainBodyCSS(
           {
             height: 'auto',
@@ -291,183 +291,71 @@ function App() {
             transition: 'height 2s ease-in'
           }
         );
-        if (comments.length !== 0){
-          var listOfShownComments = [];
-          for (let i = start; i < (Math.min(end,comments.length)); i++){
-            var dict = comments[i];
-            listOfShownComments.push(
-              <Card key={i}>
-                <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                <Card.Body> {dict.comments} </Card.Body>
-                <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-                <Card.Body>
-                Likes: {dict.totalLikes}
-                <br></br>
-                <Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'comments')}}>Like</Button>
-                </Card.Body>
-              </Card>
-            )
-          }
-          var paginationBar;
-          if (posts.length > 10){
-            var paginationSlots = [];
-            for (let i = 0; i < Math.ceil(comments.length / 10); i++){
-              paginationSlots.push(
-                //FIX THIS: add more posts to be able to check this
-                <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
-              )
-            }
-            paginationBar = (
-              <ul className="nav nav-tabs">
-                <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
-                  <ul className="dropdown-menu">
-                    {paginationSlots}
-                  </ul>
-                </li>
-              </ul>
-            )
-          }
-          changeCode(
-            <div>
-            <h1> {username}'s Profile </h1>
-            <ul className="nav nav-tabs justify-content-center">
-              <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-              </li>
-              <li className="nav-item">
-                <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-              </li>
-            </ul>
-            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-            <div className='listOfStuffs'>
-              {listOfShownComments}
-            </div>
-            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-            </div>
-          )
-        }
-        else{
-          changeCode(
-            <div>
-            <h1> {username}'s Profile </h1>
-            <ul className="nav nav-tabs justify-content-center">
-              <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-              </li>
-              <li className="nav-item">
-                <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-              </li>
-            </ul>
-            <div className='listOfStuffs'>
-              This user has no comments that you can view.
-            </div>
-            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-            </div>
-          )
-        }
-      }
-      function showLoggedInComments(username,comments,start,end,posts){
-        changeMainBodyCSS(
-          {
-            height: 'auto',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeInDepthCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeWriteFormCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        if (comments.length !== 0){
-          var listOfShownComments = [];
-          for (let i = start; i < (Math.min(end,comments.length)); i++){
-            var dict = comments[i];
-            var likeText = (<Button className='likeText' onClick={() => {handleCommentLike(comments[i].postID,start,end)}}>Like</Button>);
+        var listOfShownComments = [];
+        var likeText = (<Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'comments')}}>Like</Button>);
+        for (let i = start; i < (Math.min(end,comments.length)); i++){
+          var dict = comments[i];
+          if (cookies.get('sessionID') && cookies.get('id')){
+            likeText = (<Button className='likeText' onClick={() => {handleCommentLike(comments[i].postID,start,end)}}>Like</Button>);
             if (dict.Liked === "Liked"){
               likeText = (<Button className='likeText'onClick={() => {handleCommentUnlike(comments[i].postID,start,end)}}>Unlike </Button>);
             }
-            listOfShownComments.push(
-              <Card key={i}>
-                <Card.Title> {dict.title} </Card.Title>
-                <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                <Card.Body> {dict.comments} </Card.Body>
-                <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-                <Card.Body>
-                Likes: {dict.totalLikes}
-                <br></br>
-                {likeText}
-                </Card.Body>
-              </Card>
-            )
           }
-          var paginationBar;
-          if (posts.length > 10){
-            var paginationSlots = [];
-            for (let i = 0; i < Math.ceil(comments.length / 10); i++){
-              paginationSlots.push(
-                //FIX THIS: add more posts to be able to check this
-                <li><div className="dropdown-item" onClick={() => {showLoggedOffComments(username,comments,10 * i + 1,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
-              )
-            }
-            paginationBar = (
-              <ul className="nav nav-tabs">
-                <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
-                  <ul className="dropdown-menu">
-                    {paginationSlots}
-                  </ul>
-                </li>
-              </ul>
-            )
-          }
-          changeCode(
-            <div>
-            <h1> {username}'s Profile </h1>
-            <ul className="nav nav-tabs justify-content-center">
-              <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-              </li>
-              <li className="nav-item">
-                <div className="nav-link active" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-              </li>
-            </ul>
-            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-            <div className='listOfStuffs'>
-              {listOfShownComments}
-            </div>
-            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-            </div>
+          listOfShownComments.push(
+            <Card key={i}>
+              <Card.Title> {dict.title} </Card.Title>
+              <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+              <Card.Body> {dict.comments} </Card.Body>
+              <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+              <Card.Body>
+              Likes: {dict.totalLikes}
+              <br></br>
+              {likeText}
+              </Card.Body>
+            </Card>
           )
         }
-        else{
-          changeCode(
-            <div>
-            <h1> {username}'s Profile </h1>
-            <ul className="nav nav-tabs justify-content-center">
-              <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-              </li>
-              <li className="nav-item">
-                <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+        var paginationBar;
+        if (posts.length > 10){
+          var paginationSlots = [];
+          for (let i = 0; i < Math.ceil(comments.length / 10); i++){
+            paginationSlots.push(
+              //FIX THIS: add more posts to be able to check this
+              <li><div className="dropdown-item" onClick={() => {showComments(username,comments,10 * i + 1,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
+            )
+          }
+          paginationBar = (
+            <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
               </li>
             </ul>
-            <div className='listOfStuffs'>
-              This user has no comments that you can view.
-            </div>
-            <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-            </div>
           )
         }
+        if (listOfShownComments.length === 0){
+          listOfShownComments = (<div>There are no comments to view.</div>)
+        }
+        changeCode(
+          <div>
+          <h1> {username}'s Profile </h1>
+          <ul className="nav nav-tabs justify-content-center">
+            <li className="nav-item">
+              <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link active" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+            </li>
+          </ul>
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+          <div className='listOfStuffs'>
+            {listOfShownComments}
+          </div>
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+          </div>
+        )
       }
       function showPosts(username,posts,start,end,comments){
         changeMainBodyCSS(
@@ -545,7 +433,7 @@ function App() {
               <div className="nav-link active" aria-current="page" onClick={() => {showPosts(username,posts,start,end,comments)}}>{username}'s Posts</div>
             </li>
             <li className="nav-item">
-              <div className="nav-link" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+              <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
             </li>
           </ul>
           <div className='centerAlignPaginationBar'> {paginationBar}  </div>
@@ -633,7 +521,7 @@ function App() {
             if (variation === "posts"){
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
-              showLoggedInComments(data.username,data.comments,startPos,endPos,data.posts)
+              showComments(data.username,data.comments,startPos,endPos,data.posts)
             }else{
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
@@ -647,7 +535,7 @@ function App() {
             if (variation === "posts"){
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
-              showLoggedOffComments(data.username,data.comments,startPos,endPos,data.posts)
+              showComments(data.username,data.comments,startPos,endPos,data.posts)
             }else{
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
