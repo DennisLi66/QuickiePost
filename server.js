@@ -1801,6 +1801,7 @@ app.route("/comment")
         message: "Not Enough Information"
       })
     }
+    var privacy = (!req.query.privacy ? 'public' : req.query.privacy);
     var cQuery =
     `
     SELECT * FROM
@@ -1815,7 +1816,7 @@ app.route("/comment")
     `;
     var iQuery =
     `
-    INSERT INTO comments (postID,userID,comments,submissionDate) VALUES (?,?,?,NOW());
+    INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
     `;
     connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
       if (err1){
@@ -1831,7 +1832,7 @@ app.route("/comment")
         })
       }
       else{
-        connection.query(iQuery,[req.query.postID,req.query.userID,req.query.content],function(err2,results2,fields){
+        connection.query(iQuery,[req.query.postID,req.query.userID,req.query.content,privacy],function(err2,results2,fields){
           if (err2){
             return res.status(200).json({
               message: err2,

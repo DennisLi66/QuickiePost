@@ -731,7 +731,8 @@ function App() {
     },[cookies]
   )
   const showInDepthPost = React.useCallback(
-    (postID,commentStart = 0, commentEnd = 10) => {
+    (postID,commentStart = 0, commentEnd = 10, pact = "") => {
+      console.log(postID);
       function handlePostLike(postID){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
@@ -914,7 +915,6 @@ function App() {
           <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
           <form onSubmit={handleWritingComment}>
           <h1>Add a Comment</h1>
-
           <label htmlFor='commentContent'>Content:</label>
           <br></br>
           <textarea className='noResize' rows='5' cols='50'
@@ -937,8 +937,25 @@ function App() {
           </div>
         )
       }
-      function handleWritingComment(){
-
+      function handleWritingComment(event){
+        event.preventDefault();
+        var content = document.getElementById('postContent').value;
+        var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
+        const requestSetup = {
+            method: 'PUT',
+        }
+        // console.log(content,privacy);
+        fetch(serverLocation+"/comment?userID=" + cookies.get('id') + "&sessionID="
+          + cookies.get('sessionID') + "&postID=" + postID + "&content=" + content + "&privacy=" + privacy,requestSetup)
+          .then(response => response.json())
+          .then(data=>{
+            if (data.status === -1){
+              console.log(data);
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>);
+            }else{
+              showInDepthPost(postID,0,10,"Add");
+            }
+          })
       }
       function handlePrivacyToggled(){
         var checked = document.getElementById('privacySwitch').checked;
@@ -1003,6 +1020,7 @@ function App() {
       fetch(serverString)
         .then(response=>response.json())
         .then(data => {
+          console.log(data);
           var listOfComments = [];
           for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
             var comment = data.comments[key];
@@ -1060,10 +1078,15 @@ function App() {
           if (detect){
             writeCommentButton = (<Button onClick={() => {displayCommentWriter()}}>Add Comment</Button>)
           }
+          var confrimation = (<div></div>);
+          if (pact && pact==='Add'){
+            confrimation = (<div className='confMsg'> </div>)
+          }
           changeInDepthCode(
             <Card>
               <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
               <Card.Header><h1>{data.title}</h1></Card.Header>
+              {confrimation}
               <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
               <br></br>
               Likes: {data.totalLikes}
