@@ -10,15 +10,18 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
-//Search needs to be reworked
+//Search needs to be reworked on server side
 //INCLUDE Private posts for self users
 //add a highlight effect to the pagination bar
+//Some posts do not work when logged in.
 //Make sure all appropirate functions check session
 //Add fine tuning to posts after submission and in my posts
 //change getPosts to SELECT posts where post != private and user != private
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
+//Block List
+//Notifcation List
 //FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post //Account for not having any posts or comments
 //change color of posts and comments to better differentiate them
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
@@ -32,6 +35,7 @@ import Cookies from 'universal-cookie';
 //recheck queries
 //VIEWERSHIP ENABLEMENT
 //add better session check
+//Show in depth comment
 //if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
 function App() {
   //Variables
@@ -40,7 +44,6 @@ function App() {
   var id = cookies.get("id");
   var sessionID = cookies.get("sessionID");
   var expireTime = cookies.get("expireTime");
-  // console.log(id)
 
   const handleLogin = React.useCallback(
   (event) => {
@@ -160,6 +163,8 @@ function App() {
   const showUserProfile = React.useCallback(
     (userID,startPos = 0, endPos = 10, variation = "") => {
       //FIX THIS: Rework to single fetch?
+      //FIX THIS: If owner show some details
+      //FIX THIS: check if css is really needed?
       function cancelLogin(username,start,end,variation){
         showUserProfile(userID,start,end,variation)
       }
@@ -270,6 +275,44 @@ function App() {
         )
       }
       //Merge Comments Together
+      function showOptions(username,posts,comments){
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeCode(
+          <div>
+          <h1> {username}'s Profile </h1>
+          <ul className="nav nav-tabs justify-content-center">
+            <li className="nav-item">
+              <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+            </li>
+          </ul>
+          </div>
+        )
+      }
       function showComments(username,comments,start,end,posts){
         changeMainBodyCSS(
           {
@@ -343,10 +386,13 @@ function App() {
           <h1> {username}'s Profile </h1>
           <ul className="nav nav-tabs justify-content-center">
             <li className="nav-item">
-              <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+              <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
             </li>
             <li className="nav-item">
-              <div className="nav-link active" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+              <div className="nav-link active" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
             </li>
           </ul>
           <div className='centerAlignPaginationBar'> {paginationBar}  </div>
@@ -435,6 +481,9 @@ function App() {
             <li className="nav-item">
               <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
             </li>
+            <li className="nav-item">
+              <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+            </li>
           </ul>
           <div className='centerAlignPaginationBar'> {paginationBar}  </div>
           <div className='listOfStuffs'>
@@ -517,7 +566,7 @@ function App() {
         fetch(serverLocation + "/commentsandposts?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
           .then(response => response.json())
           .then(data=>{
-            console.log(data)
+            // console.log(data)
             if (variation === "posts"){
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
@@ -531,7 +580,7 @@ function App() {
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)
           .then(response => response.json())
           .then(data => {
-            console.log(data)
+            // console.log(data)
             if (variation === "posts"){
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
