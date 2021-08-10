@@ -19,18 +19,15 @@ import Cookies from 'universal-cookie';
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
-//FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post
+//FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post //Account for not having any posts or comments
 //change color of posts and comments to better differentiate them
-//FIX THIS: LOGIN should redirect to previous page instead of home
+//FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
-//NEED TO BE ABLE TO ADD COMMENTS
 //FIX UI
 //FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID AND YOUR ID
-//REDO QUERIES
+//REDO QUERIES - SOME NEED TO BE FIXED
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
 //may need to add privacy to cookies
-//Account for not having any posts or comments
-//Add commenting to a post
 //rewrite post pages to include pagination
 //recheck queries
 //VIEWERSHIP ENABLEMENT
@@ -162,11 +159,10 @@ function App() {
   )
   const showUserProfile = React.useCallback(
     (userID,startPos = 0, endPos = 10, variation = "") => {
-      //FIX THIS: Rework to single fetch
+      //FIX THIS: Rework to single fetch?
       function cancelLogin(username,start,end,variation){
         showUserProfile(userID,start,end,variation)
       }
-      //Move start end and variation to hidden elements
       function innerHandleLogin(event,start,end,variation){
         event.preventDefault();
         var email = document.getElementById("userEmail").value;
@@ -245,7 +241,6 @@ function App() {
               showUserProfile(userID,start,end,variation);
             }
           });
-        // console.log(email,pswrd);
       }
       function innerLoginPage(username,start,end,variation){
         changeCode(
@@ -274,6 +269,7 @@ function App() {
           </div>
         )
       }
+      //Merge Comments Together
       function showLoggedOffComments(username,comments,start,end,posts){
         changeMainBodyCSS(
           {
@@ -337,7 +333,7 @@ function App() {
             <h1> {username}'s Profile </h1>
             <ul className="nav nav-tabs justify-content-center">
               <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showLoggedOffPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
               </li>
               <li className="nav-item">
                 <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
@@ -357,7 +353,7 @@ function App() {
             <h1> {username}'s Profile </h1>
             <ul className="nav nav-tabs justify-content-center">
               <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showLoggedOffPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
               </li>
               <li className="nav-item">
                 <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
@@ -370,165 +366,6 @@ function App() {
             </div>
           )
         }
-      }
-      function showLoggedOffPosts(username,posts,start,end,comments){
-        changeMainBodyCSS(
-          {
-            height: 'auto',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeInDepthCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeWriteFormCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        var listOfShownPosts = [];
-        for (let i = start; i < (Math.min(end,posts.length)); i++){
-          var dict = posts[i];
-          listOfShownPosts.push(
-            <Card key={i}>
-              <Card.Title> {dict.title} </Card.Title>
-              <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-              <Card.Body> {dict.content} </Card.Body>
-              <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-              <Card.Body>
-              Likes: {dict.totalLikes} Comments: {dict.totalComments}
-              <br></br>
-              <Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'posts')}}>Like</Button>
-              </Card.Body>
-            </Card>
-          )
-        }
-        var paginationBar;
-        if (posts.length > 10){
-          var paginationSlots = [];
-          for (let i = 0; i < Math.ceil(posts.length / 10); i++){
-            paginationSlots.push(
-              //FIX THIS: add more posts to be able to check this
-              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedOffPosts(username,posts,10 * i + 1,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
-            )
-          }
-          paginationBar = (
-            <ul className="nav nav-tabs">
-              <li className="nav-item dropdown">
-                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-                <ul className="dropdown-menu">
-                  {paginationSlots}
-                </ul>
-              </li>
-            </ul>
-          )
-        }
-        changeCode(
-          <div>
-          <h1> {username}'s Profile </h1>
-          <ul className="nav nav-tabs justify-content-center">
-            <li className="nav-item">
-              <div className="nav-link active" aria-current="page" onClick={() => {showLoggedOffPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-            </li>
-            <li className="nav-item">
-              <div className="nav-link" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-            </li>
-          </ul>
-          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-          <div className='listOfStuffs'>
-            {listOfShownPosts}
-          </div>
-          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-          </div>
-        );
-      }
-      function showLoggedInPosts(username,posts,start,end,comments){
-        changeMainBodyCSS(
-          {
-            height: 'auto',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeInDepthCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeWriteFormCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        // console.log(posts);
-        var listOfShownPosts = [];
-        for (let i = start; i < (Math.min(end,posts.length)); i++){
-          var dict = posts[i];
-          //FIX THIS turn below into buttons
-          var likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,start,end)}}>Like</Button>);
-          if (dict.isLiked === "Liked"){
-            likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,start,end)}}>Unlike </Button>);
-          }
-          listOfShownPosts.push(
-            <Card key={i}>
-              <Card.Title> {dict.title} </Card.Title>
-              <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-              <Card.Body> {dict.content} </Card.Body>
-              <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-              <Card.Body>
-              Likes: {dict.totalLikes} Comments: {dict.totalComments}
-              <br></br>
-              {likeText}
-              </Card.Body>
-            </Card>
-          )
-        }
-        var paginationBar;
-        if (posts.length > 10){
-          var paginationSlots = [];
-          for (let i = 0; i < Math.ceil(posts.length/10); i++){
-            paginationSlots.push(
-              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showLoggedInPosts(username,posts,10 * i + 1,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
-            )
-          }
-          paginationBar = (
-            <ul className="nav nav-tabs">
-              <li className="nav-item dropdown">
-                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-                <ul className="dropdown-menu">
-                  {paginationSlots}
-                </ul>
-              </li>
-            </ul>
-          )
-        }
-        changeCode(
-          <div>
-          <h1> {username}'s Profile </h1>
-          <ul className="nav nav-tabs justify-content-center">
-            <li className="nav-item">
-              <div className="nav-link active" aria-current="page" onClick={() => {showLoggedInPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-            </li>
-            <li className="nav-item">
-              <div className="nav-link" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-            </li>
-          </ul>
-          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-          <div className='listOfStuffs'>
-            {listOfShownPosts}
-          </div>
-          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-          </div>
-        );
       }
       function showLoggedInComments(username,comments,start,end,posts){
         changeMainBodyCSS(
@@ -598,7 +435,7 @@ function App() {
             <h1> {username}'s Profile </h1>
             <ul className="nav nav-tabs justify-content-center">
               <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showLoggedInPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
               </li>
               <li className="nav-item">
                 <div className="nav-link active" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
@@ -618,7 +455,7 @@ function App() {
             <h1> {username}'s Profile </h1>
             <ul className="nav nav-tabs justify-content-center">
               <li className="nav-item">
-                <div className="nav-link" aria-current="page" onClick={() => {showLoggedOffPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                <div className="nav-link" aria-current="page" onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
               </li>
               <li className="nav-item">
                 <div className="nav-link active" onClick={()=>{showLoggedOffComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
@@ -631,6 +468,93 @@ function App() {
             </div>
           )
         }
+      }
+      function showPosts(username,posts,start,end,comments){
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        var listOfShownPosts = [];
+        var detect = cookies.get('id') && cookies.get('sessionID');
+        for (let i = start; i < (Math.min(end,posts.length)); i++){
+          var dict = posts[i];
+          var likeText = (<Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'posts')}}>Like</Button>);
+          if (detect){
+            likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,startPos,endPos)}}>Like</Button>);
+            if (dict.isLiked === "Liked"){
+              likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,startPos,endPos)}}>Unlike </Button>);
+            }
+          }
+          listOfShownPosts.push(
+            <Card key={i}>
+              <Card.Title> {dict.title} </Card.Title>
+              <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+              <Card.Body> {dict.content} </Card.Body>
+              <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+              <Card.Body>
+              Likes: {dict.totalLikes} Comments: {dict.totalComments}
+              <br></br>
+              {likeText}
+              </Card.Body>
+            </Card>
+          )
+        }
+        var paginationBar;
+        if (posts.length > 10){
+          var paginationSlots = [];
+          for (let i = 0; i < Math.ceil(posts.length/10); i++){
+            paginationSlots.push(
+              <li key={10*i+1}><div className="dropdown-item" onClick={() => {showPosts(username,posts,10 * i + 1,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
+            )
+          }
+          paginationBar = (
+            <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
+              </li>
+            </ul>
+          )
+        }
+        if (listOfShownPosts.length === 0){
+          listOfShownPosts = (<div>This user has no posts to show.</div>)
+        }
+        changeCode(
+          <div>
+          <h1> {username}'s Profile </h1>
+          <ul className="nav nav-tabs justify-content-center">
+            <li className="nav-item">
+              <div className="nav-link active" aria-current="page" onClick={() => {showPosts(username,posts,start,end,comments)}}>{username}'s Posts</div>
+            </li>
+            <li className="nav-item">
+              <div className="nav-link" onClick={()=>{showLoggedInComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+            </li>
+          </ul>
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+          <div className='listOfStuffs'>
+            {listOfShownPosts}
+          </div>
+          <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+          </div>
+        );
       }
       function handlePostLike(postID,start,end){
         var sessionID = cookies.get('sessionID');
@@ -700,17 +624,18 @@ function App() {
       }
       var sessionID = cookies.get("sessionID");
       var id = cookies.get("id");
+      //FIX THIS: Can be merged, need to add third tab
       if (sessionID && id){
         fetch(serverLocation + "/commentsandposts?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
           .then(response => response.json())
           .then(data=>{
             console.log(data)
             if (variation === "posts"){
-              showLoggedInPosts(data.username,data.posts,startPos,endPos,data.comments);
+              showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
               showLoggedInComments(data.username,data.comments,startPos,endPos,data.posts)
             }else{
-              showLoggedInPosts(data.username,data.posts,startPos,endPos,data.comments);
+              showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
           })
       }else{
@@ -720,11 +645,11 @@ function App() {
           .then(data => {
             console.log(data)
             if (variation === "posts"){
-              showLoggedOffPosts(data.username,data.posts,startPos,endPos,data.comments);
+              showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
               showLoggedOffComments(data.username,data.comments,startPos,endPos,data.posts)
             }else{
-              showLoggedOffPosts(data.username,data.posts,startPos,endPos,data.comments);
+              showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
           })
       }
@@ -732,7 +657,7 @@ function App() {
   )
   const showInDepthPost = React.useCallback(
     (postID,commentStart = 0, commentEnd = 10, pact = "") => {
-      console.log(postID);
+      // console.log(postID);
       function handlePostLike(postID){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
