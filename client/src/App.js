@@ -296,6 +296,30 @@ function App() {
             transition: 'height 2s ease-in'
           }
         );
+        var optionsMenu;
+        if (cookies.get("sessionID") && cookies.get("id")){
+          if (cookies.get('id') === userID){//isowner
+            optionsMenu = (
+              <div>
+
+              </div>
+            );
+          }else{//issomeoneelse
+            optionsMenu = (
+              <div>
+
+              </div>
+            );
+          }
+        }else{
+          optionsMenu = (
+            <div>
+            You will need to be logged in to view these options.
+            <br></br>
+            <Button onClick={() => {innerLoginPage(username,startPos,endPos,'options')}}> Login </Button>
+            </div>
+          )
+        }
         changeCode(
           <div>
           <h1> {username}'s Profile </h1>
@@ -310,6 +334,7 @@ function App() {
               <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
             </li>
           </ul>
+          {optionsMenu}
           </div>
         )
       }
@@ -585,7 +610,10 @@ function App() {
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
               showComments(data.username,data.comments,startPos,endPos,data.posts)
-            }else{
+            }else if (variation === "options"){
+              showOptions(data.username,data.posts,data.comments);
+            }
+            else{
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
           })

@@ -54,3 +54,17 @@ create table commentLikes(
     userID int NOT NULL,
     UNIQUE KEY IDS (commentID,userID)
 )
+;
+create table blocked(
+	blockedID int NOT NULL,
+    blockerID int NOT NULL,
+    UNIQUE KEY IDS (blockedID,blockerID)
+)
+;
+create table notifications(
+	notificationID int NOT NULL auto_increment primary key,
+    title varchar(255) not null,
+    content varchar(255) not null,
+--     meantFor varchar(255) not null, -- user or viewers or everyone
+    userID int not null
+)

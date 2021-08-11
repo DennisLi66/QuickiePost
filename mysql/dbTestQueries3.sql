@@ -79,7 +79,7 @@ AND (comments.visibility != 'private' or users.visibility != 'private' OR users.
       
       
       
-      
+      select * from posts;
       
       
       
