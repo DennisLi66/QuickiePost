@@ -67,4 +67,10 @@ create table notifications(
     content varchar(255) not null,
 --     meantFor varchar(255) not null, -- user or viewers or everyone
     userID int not null
+);
+create table viewershipRequests(
+	viewerID int NOT NULL,
+    posterID int NOT NULL,
+    initiatedBy int NOT NULL,
+    UNIQUE KEY IDS (viewerID,posterID)
 )

@@ -61,3 +61,23 @@ INSERT INTO comments (postID,userID,comments,visibility,submissionDate) VALUES
 (1,4,"Let me be a mod",'public',NOW() - interval - 5 minute),
 (1,4,"Let me be a mod",'public',NOW() - interval - 5 minute),
 (1,4,"Let me be a mod",'public',NOW() - interval - 5 minute);
+;
+
+-- Testing Block
+INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES
+("GoodBoi","hiimgood@google.com","SAMPLE_TEXT",'public',"user"),
+("EvilMan","hiimevil@google.com","SAMPLE TEXT",'public','user'),
+("NeutralMan","hiimneutral@yahoo.com","SAMPLE_TEXT","public","user")
+;
+INSERT INTO blocked (blockedID,blockerID) VALUES 
+(7,8),
+(8,7),
+(5,6),
+(6,5),
+(5,4);
+INSERT INTO blocked (blockedID,blockerID) VALUES 
+(1,8),
+(2,8),
+(3,8),
+(4,8),
+(5,8)

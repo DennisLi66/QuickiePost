@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 //things ill Need
 //Search needs to be reworked on server side
 //INCLUDE Private posts for self users
+//get blocklist
 //add a highlight effect to the pagination bar
 //Some posts do not work when logged in.
 //Make sure all appropirate functions check session

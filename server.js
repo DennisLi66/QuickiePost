@@ -2378,6 +2378,73 @@ app.route("/commentsandposts")
     }
   })
 app.route("/block")
+  .get(function(req,res){
+    //get all users a person is blocking
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var sQuery =
+    `
+    select blockedID,blockerID,userName from blocked
+    LEFT JOIN users ON blocked.blockedID = users.userID
+    WHERE blockerID = ?
+    `;
+    if (!req.query.sessionID || !req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: 'Not Enough Information'
+      })
+    }
+    else{
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            message: err1,
+            status: -1
+          })
+        }
+        else if (results1.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }
+        else{
+          connection.query(sQuery,[req.query.userID],function(err2,results2,fields){
+            if (err2){
+              return res.status(200).json({
+                message: err2,
+                status: -1
+              })
+            }
+            else{
+              var listOfBlockedUsers = [];
+              for (let i = 0; i < results2.length; i++){
+                listOfBlockedUsers.push({
+                  userID: results2[i].blockedID,
+                  username: results2[i].userName
+                })
+              }
+              return res.status(200).json({
+                status: 0,
+                message: "Results Retrieved.",
+                blockedUsers: listOfBlockedUsers
+              })
+            }
+          })
+        }
+      })
+    }
+  })
   .put(function(req,res){
     if (!req.query.sessionID || !req.query.userID || !req.query.blockedID){
       return res.status(200).json({
@@ -2488,10 +2555,79 @@ app.route("/block")
   })
 app.route("/viewership")
   .put(function(req,res){
-
+    //viewership needs to be confirmed by both sides
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var sQuery =
+    `
+    `;
+    var iQuery =
+    `
+    `;
+    // if (!req.query.sessionID || !req.query.userID || )
   })
   .delete(function(req,res){
-    
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var dQuery =
+    `
+    DELETE from viewers WHERE posterID = ? AND viewerID = ?;
+    `;
+    if (!req.query.sessionID || !req.query.userID || !req.query.posterID || !req.query.viewerID){
+      return res.status(200).json({
+        message: "Not Enough Information.",
+        status: -1
+      })
+    }else{
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        }
+        else if (results1.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }else{
+          connection.query(dQuery,[req.query.posterID,req.query.viewerID],function(err2,results2,fields){
+            if (err2){
+              return res.status(200).json({
+                status: -1,
+                message: err2
+              })
+            }else{
+              return res.status(200).json({
+                status: 0,
+                message: "Deletion of VIEWERSHIP Occured."
+              })
+            }
+          })
+        }
+      })
+    }
   })
 app.listen(3001, function() {
   console.log("Server Started.")

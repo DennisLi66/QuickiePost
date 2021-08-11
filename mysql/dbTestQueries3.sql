@@ -100,3 +100,10 @@ WHERE users.userID = 1
 AND users.visibility != 'hidden'
 AND posts.visibility != 'hidden'
 AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
+;
+
+
+-- get all users a user is blocking
+select * from blocked 
+LEFT JOIN users ON 
+WHERE blockerID = 8
