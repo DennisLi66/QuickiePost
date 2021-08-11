@@ -1624,7 +1624,6 @@ app.route("/user")
     })
   }
   })
-
 app.route("/comment")
   .get(function(req,res){
     var commentID = req.query.commentID;
@@ -2377,6 +2376,122 @@ app.route("/commentsandposts")
         }
       })
     }
+  })
+app.route("/block")
+  .put(function(req,res){
+    if (!req.query.sessionID || !req.query.userID || !req.query.blockedID){
+      return res.status(200).json({
+        message: "Not Enough Information.",
+        status: -1
+      })
+    }else{
+      var cQuery =
+      `
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      RIGHT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `;
+      var iQuery =
+      `
+      INSERT INTO blocked (blockedID,blockerID) VALUES (?,?);
+      `;
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            message: err1,
+            status: -1
+          })
+        }
+        else if (results1.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }
+        else{
+          connection.query(iQuery,[req.query.blockedID,req.query.userID],function(err2,results2,fields){
+            if (err2){
+              return res.status(200).json({
+                message: err2,
+                status: -1
+              })
+            }
+            else{
+              return res.status(200).json({
+                status: 0,
+                message: "Block Inserted."
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+  .delete(function(req,res){
+    if (!req.query.sessionID || !req.query.userID || !req.query.blockedID){
+      return res.status(200).json({
+        message: "Not Enough Information.",
+        status: -1
+      })
+    }else{
+      var cQuery =
+      `
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      RIGHT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `;
+      var dQuery =
+      `
+      DELETE FROM blocked WHERE blockedID = ? AND blockerID = ?;
+      `;
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        }
+        else if (results1.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }else{
+          connection.query(dQuery,[req.query.blockedID,req.query.blockerID],function(err2,results2,fields){
+            if (err2){
+              return res.status(200).json({
+                status: -1,
+                message: err2
+              })
+            }else{
+              return res.status(200).json({
+                status: 0,
+                message: "Deletion of Block Occured."
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+app.route("/viewership")
+  .put(function(req,res){
+
+  })
+  .delete(function(req,res){
+    
   })
 app.listen(3001, function() {
   console.log("Server Started.")
