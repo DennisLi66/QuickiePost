@@ -13,6 +13,7 @@ import Cookies from 'universal-cookie';
 //Search needs to be reworked on server side
 //INCLUDE Private posts for self users
 //get blocklist
+//Need to integrate the impact of being blocked
 //add a highlight effect to the pagination bar
 //Some posts do not work when logged in.
 //Make sure all appropirate functions check session
@@ -357,13 +358,60 @@ function App() {
                 <Button onClick={showBlockedList}> View Blocked List </Button>
               </div>
             );
-          }else{//issomeoneelse
-            //FIX THIS: Will need to retrieve information here
-            optionsMenu = (
+            changeCode(
               <div>
-                <Button variant='danger'> Block User </Button>
+              <h1> {username}'s Profile </h1>
+              <ul className="nav nav-tabs justify-content-center">
+                <li className="nav-item">
+                  <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                </li>
+                <li className="nav-item">
+                  <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                </li>
+                <li className="nav-item">
+                  <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                </li>
+              </ul>
+              {optionsMenu}
               </div>
-            );
+            )
+          }else{//issomeoneelse
+            fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
+              .then(response=>response.json())
+              .then(data =>{
+                var blockButton = (<Button variant='danger' onClick={blockUser}> Block User </Button>);
+                if (data.blockingThem && data.blockblockingThem === 'true'){
+                  blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
+                }
+                optionsMenu = (
+                  <div>
+                    <br></br>
+                    <Button variant='info'> Confer Viewershup </Button>
+                    <br></br>
+                    <Button variant='info'> Request Viewershup </Button>
+                    <br></br>
+                    {blockButton}
+                    <br></br>
+                  </div>
+                );
+                changeCode(
+                  <div>
+                  <h1> {username}'s Profile </h1>
+                  <ul className="nav nav-tabs justify-content-center">
+                    <li className="nav-item">
+                      <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                    </li>
+                  </ul>
+                  {optionsMenu}
+                  </div>
+                )
+              })
           }
         }else{
           optionsMenu = (
@@ -372,25 +420,25 @@ function App() {
             <br></br>
             <Button onClick={() => {innerLoginPage(username,startPos,endPos,'options')}}> Login </Button>
             </div>
+          );
+          changeCode(
+            <div>
+            <h1> {username}'s Profile </h1>
+            <ul className="nav nav-tabs justify-content-center">
+              <li className="nav-item">
+                <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+              </li>
+              <li className="nav-item">
+                <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+              </li>
+              <li className="nav-item">
+                <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+              </li>
+            </ul>
+            {optionsMenu}
+            </div>
           )
         }
-        changeCode(
-          <div>
-          <h1> {username}'s Profile </h1>
-          <ul className="nav nav-tabs justify-content-center">
-            <li className="nav-item">
-              <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-            </li>
-            <li className="nav-item">
-              <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-            </li>
-            <li className="nav-item">
-              <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-            </li>
-          </ul>
-          {optionsMenu}
-          </div>
-        )
       }
       function showComments(username,comments,start,end,posts){
         changeMainBodyCSS(
