@@ -166,7 +166,8 @@ function App() {
       //FIX THIS: Rework to single fetch?
       //FIX THIS: If owner show some details
       //FIX THIS: check if css is really needed?
-      function cancelLogin(username,start,end,variation){
+      //Login Functions
+      function cancel(username,start,end,variation){
         showUserProfile(userID,start,end,variation)
       }
       function innerHandleLogin(event,start,end,variation){
@@ -251,7 +252,7 @@ function App() {
       function innerLoginPage(username,start,end,variation){
         changeCode(
           <div>
-          <Button onClick={()=>{cancelLogin(username,start,end,variation)}}> Cancel </Button>
+          <Button onClick={()=>{cancel(username,start,end,variation)}}> Cancel </Button>
           <br></br>
           <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
             <h1> Login Page </h1>
@@ -275,7 +276,58 @@ function App() {
           </div>
         )
       }
-      //Merge Comments Together
+      //Block List functions
+      function showBlockedList(){
+        //show blocked users for a certain id
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        var userID = cookies.get("id");
+        var sessionID = cookies.get("sessionID");
+        fetch(serverLocation + "/block?userID=" + userID + "&sessionID=" + sessionID)
+          .then(response=>response.json())
+          .then(data=>{
+            console.log(data.blockedUsers);
+            var listOfBlockedUsers = [];
+            for (let i = 0; i < data.blockedUsers.length; i++){
+
+            }
+            var paginationBar;
+            var needsWork;
+            changeCode(
+              <div>
+              <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+              <h1> Users You've Blocked </h1>
+              {paginationBar}
+              {listOfBlockedUsers}
+              {paginationBar}
+              </div>
+            )
+          })
+      }
+      function blockUser(){
+
+      }
+      function unblockUser(){
+
+      }
       function showOptions(username,posts,comments){
         changeMainBodyCSS(
           {
@@ -302,13 +354,14 @@ function App() {
           if (cookies.get('id') === userID){//isowner
             optionsMenu = (
               <div>
-
+                <Button onClick={showBlockedList}> View Blocked List </Button>
               </div>
             );
           }else{//issomeoneelse
+            //FIX THIS: Will need to retrieve information here
             optionsMenu = (
               <div>
-
+                <Button variant='danger'> Block User </Button>
               </div>
             );
           }

@@ -2779,6 +2779,93 @@ app.route("/viewership")
       })
     }
   })
+app.route("/relationship")
+  .get(function(req,res){
+    //Retrieve isBlocked and isViewer and isViewee
+    if (!req.query.sessionID || !req.query.userID || !req.query.profileID){
+      return res.status(200).json({
+        message: "Not Enough Data",
+        status: -1
+      })
+    }
+    var cQuery =
+    `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    var sQuery =
+    `
+    SELECT base.userID as userID, if(blockingThem.blockerID is null,'false','true') as blockingThem, if(blockingMe.blockedID is null,'false','true') as blockingMe,
+    if(viewingThem.viewerID is null,'false','true') as viewingThem, if(viewingMe.viewerID is null,'false','true') as viewingMe,
+    if (theirViewershipRequestToViewMe.posterID is null,'false','true') as theyHaveRequestedToViewMe,
+    if (myViewershipRequestToViewMe.posterID is null,'false','true') as iHaveRequestedToViewMe,
+    if (theirViewershipRequestToViewThem.posterID is null,'false','true') as theyHaveRequestedToViewThem,
+    if (myViewershipRequestToViewThem.posterID is null,'false','true') as iHaveRequestedToViewThem
+    FROM (select ? as userID) base LEFT JOIN
+    (select * from blocked WHERE blockerID = ? and blockedID = ?) blockingThem
+    ON base.userID = blockingThem.blockerID LEFT JOIN
+    (select * from blocked WHERE blockerID = ? and blockedID = ?) blockingMe
+    ON base.userID = blockingMe.blockedID LEFT JOIN
+    (select * from viewers WHERE viewerID = ? AND posterID = ?) viewingThem
+    ON viewingThem.viewerID = base.userID LEFT JOIN
+    (select * from viewers WHERE posterID = ? AND viewerID = ?) viewingMe
+    ON base.userID = viewingMe.posterID LEFT JOIN
+    (select * from viewershipRequests WHERE posterID = ? AND viewerID = ? AND initiatedBy = ?) theirViewershipRequestToViewMe
+    ON base.userID = theirViewershipRequestToViewMe.posterID LEFT JOIN
+    (select * from viewershipRequests WHERE posterID = ? AND viewerID = ? AND initiatedBy = ?) myViewershipRequestToViewMe
+    ON base.userID = myViewershipRequestToViewMe.posterID LEFT JOIN
+    (select * from viewershipRequests WHERE posterID = ? AND viewerID = ? AND initiatedBy = ?) myViewershipRequestToViewThem
+    ON base.userID = myViewershipRequestToViewThem.viewerID LEFT JOIN
+    (select * from viewershipRequests WHERE posterID = ? AND viewerID = ? AND initiatedBy = ?) theirViewershipRequestToViewThem
+    ON base.userID = theirViewershipRequestToViewThem.viewerID;
+    `;
+    var u = req.query.userID;
+    var p = req.query.profileID;
+    var variables = [u,u,p,p,u,u,p,u,p,u,p,p,u,p,u,p,u,u,p,u,p];
+    connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+      if (err1){
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      }
+      else if (results1.length === 0){
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      }else{
+        connection.query(dQuery,variables,function(err2,results2,fields){
+          if (err2){
+            return res.status(200).json({
+              status: -1,
+              message: err2
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "Records Retrieved",
+              blockingThem: results2[0].blockingThem,
+              blockingMe: results2[0].blockingMe,
+              viewingThem: results2[0].viewingThem,
+              viewingMe: results2[0].viewingMe,
+              theyHaveRequestedToViewMe: results2[0].theyHaveRequestedToViewMe,
+              theyHaveRequestedToViewThem: results2[0].theyHaveRequestedToViewThem,
+              iHaveRequestedToViewMe: results2[0].iHaveRequestedToViewMe,
+              iHaveRequestedToViewThem: results2[0].iHaveRequestedToViewThem
+            })
+          }
+        })
+      }
+    })
+  })
 app.listen(3001, function() {
   console.log("Server Started.")
 });
