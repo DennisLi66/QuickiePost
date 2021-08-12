@@ -2556,6 +2556,109 @@ app.route("/block")
 app.route("/viewership")
   .put(function(req,res){
     //viewership needs to be confirmed by both sides
+    if (!req.query.sessionID || !req.query.userID || !req.query.viewerID || !req.query.posterID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    else if ((req.query.userID !== req.query.viewerID) && (req.query.userID !== req.query.posterID)){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Correctly Sent Information"
+      })
+    }
+    else{
+      var cQuery =
+      `
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      RIGHT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `;
+      var sQuery =
+      `
+      SELECT * FROM viewershipRequests WHERE
+      (posterID = ? AND viewerID = ? AND initiatedBy = ?)
+      `; //check that viewership has been initiated
+      var variables = [];
+      if (req.query.userID === req.query.viewerID){
+        variables = [req.query.posterID,req.query.viewerID,req.query.posterID];
+      }else{
+        variables = [req.query.posterID,req.query.viewerID,req.query.viewerID];
+      }
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        }
+        else if (results1.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }else{
+          connection.query(sQuery,variables,function(err2,results2,fields){
+            if (err2){
+              return res.status(200).json({
+                status: -1,
+                message: err2
+              })
+            }else if (results2.length === 0){
+              //insertion
+              var iQuery =
+              `
+              INSERT INTO viewershipRequests (posterID,viewerID,initiatedBy) values (?,?,?)
+              `;
+              connection.query(iQuery,[req.query.posterID,req.query.viewerID,req.query.userID],function(err3,results3,fields){
+                if (err3){
+                  return res.status(200).json({
+                    status: -1,
+                    message: err3
+                  })
+                }else{
+                  return res.status(200).json({
+                    status: 0,
+                    message: "Viewership Request Inserted."
+                  })
+                }
+              })
+            }else{
+              //insertion into viewer and delete request
+              var iAnddQuery =
+              `
+              DELETE FROM viewershipRequests WHERE viewerID = ? AND posterID = ?;
+              INSERT INTO viewers (viewerID,posterID) VALUES (?,?);
+              `;
+              connection.query(iAnddQuery,[req.query.viewerID,req.query.posterID,req.query.viewerID,req.query.posterID],function(err3,results3,fields3){
+                if (err3){
+                  return res.status(200).json({
+                    status: -1,
+                    message: err3
+                  })
+                }
+                else{
+                  return res.status(200).json({
+                    status: 0,
+                    message: "Deletion and Insertion Occurred."
+                  })
+                }
+              })
+            }
+          })
+        }
+      })
+  }
+  })
+  .patch(function(req,res){
+    //used to delete requests but not actual viewers
     var cQuery =
     `
     SELECT * FROM
@@ -2568,13 +2671,60 @@ app.route("/viewership")
     sessions
     ON sessions.userID = a.userID AND sessions.sessionDate = a.high
     `;
-    var sQuery =
-    `
-    `;
-    var iQuery =
-    `
-    `;
-    // if (!req.query.sessionID || !req.query.userID || )
+    var dQuery;
+    var variables;
+    if (!req.query.sessionID || !req.query.userID || !req.query.viewerID || !req.query.posterID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    else if ((req.query.userID !== req.query.viewerID) && (req.query.userID !== req.query.posterID)){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Correctly Sent Information"
+      })
+    }
+    else{
+      var dQuery =
+      `
+      DELETE FROM viewershipRequests
+      WHERE req.query.posterID = ? AND req.query.viewerID = ? and initiatedBy = ?;
+      `
+      if (req.query.userID === req.query.viewerID){
+        variables = [];
+      }else{
+        variables = [];
+      }
+      connection.query(cQuery,[req.query.userID,req.query.sessionID],function(err1,results1,fields){
+        if (err1){
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        }
+        else if (results1.length === 0){
+          return res.status(200).json({
+            status: -1,
+            message: "No Valid Session."
+          })
+        }else{
+          connection.query(dQuery,variables,function(err2,results2,fields){
+            if (err2){
+              return res.status(200).json({
+                status: -1,
+                message: err2
+              })
+            }else{
+              return res.status(200).json({
+                status: 0,
+                message: "Deletion of VIEWERSHIP REQUEST Occured."
+              })
+            }
+          })
+        }
+      })
+    }
   })
   .delete(function(req,res){
     var cQuery =
