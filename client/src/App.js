@@ -168,7 +168,7 @@ function App() {
       //FIX THIS: If owner show some details
       //FIX THIS: check if css is really needed?
       //Login Functions
-      function cancel(username,start,end,variation){
+      function cancel(start,end,variation){
         showUserProfile(userID,start,end,variation)
       }
       function innerHandleLogin(event,start,end,variation){
@@ -314,7 +314,7 @@ function App() {
             var needsWork;
             changeCode(
               <div>
-              <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+              <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
               <h1> Users You've Blocked </h1>
               {paginationBar}
               {listOfBlockedUsers}
@@ -324,7 +324,21 @@ function App() {
           })
       }
       function blockUser(){
-
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PUT',
+        }
+        fetch(serverLocation + "/block?sessionID=" + sessionID + "&userID=" + id + "&blockedID=" + userID,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(userID,startPos,endPos,"options");
+            }
+          })
       }
       function unblockUser(){
 
@@ -380,7 +394,7 @@ function App() {
               .then(response=>response.json())
               .then(data =>{
                 var blockButton = (<Button variant='danger' onClick={blockUser}> Block User </Button>);
-                if (data.blockingThem && data.blockblockingThem === 'true'){
+                if (data.blockingThem && data.blockingThem === 'true'){
                   blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
                 }
                 optionsMenu = (
