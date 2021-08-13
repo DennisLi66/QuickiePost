@@ -278,7 +278,7 @@ function App() {
         )
       }
       //Block List functions
-      function showBlockedList(){
+      function showBlockedList(firstPoint = 0,secondPoint = 10){
         //show blocked users for a certain id
         changeMainBodyCSS(
           {
@@ -305,13 +305,55 @@ function App() {
         fetch(serverLocation + "/block?userID=" + userID + "&sessionID=" + sessionID)
           .then(response=>response.json())
           .then(data=>{
-            console.log(data.blockedUsers);
-            var listOfBlockedUsers = [];
-            for (let i = 0; i < data.blockedUsers.length; i++){
-
+            var listOfBlockedUsers;
+            var listOfBlockedUsers1 = [];
+            for (let i = firstPoint; i < Math.min(secondPoint,data.blockedUsers.length); i++){
+              listOfBlockedUsers1.push(
+                <tr key={i}>
+                  <td>{data.blockedUsers[i].username}</td>
+                  <td> <Button onClick={()=>{showUserProfile(data.blockedUsers[i].userID)}}> View Profile </Button></td>
+                  <td> <Button onClick={()=>{unblockUser("blockMenu",firstPoint,secondPoint,data.blockedUsers[i].userID)}}> Unblock User </Button></td>
+                </tr>
+              )
+            }
+            if (data.blockedUsers.length === 0){
+              listOfBlockedUsers = (<div> You have not blocked any users.</div>)
+            }else{
+              listOfBlockedUsers = (
+                <table className='centeredTable'>
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>View Profile</th>
+                      <th>Remove From Blocked List</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                {listOfBlockedUsers1}
+                  </tbody>
+                </table>
+              )
             }
             var paginationBar;
-            var needsWork;
+            if (data.blockedUsers.length > 10){
+              var paginationSlots = [];
+              for (let i = 0; i < Math.ceil(data.blockedUsers.length / 10); i++){
+                paginationSlots.push(
+                  //FIX THIS: add more posts to be able to check this
+                  <li><div className="dropdown-item" onClick={() => {showBlockedList(10 * i + 1,Math.min(10*i+10,data.blockedUsers.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.blockedUsers.length)}</div></li>
+                )
+              }
+              paginationBar = (
+                <ul className="nav nav-tabs">
+                  <li className="nav-item dropdown">
+                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                    <ul className="dropdown-menu">
+                      {paginationSlots}
+                    </ul>
+                  </li>
+                </ul>
+              )
+            }
             changeCode(
               <div>
               <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
@@ -340,20 +382,24 @@ function App() {
             }
           })
       }
-      function unblockUser(){
+      function unblockUser(variationBlock = 'none',startUser=0,endUser=10,profileID=userID){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
         const requestSetup = {
             method: 'DELETE',
         }
-        fetch(serverLocation + "/block?sessionID=" + sessionID + "&userID=" + id + "&blockedID=" + userID,requestSetup)
+        fetch(serverLocation + "/block?sessionID=" + sessionID + "&userID=" + id + "&blockedID=" + profileID,requestSetup)
           .then(response => response.json())
           .then(data => {
-            console.log(data);
+            // console.log(data);
             if (data.status === -1){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
-              showUserProfile(userID,startPos,endPos,"options");
+              if (variationBlock === 'blockMenu'){
+                showBlockedList(startUser,endUser);
+              }else{
+                showUserProfile(profileID,startPos,endPos,"options");
+              }
             }
           })
       }
@@ -383,7 +429,7 @@ function App() {
           if (cookies.get('id') === userID){//isowner
             optionsMenu = (
               <div>
-                <Button onClick={showBlockedList}> View Blocked List </Button>
+                <Button onClick={() => {showBlockedList()}}> View Blocked List </Button>
               </div>
             );
             changeCode(
@@ -515,7 +561,7 @@ function App() {
           )
         }
         var paginationBar;
-        if (posts.length > 10){
+        if (comments.length > 10){
           var paginationSlots = [];
           for (let i = 0; i < Math.ceil(comments.length / 10); i++){
             paginationSlots.push(
