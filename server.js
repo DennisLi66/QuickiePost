@@ -2442,7 +2442,7 @@ app.route("/block")
     }
   })
   .delete(function(req, res) {
-    if (!req.query.sessionID || !req.query.userID || !req.query.blockedID) {
+    if (!req.query.sessionID || !req.query.userID || !req.query.blockedID ) {
       return res.status(200).json({
         message: "Not Enough Information.",
         status: -1
@@ -2476,7 +2476,7 @@ app.route("/block")
             message: "No Valid Session."
           })
         } else {
-          connection.query(dQuery, [req.query.blockedID, req.query.blockerID], function(err2, results2, fields) {
+          connection.query(dQuery, [req.query.blockedID, req.query.userID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
                 status: -1,

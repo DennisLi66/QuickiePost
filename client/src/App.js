@@ -341,7 +341,21 @@ function App() {
           })
       }
       function unblockUser(){
-
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'DELETE',
+        }
+        fetch(serverLocation + "/block?sessionID=" + sessionID + "&userID=" + id + "&blockedID=" + userID,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(userID,startPos,endPos,"options");
+            }
+          })
       }
       function showOptions(username,posts,comments){
         changeMainBodyCSS(
@@ -393,6 +407,7 @@ function App() {
             fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
               .then(response=>response.json())
               .then(data =>{
+                console.log(data);
                 var blockButton = (<Button variant='danger' onClick={blockUser}> Block User </Button>);
                 if (data.blockingThem && data.blockingThem === 'true'){
                   blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
@@ -702,7 +717,6 @@ function App() {
       }
       var sessionID = cookies.get("sessionID");
       var id = cookies.get("id");
-      //FIX THIS: Can be merged, need to add third tab
       if (sessionID && id){
         fetch(serverLocation + "/commentsandposts?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
           .then(response => response.json())
@@ -712,6 +726,8 @@ function App() {
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
               showComments(data.username,data.comments,startPos,endPos,data.posts)
+            }else if (variation === "options"){
+              showOptions(data.username,data.posts,data.comments);
             }else{
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
@@ -721,7 +737,6 @@ function App() {
         fetch(serverLocation + "/commentsandposts?profileID=" + userID)
           .then(response => response.json())
           .then(data => {
-            // console.log(data)
             if (variation === "posts"){
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }else if (variation === "comments"){
