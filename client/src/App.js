@@ -436,7 +436,7 @@ function App() {
                   <tr key={i}>
                     <td>{data.blockedUsers[i].username}</td>
                     <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
-                    <td> <Button onClick={()=>{stopViewingUser(data.listOfToView[i].userID)}}> Stop Viewing User</Button></td>
+                    <td> <Button onClick={()=>{removeViewership(data.listOfToView[i].userID,cookies.get('id'),firstPoint,secondPoint,"imviewing")}}> Stop Viewing User</Button></td>
                   </tr>
                 )
               }
@@ -522,7 +522,7 @@ function App() {
                 <tr key={i}>
                   <td>{data.blockedUsers[i].username}</td>
                   <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
-                  <td> <Button onClick={()=>{stopUserViewingMe(data.listOfToView[i].userID)}}> Stop Viewing User</Button></td>
+                  <td> <Button onClick={()=>{removeViewership()(cookies.get('id'),data.listOfToView[i].userID,firstPoint,secondPoint,"viewingme")}}> Stop Viewing User</Button></td>
                 </tr>
               )
             }
@@ -581,8 +581,26 @@ function App() {
       function conferViewership(){
 
       }
-      function stopViewingUser(){}
-      function stopUserViewingMe(){}
+      function removeViewership(posterID,viewerID,first,second,variation){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'DELETE',
+        }
+        fetch(serverLocation + "/viewership?posterID=" + posterID + "&viewerID=" + viewerID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              if (variation === "imviewing"){
+                showPeopleImViewing(first,second);
+              }else if (variation === "viewingme"){
+                showPeopleViewingMe(first,second);
+              }
+            }
+          })
+      }
       //options
       function showOptions(username,posts,comments){
         changeMainBodyCSS(
