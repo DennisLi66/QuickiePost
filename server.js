@@ -2797,6 +2797,126 @@ app.route("/relationship")
       }
     })
   })
+app.route("whosviewingme")
+  .get(function(req,res){
+    var cQuery =
+    `
+  SELECT * FROM
+  (select userID,max(sessionDate) as high from sessions group by userID) a
+  RIGHT JOIN
+  (
+  Select * from sessions WHERE userID = ? AND sessionID = ? AND
+  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+  )
+  sessions
+  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+  `;
+    var sQuery =
+    `
+    select viewerID,userName from viewers left join users on users.userID = viewers.viewerID WHERE viewers.posterID = ?;
+    `;
+    if (!req.query.sessionID || !req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      } else if (results1.length === 0) {
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      } else {
+        connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
+          if (err2) {
+            return res.status(200).json({
+              status: -1,
+              message: err2
+            })
+          } else {
+            var listOfToView = [];
+            for (let i = 0; i < results2.length;i++){
+              listOfToView.push({
+                userID: results2[i].viewerID,
+                username: results2[i].userName
+              })
+            }
+            return res.status(200).json({
+              status: 0,
+              message: "Records Retrieved",
+              listOfToView: listOfToView
+            })
+          }
+        })
+      }
+    })
+  })
+app.route("whoimviewing")
+  .get(function(req,res){
+    var cQuery =
+    `
+  SELECT * FROM
+  (select userID,max(sessionDate) as high from sessions group by userID) a
+  RIGHT JOIN
+  (
+  Select * from sessions WHERE userID = ? AND sessionID = ? AND
+  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+  )
+  sessions
+  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+  `;
+    var sQuery =
+    `
+    select posterID,userName from viewers left join users on users.userID = viewers.posterID WHERE viewers.viewerID = ?;
+    `;
+    if (!req.query.sessionID || !req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      } else if (results1.length === 0) {
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      } else {
+        connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
+          if (err2) {
+            return res.status(200).json({
+              status: -1,
+              message: err2
+            })
+          } else {
+            var listOfToView = [];
+            for (let i = 0; i < results2.length;i++){
+              listOfToView.push({
+                userID: results2[i].posterID,
+                username: results2[i].userName
+              })
+            }
+            return res.status(200).json({
+              status: 0,
+              message: "Records Retrieved",
+              listOfToView: listOfToView
+            })
+          }
+        })
+      }
+    })
+  })
 app.listen(3001, function() {
   console.log("Server Started.")
 });

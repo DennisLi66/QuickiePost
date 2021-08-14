@@ -128,4 +128,7 @@ ON base.userID = myViewershipRequestToViewThem.viewerID LEFT JOIN
 (select * from viewershipRequests WHERE posterID = 2 AND viewerID = 1 AND initiatedBy = 2) theirViewershipRequestToViewThem
 ON base.userID = theirViewershipRequestToViewThem.viewerID;
 
-
+-- get all users I'm viewing
+select posterID,userName from viewers left join users on users.userID = viewers.posterID;
+-- get all users viewing me
+select viewerID,userName from viewers left join users on users.userID = viewers.viewerID;

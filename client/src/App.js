@@ -165,7 +165,6 @@ function App() {
   const showUserProfile = React.useCallback(
     (userID,startPos = 0, endPos = 10, variation = "") => {
       //FIX THIS: Rework to single fetch?
-      //FIX THIS: If owner show some details
       //FIX THIS: check if css is really needed?
       //Login Functions
       function cancel(start,end,variation){
@@ -425,11 +424,14 @@ function App() {
           }
         );
         var optionsMenu;
+        var conferrequestbothviews;
         if (cookies.get("sessionID") && cookies.get("id")){
           if (cookies.get('id') === userID){//isowner
             optionsMenu = (
               <div>
                 <Button onClick={() => {showBlockedList()}}> View Blocked List </Button>
+                View List Of People I'm Viewing
+                View List Of People Who Is Viewing Me
               </div>
             );
             changeCode(
@@ -453,7 +455,6 @@ function App() {
             fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
               .then(response=>response.json())
               .then(data =>{
-                console.log(data);
                 var blockButton = (<Button variant='danger' onClick={blockUser}> Block User </Button>);
                 if (data.blockingThem && data.blockingThem === 'true'){
                   blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
