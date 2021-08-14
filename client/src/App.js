@@ -402,6 +402,104 @@ function App() {
             }
           })
       }
+      //Viewership Functions
+      function showPeopleImViewing(firstPoint = 0, secondPoint = 10){
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        var userID = cookies.get("id");
+        var sessionID = cookies.get("sessionID");
+        fetch(serverLocation + "/whoimviewing?userID="+userID+"&sessionID="+sessionID)
+            .then(response=>response.json())
+            .then(data=>{
+              var tableOfUsers;
+              var listOfUsers = [];
+              for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
+                listOfUsers.push(
+                  <tr key={i}>
+                    <td>{data.blockedUsers[i].username}</td>
+                    <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
+                    <td> <Button onClick={()=>{stopViewingUser(data.listOfToView[i].userID)}}> Stop Viewing User</Button></td>
+                  </tr>
+                )
+              }
+              if (data.listOfToView.length === 0){
+                tableOfUsers = (<div> You are not viewing any users. </div>)
+              }else{
+                tableOfUsers = (
+                  <table className='centeredTable'>
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>View Profile</th>
+                        <th>Remove From Viewing List</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {listOfUsers}
+                    </tbody>
+                  </table>
+                )
+              }
+              var paginationBar;
+              if (data.blockedUsers.length > 10){
+                var paginationSlots = [];
+                for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
+                  paginationSlots.push(
+                    //FIX THIS: add more posts to be able to check this
+                    <li><div className="dropdown-item" onClick={() => {showPeopleImViewing(10 * i + 1,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                  )
+                }
+                paginationBar = (
+                  <ul className="nav nav-tabs">
+                    <li className="nav-item dropdown">
+                      <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                      <ul className="dropdown-menu">
+                        {paginationSlots}
+                      </ul>
+                    </li>
+                  </ul>
+                )
+              }
+              changeCode(
+                <div>
+                <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                <h1> Users You've Blocked </h1>
+                {paginationBar}
+                {tableOfUsers}
+                {paginationBar}
+                </div>
+              )
+            })
+      }
+      function showPeopleViewingMe(){
+
+      }
+      function askForViewership(){
+
+      }
+      function conferViewership(){
+
+      }
+      function stopViewingUser(){}
+      //options
       function showOptions(username,posts,comments){
         changeMainBodyCSS(
           {
@@ -430,7 +528,9 @@ function App() {
             optionsMenu = (
               <div>
                 <Button onClick={() => {showBlockedList()}}> View Blocked List </Button>
-                View List Of People I'm Viewing
+                <br></br>
+                <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button>
+                <br></br>
                 View List Of People Who Is Viewing Me
               </div>
             );
