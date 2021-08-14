@@ -345,7 +345,7 @@ function App() {
               paginationBar = (
                 <ul className="nav nav-tabs">
                   <li className="nav-item dropdown">
-                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
                     <ul className="dropdown-menu">
                       {paginationSlots}
                     </ul>
@@ -470,7 +470,7 @@ function App() {
                 paginationBar = (
                   <ul className="nav nav-tabs">
                     <li className="nav-item dropdown">
-                      <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                      <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
                       <ul className="dropdown-menu">
                         {paginationSlots}
                       </ul>
@@ -481,7 +481,7 @@ function App() {
               changeCode(
                 <div>
                 <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
-                <h1> Users You've Blocked </h1>
+                <h1> Users You're Viewing' </h1>
                 {paginationBar}
                 {tableOfUsers}
                 {paginationBar}
@@ -489,8 +489,91 @@ function App() {
               )
             })
       }
-      function showPeopleViewingMe(){
-
+      function showPeopleViewingMe(firstPoint = 0, secondPoint = 10){
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        var userID = cookies.get("id");
+        var sessionID = cookies.get("sessionID");
+        fetch(serverLocation + "/whosviewingMe?userID="+userID+"&sessionID="+sessionID)
+          .then(response=>response.json())
+          .then(data=>{
+            var tableOfUsers;
+            var listOfUsers = [];
+            for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
+              listOfUsers.push(
+                <tr key={i}>
+                  <td>{data.blockedUsers[i].username}</td>
+                  <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
+                  <td> <Button onClick={()=>{stopUserViewingMe(data.listOfToView[i].userID)}}> Stop Viewing User</Button></td>
+                </tr>
+              )
+            }
+            if (data.listOfToView.length === 0){
+              tableOfUsers = (<div> You are not viewing any users. </div>)
+            }else{
+              tableOfUsers = (
+                <table className='centeredTable'>
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>View Profile</th>
+                      <th>Remove From Viewing List</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  {listOfUsers}
+                  </tbody>
+                </table>
+              )
+            }
+            var paginationBar;
+            if (data.blockedUsers.length > 10){
+              var paginationSlots = [];
+              for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
+                paginationSlots.push(
+                  //FIX THIS: add more posts to be able to check this
+                  <li><div className="dropdown-item" onClick={() => {showPeopleViewingMe(10 * i + 1,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                )
+              }
+              paginationBar = (
+                <ul className="nav nav-tabs">
+                  <li className="nav-item dropdown">
+                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
+                    <ul className="dropdown-menu">
+                      {paginationSlots}
+                    </ul>
+                  </li>
+                </ul>
+              )
+            }
+            changeCode(
+              <div>
+              <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+              <h1> Users Viewing You </h1>
+              {paginationBar}
+              {tableOfUsers}
+              {paginationBar}
+              </div>
+            )
+          })
       }
       function askForViewership(){
 
@@ -499,6 +582,7 @@ function App() {
 
       }
       function stopViewingUser(){}
+      function stopUserViewingMe(){}
       //options
       function showOptions(username,posts,comments){
         changeMainBodyCSS(
@@ -531,7 +615,7 @@ function App() {
                 <br></br>
                 <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button>
                 <br></br>
-                View List Of People Who Is Viewing Me
+                <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Is Viewing Me</Button>
               </div>
             );
             changeCode(
