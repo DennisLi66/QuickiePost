@@ -581,6 +581,13 @@ function App() {
       function conferViewership(){
 
       }
+      function cancelViewershipRequest(){
+        //for declining incoming and cancel outgoing requests
+      }
+      function acceptViewershipRequest(){
+
+      }
+
       function removeViewership(posterID,viewerID,first,second,variation){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
@@ -637,6 +644,8 @@ function App() {
                 <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button>
                 <br></br>
                 <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Is Viewing Me</Button>
+                <br></br>
+                Viewership Requests
               </div>
             );
             changeCode(
@@ -668,9 +677,51 @@ function App() {
                 if (data.viewingThem && data.viewingThem === 'true'){
                   requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id"),0,10,"stopViewership")}}> Stop Viewing This User</Button>)
                 }
+                else if (data.blockingThem && data.blockingThem === 'true'){
+                  requestViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>)
+                }
+                else if (data.blockingMe && data.blockingMe === "true"){
+                  requestViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>)
+                }
+                else if (data.theyHaveRequestedToViewThem && data.theyHaveRequestedToViewThem === "true"){
+                  requestViewershipButton =
+                  (
+                    <div>
+                      This user has sent you a viewership request to become their viewer.
+                      <br></br>
+                      <Button onClick={() => {acceptViewershipRequest()}}>Accept Request</Button>
+                      <br></br>
+                      <Button onClick={() => {cancelViewershipRequest()}}>Deny Request</Button>
+                      <br></br>
+                    </div>
+                  )
+                }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
+                  requestViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest()}}>Cancel Request</Button></div>)
+                }
                 var conferViewershipButton = (<Button variant='info' onClick={()=>{conferViewership()}}> Confer Viewership </Button>);
                 if (data.viewingMe && data.viewingMe === "true"){
                   conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
+                }
+                else if (data.blockingThem && data.blockingThem === 'true'){
+                  conferViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>);
+                }
+                else if (data.blockingMe && data.blockingMe === "true"){
+                  conferViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>);
+                }
+                else if (data.theyHaveRequestedToViewMe && data.theyHaveRequestedToViewMe === 'true'){
+                  conferViewershipButton =
+                    (
+                      <div>
+                        This user has sent you a viewership request to view them.
+                        <br></br>
+                        <Button onClick={() => {acceptViewershipRequest()}}>Accept Request</Button>
+                        <br></br>
+                        <Button onClick={() => {cancelViewershipRequest()}}>Deny Request</Button>
+                        <br></br>
+                      </div>
+                    )
+                } else if (data.iHaveRequestedToViewMe && data.iHaveRequestedToViewMe === 'true'){
+                  conferViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest()}}>Cancel Request</Button></div>)
                 }
                 optionsMenu = (
                   <div>
