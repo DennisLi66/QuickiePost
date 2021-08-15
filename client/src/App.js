@@ -597,6 +597,8 @@ function App() {
                 showPeopleImViewing(first,second);
               }else if (variation === "viewingme"){
                 showPeopleViewingMe(first,second);
+              }else if (variation === "stopViewership"){
+                showUserProfile(posterID,0,10,"options");
               }
             }
           })
@@ -661,12 +663,16 @@ function App() {
                 if (data.blockingThem && data.blockingThem === 'true'){
                   blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
                 }
+                var requestViewershipButton = (<Button variant='info' onClick={askForViewership()}> Request Viewershup </Button>);
+                if (data.viewingThem && data.viewingThem === 'true'){
+                  requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id",0,10,"stopViewership"))}}> Stop Viewing This User</Button>)
+                }
                 optionsMenu = (
                   <div>
                     <br></br>
                     <Button variant='info'> Confer Viewershup </Button>
                     <br></br>
-                    <Button variant='info'> Request Viewershup </Button>
+                    {requestViewershipButton}
                     <br></br>
                     {blockButton}
                     <br></br>
