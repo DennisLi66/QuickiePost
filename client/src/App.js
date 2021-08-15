@@ -599,6 +599,8 @@ function App() {
                 showPeopleViewingMe(first,second);
               }else if (variation === "stopViewership"){
                 showUserProfile(posterID,0,10,"options");
+              }else if (variation === "stopViewingMe"){
+                showUserProfile(viewerID,0,10,"options")
               }
             }
           })
@@ -626,7 +628,6 @@ function App() {
           }
         );
         var optionsMenu;
-        var conferrequestbothviews;
         if (cookies.get("sessionID") && cookies.get("id")){
           if (cookies.get('id') === userID){//isowner
             optionsMenu = (
@@ -665,12 +666,16 @@ function App() {
                 }
                 var requestViewershipButton = (<Button variant='info' onClick={askForViewership()}> Request Viewershup </Button>);
                 if (data.viewingThem && data.viewingThem === 'true'){
-                  requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id",0,10,"stopViewership"))}}> Stop Viewing This User</Button>)
+                  requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id"),0,10,"stopViewership")}}> Stop Viewing This User</Button>)
+                }
+                var conferViewershipButton = (<Button variant='info' onClick={()=>{conferViewership()}}> Confer Viewership </Button>);
+                if (data.viewingMe && data.viewingMe === "true"){
+                  conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
                 }
                 optionsMenu = (
                   <div>
                     <br></br>
-                    <Button variant='info'> Confer Viewershup </Button>
+                    {conferViewershipButton}
                     <br></br>
                     {requestViewershipButton}
                     <br></br>
