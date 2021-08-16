@@ -12,7 +12,6 @@ import Cookies from 'universal-cookie';
 //things ill Need
 //Search needs to be reworked on server side
 //INCLUDE Private posts for self users
-//get blocklist
 //Need to integrate the impact of being blocked
 //add a highlight effect to the pagination bar
 //Some posts do not work when logged in.
@@ -581,13 +580,31 @@ function App() {
       function conferViewership(){
 
       }
-      function cancelViewershipRequest(){
+      function cancelViewershipRequest(posterID,viewerID,variation){
         //for declining incoming and cancel outgoing requests
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PATCH',
+        }
+        fetch(serverLocation + "/viewership?userID=" + id + "&sessionID=" + sessionID +
+          "&viewerID=" + viewerID + "&posterID=" + posterID,requestSetup)
+          .then(response => response.json())
+          .then(data=>{
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              if (variation === "profile"){
+                showUserProfile(userID,0,10,"options");
+              }else{
+                //FIX THIS
+              }
+            }
+          })
       }
       function acceptViewershipRequest(){
 
       }
-
       function removeViewership(posterID,viewerID,first,second,variation){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
@@ -691,12 +708,12 @@ function App() {
                       <br></br>
                       <Button onClick={() => {acceptViewershipRequest()}}>Accept Request</Button>
                       <br></br>
-                      <Button onClick={() => {cancelViewershipRequest()}}>Deny Request</Button>
+                      <Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Deny Request</Button>
                       <br></br>
                     </div>
                   )
                 }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
-                  requestViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest()}}>Cancel Request</Button></div>)
+                  requestViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
                 }
                 var conferViewershipButton = (<Button variant='info' onClick={()=>{conferViewership()}}> Confer Viewership </Button>);
                 if (data.viewingMe && data.viewingMe === "true"){
@@ -712,16 +729,16 @@ function App() {
                   conferViewershipButton =
                     (
                       <div>
-                        This user has sent you a viewership request to view them.
+                        This user has sent you a viewership request for them to view you.
                         <br></br>
                         <Button onClick={() => {acceptViewershipRequest()}}>Accept Request</Button>
                         <br></br>
-                        <Button onClick={() => {cancelViewershipRequest()}}>Deny Request</Button>
+                        <Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Deny Request</Button>
                         <br></br>
                       </div>
                     )
                 } else if (data.iHaveRequestedToViewMe && data.iHaveRequestedToViewMe === 'true'){
-                  conferViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest()}}>Cancel Request</Button></div>)
+                  conferViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Cancel Request</Button></div>)
                 }
                 optionsMenu = (
                   <div>
