@@ -643,7 +643,7 @@ function App() {
             }
           })
       }
-      //options
+      //Main Showers
       function showOptions(username,posts,comments){
         changeMainBodyCSS(
           {
@@ -676,7 +676,9 @@ function App() {
                 <br></br>
                 <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Is Viewing Me</Button>
                 <br></br>
-                Viewership Requests
+                Change Privacy
+                <br></br>
+                <Button onClick={() => {showDeactivationPage()}}>Deactivate Account</Button>
               </div>
             );
             changeCode(
@@ -991,6 +993,34 @@ function App() {
           </div>
         );
       }
+      //Privacy Handlers
+      function showDeactivationPage(){
+        changeCode(
+          <div>
+            <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+            <h4>WARNING: Hiding your account will prevent you from accessing it until it has been reactivated.</h4>
+            <h5> This command will require you to retype your username and password.</h5>
+            <form onSubmit={handleAccountDeactivation}>
+              <label htmlFor='userEmail'>Email</label>
+              <br></br>
+              <input type="email" name="userEmail" id="userEmail" required></input>
+              <br></br>
+              <label htmlFor="pswrd" >Password</label>
+              <br></br>
+              <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+              <br></br><br></br>
+              <Button type="submit">Deactivate Account</Button>
+            </form>
+          </div>
+        )
+      }
+      function handleAccountDeactivation(){
+
+      }
+      function togglePrivacy(){
+
+      }
+      //Likers
       function handlePostLike(postID,start,end){
         var sessionID = cookies.get('sessionID');
         var id = cookies.get('id');
@@ -1057,6 +1087,7 @@ function App() {
             }
           })
       }
+      //Main
       var sessionID = cookies.get("sessionID");
       var id = cookies.get("id");
       if (sessionID && id){
