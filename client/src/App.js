@@ -602,8 +602,26 @@ function App() {
             }
           })
       }
-      function acceptViewershipRequest(){
-
+      function acceptViewershipRequest(posterID,viewerID,variation){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get('id');
+        const requestSetup = {
+            method: 'PUT'
+        }
+        fetch(serverLocation + "/viewership?userID=" + id + "&sessionID=" + sessionID
+          + "&posterID="+ posterID + "&viewerID=" + viewerID,requestSetup)
+          .then(response => response.json())
+          .then(data =>{
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              if (variation === "profile"){
+                showUserProfile(userID,0,10,"options")
+              }else{
+                //FIX THIS
+              }
+            }
+          })
       }
       function removeViewership(posterID,viewerID,first,second,variation){
         var sessionID = cookies.get('sessionID');
@@ -706,7 +724,7 @@ function App() {
                     <div>
                       This user has sent you a viewership request to become their viewer.
                       <br></br>
-                      <Button onClick={() => {acceptViewershipRequest()}}>Accept Request</Button>
+                      <Button onClick={() => {acceptViewershipRequest(userID,cookies.get('id'),'profile')}}>Accept Request</Button>
                       <br></br>
                       <Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Deny Request</Button>
                       <br></br>
@@ -731,7 +749,7 @@ function App() {
                       <div>
                         This user has sent you a viewership request for them to view you.
                         <br></br>
-                        <Button onClick={() => {acceptViewershipRequest()}}>Accept Request</Button>
+                        <Button onClick={() => {acceptViewershipRequest(cookies.get('id'),userID,'profile')}}>Accept Request</Button>
                         <br></br>
                         <Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Deny Request</Button>
                         <br></br>
