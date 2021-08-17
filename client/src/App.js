@@ -164,7 +164,7 @@ function App() {
   const showUserProfile = React.useCallback(
     (userID,startPos = 0, endPos = 10, variation = "") => {
       //FIX THIS: Rework to single fetch?
-      //FIX THIS: check if css is really needed?
+      //FIX THIS: check if changingcss is really needed?
       //Login Functions
       function cancel(start,end,variation){
         showUserProfile(userID,start,end,variation)
@@ -574,11 +574,28 @@ function App() {
             )
           })
       }
-      function askForViewership(){
-
-      }
-      function conferViewership(){
-
+      function viewershipRequest(posterID,viewerID,variation){
+        var sessionID = cookies.get('sessionID');
+        var id = cookies.get("id");
+        const requestSetup = {
+            method: 'PUT'
+        }
+        fetch(serverLocation + "/viewership?userID=" + id + "&sessionID=" + sessionID
+          + "&posterID="+ posterID + "&viewerID=" + viewerID,requestSetup)
+        .then(response => response.json())
+        .then(data =>{
+          if (data.status === -1){
+            changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+          }else{
+            if (variation === "poster"){
+              showUserProfile(posterID,0,10,"options")
+            }else if (variation === "viewer"){
+              showUserProfile(viewerID,0,10,"options")
+            }else{
+              //FIX THIS
+            }
+          }
+        })
       }
       function cancelViewershipRequest(posterID,viewerID,variation){
         //for declining incoming and cancel outgoing requests
@@ -596,27 +613,6 @@ function App() {
             }else{
               if (variation === "profile"){
                 showUserProfile(userID,0,10,"options");
-              }else{
-                //FIX THIS
-              }
-            }
-          })
-      }
-      function acceptViewershipRequest(posterID,viewerID,variation){
-        var sessionID = cookies.get('sessionID');
-        var id = cookies.get('id');
-        const requestSetup = {
-            method: 'PUT'
-        }
-        fetch(serverLocation + "/viewership?userID=" + id + "&sessionID=" + sessionID
-          + "&posterID="+ posterID + "&viewerID=" + viewerID,requestSetup)
-          .then(response => response.json())
-          .then(data =>{
-            if (data.status === -1){
-              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
-            }else{
-              if (variation === "profile"){
-                showUserProfile(userID,0,10,"options")
               }else{
                 //FIX THIS
               }
@@ -708,7 +704,7 @@ function App() {
                 if (data.blockingThem && data.blockingThem === 'true'){
                   blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
                 }
-                var requestViewershipButton = (<Button variant='info' onClick={askForViewership()}> Request Viewershup </Button>);
+                var requestViewershipButton = (<Button variant='info' onClick={viewershipRequest(userID,cookies.get('id'),"poster")}> Request Viewership </Button>);
                 if (data.viewingThem && data.viewingThem === 'true'){
                   requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id"),0,10,"stopViewership")}}> Stop Viewing This User</Button>)
                 }
@@ -724,7 +720,7 @@ function App() {
                     <div>
                       This user has sent you a viewership request to become their viewer.
                       <br></br>
-                      <Button onClick={() => {acceptViewershipRequest(userID,cookies.get('id'),'profile')}}>Accept Request</Button>
+                      <Button onClick={() => {viewershipRequest(userID,cookies.get('id'),'poster')}}>Accept Request</Button>
                       <br></br>
                       <Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Deny Request</Button>
                       <br></br>
@@ -733,7 +729,7 @@ function App() {
                 }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
                   requestViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
                 }
-                var conferViewershipButton = (<Button variant='info' onClick={()=>{conferViewership()}}> Confer Viewership </Button>);
+                var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
                 if (data.viewingMe && data.viewingMe === "true"){
                   conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
                 }
@@ -749,7 +745,7 @@ function App() {
                       <div>
                         This user has sent you a viewership request for them to view you.
                         <br></br>
-                        <Button onClick={() => {acceptViewershipRequest(cookies.get('id'),userID,'profile')}}>Accept Request</Button>
+                        <Button onClick={() => {viewershipRequest(cookies.get('id'),userID,'viewer')}}>Accept Request</Button>
                         <br></br>
                         <Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Deny Request</Button>
                         <br></br>
