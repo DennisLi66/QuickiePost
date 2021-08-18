@@ -32,7 +32,9 @@ import Cookies from 'universal-cookie';
 //REDO QUERIES - SOME NEED TO BE FIXED
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
 //may need to add privacy to cookies
+//editing posts and comments]
 //rewrite post pages to include pagination
+//LOGIN page should check if user is currently hidden
 //recheck queries
 //VIEWERSHIP ENABLEMENT
 //add better session check
@@ -676,7 +678,7 @@ function App() {
                 <br></br>
                 <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Is Viewing Me</Button>
                 <br></br>
-                Change Privacy
+                <Button onClick={()=>{showPrivacyTogglePage()}}> Change Your Visibility </Button>
                 <br></br>
                 <Button onClick={() => {showDeactivationPage()}}>Deactivate Account</Button>
               </div>
@@ -1000,7 +1002,8 @@ function App() {
             <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
             <h4>WARNING: Hiding your account will prevent you from accessing it until it has been reactivated.</h4>
             <h5> This command will require you to retype your username and password.</h5>
-            <form onSubmit={handleAccountDeactivation}>
+            <form onSubmit={handleAccountPrivacyChange}>
+              <input type="hidden" name="privacy" value="hidden"></input>
               <label htmlFor='userEmail'>Email</label>
               <br></br>
               <input type="email" name="userEmail" id="userEmail" required></input>
@@ -1014,11 +1017,47 @@ function App() {
           </div>
         )
       }
-      function handleAccountDeactivation(){
-
+      function handleAccountPrivacyChange(){
+           var empty;
       }
-      function togglePrivacy(){
-
+      function showPrivacyTogglePage(){
+        fetch(serverLocation + "/user?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID"))
+          .then(response => response.json())
+          .then(data=>{
+            var privacyText;
+            var hiddenInput;
+            if (!data.userVisibility || data.userVisibility === "public"){
+              privacyText = (<div> Your visibility is currently set to PUBLIC, and you will be changing it to PRIVATE. </div>);
+              hiddenInput = "private";
+            }else if (data.userVisibility === "hidden"){
+              ///oops error
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              return;
+            }else if (data.userVisibility === "private"){
+              privacyText = (<div> Your visibility is currently set to PRIVATE, and you will be changing it to PUBLIC. </div>);
+              hiddenInput = "public";
+            }
+            changeCode(
+              <div>
+              {privacyText}
+              <form onSubmit={handleAccountPrivacyChange}>
+                In order to change your visibility settings, you will need to enter your login details.
+                <input type='hidden' name='privacy' value={hiddenInput}></input>
+                <br></br>
+                <label htmlFor='userEmail'>Email</label>
+                <br></br>
+                <input type="email" name="userEmail" id="userEmail" required></input>
+                <br></br>
+                <label htmlFor="pswrd" >Password</label>
+                <br></br>
+                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                <br></br><br></br>
+                <Button type="submit">Change Privacy</Button>
+              </form>
+              </div>
+            )
+            }
+          )
       }
       //Likers
       function handlePostLike(postID,start,end){

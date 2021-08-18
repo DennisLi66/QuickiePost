@@ -1499,12 +1499,13 @@ app.post("/login", function(req, res) {
 })
 
 app.route("/user")
+//FIX THIS: Need to account for owner
   //Get User and Associated Posts
   .get(function(req, res) {
     var userID = req.query.userID;
     //Get hidden posts if mod or admin
     //Get private posts if mod, admin, or owner
-    var sQuery = "SELECT * FROM users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = ? ORDER BY subDate DESC";
+    var sQuery = "SELECT * FROM (select userID, userName, email, pswrd, visibility as userVisibility from users) users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = 1 ORDER BY subDate DESC";
     connection.query(sQuery, [req.query.userID], function(err, results, fields) {
       if (err) {
         console.log(err);
@@ -1534,6 +1535,7 @@ app.route("/user")
             status: 0,
             message: "User Found",
             username: results[0].userName,
+            userVisibility: results[0].userVisibility,
             posts: toPrep
           })
         }
@@ -2917,9 +2919,9 @@ app.route("whoimviewing")
       }
     })
   })
-app.route("deactivate")
+app.route("changeVisibility")
   .post(function(req, res) {
-    if (!req.body.sessionID || !req.body.userID || !req.body.password || !req.body.email) {
+    if (!req.body.sessionID || !req.body.userID || !req.body.password || !req.body.email || !req.body.visibility) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
@@ -2944,7 +2946,7 @@ app.route("deactivate")
       var uQuery = // update user
         `
       UPDATE users
-      SET visibility = hidden
+      SET visibility = ?
       WHERE email = ?;
       `;
       connection.query(cQuery, [req.body.userID, req.body.sessionID], function(err1, results1, fields1) {
@@ -2978,7 +2980,7 @@ app.route("deactivate")
                     message: err3
                   })
                 } else if (rresult) {
-                  connection.query(uQuery, [req.qbody.email], function(err3, results3, fields3) {
+                  connection.query(uQuery, [req.body.visibility,req.qbody.email], function(err3, results3, fields3) {
                     if (err3) {
                       return res.status(200).json({
                         status: -1,

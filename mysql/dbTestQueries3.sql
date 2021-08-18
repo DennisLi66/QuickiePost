@@ -32,8 +32,8 @@ AND users.visibility != 'hidden'
 AND posts.visibility != 'hidden' 
 AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 1 or viewers.viewerID = 1)
 ;
-
-
+SELECT * FROM (select userID, userName, email, pswrd, visibility as userVisibility from users) users LEFT JOIN posts ON users.userID = posts.userID WHERE users.userID = 1 ORDER BY subDate DESC
+;
       select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility,totalLikes,totalComments from posts
       LEFT JOIN users ON users.userID = posts.userID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
