@@ -2442,7 +2442,7 @@ app.route("/block")
     }
   })
   .delete(function(req, res) {
-    if (!req.query.sessionID || !req.query.userID || !req.query.blockedID ) {
+    if (!req.query.sessionID || !req.query.userID || !req.query.blockedID) {
       return res.status(200).json({
         message: "Not Enough Information.",
         status: -1
@@ -2798,9 +2798,9 @@ app.route("/relationship")
     })
   })
 app.route("whosviewingme")
-  .get(function(req,res){
+  .get(function(req, res) {
     var cQuery =
-    `
+      `
   SELECT * FROM
   (select userID,max(sessionDate) as high from sessions group by userID) a
   RIGHT JOIN
@@ -2812,10 +2812,10 @@ app.route("whosviewingme")
   ON sessions.userID = a.userID AND sessions.sessionDate = a.high
   `;
     var sQuery =
-    `
+      `
     select viewerID,userName from viewers left join users on users.userID = viewers.viewerID WHERE viewers.posterID = ?;
     `;
-    if (!req.query.sessionID || !req.query.userID){
+    if (!req.query.sessionID || !req.query.userID) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
@@ -2841,7 +2841,7 @@ app.route("whosviewingme")
             })
           } else {
             var listOfToView = [];
-            for (let i = 0; i < results2.length;i++){
+            for (let i = 0; i < results2.length; i++) {
               listOfToView.push({
                 userID: results2[i].viewerID,
                 username: results2[i].userName
@@ -2858,9 +2858,9 @@ app.route("whosviewingme")
     })
   })
 app.route("whoimviewing")
-  .get(function(req,res){
+  .get(function(req, res) {
     var cQuery =
-    `
+      `
   SELECT * FROM
   (select userID,max(sessionDate) as high from sessions group by userID) a
   RIGHT JOIN
@@ -2872,10 +2872,10 @@ app.route("whoimviewing")
   ON sessions.userID = a.userID AND sessions.sessionDate = a.high
   `;
     var sQuery =
-    `
+      `
     select posterID,userName from viewers left join users on users.userID = viewers.posterID WHERE viewers.viewerID = ?;
     `;
-    if (!req.query.sessionID || !req.query.userID){
+    if (!req.query.sessionID || !req.query.userID) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
@@ -2901,7 +2901,7 @@ app.route("whoimviewing")
             })
           } else {
             var listOfToView = [];
-            for (let i = 0; i < results2.length;i++){
+            for (let i = 0; i < results2.length; i++) {
               listOfToView.push({
                 userID: results2[i].posterID,
                 username: results2[i].userName
@@ -2916,6 +2916,93 @@ app.route("whoimviewing")
         })
       }
     })
+  })
+app.route("deactivate")
+  .post(function(req, res) {
+    if (!req.body.sessionID || !req.body.userID || !req.body.password || !req.body.email) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    } else {
+      var cQuery = //check session
+        `
+      SELECT * FROM
+      (select userID,max(sessionDate) as high from sessions group by userID) a
+      RIGHT JOIN
+      (
+      Select * from sessions WHERE userID = ? AND sessionID = ? AND
+      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+      )
+      sessions
+      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+      `;
+      var cQuery2 = // check user
+        `
+      SELECT * FROM users WHERE email = ?;
+      `;
+      var uQuery = // update user
+        `
+      UPDATE users
+      SET visibility = hidden
+      WHERE email = ?;
+      `;
+      connection.query(cQuery, [req.body.userID, req.body.sessionID], function(err1, results1, fields1) {
+        if (err1) {
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        } else if (results1.length === 0) {
+          return res.status(200).json({
+            status: -1,
+            message: "Non-Valid Session."
+          })
+        } else {
+          connection.query(cQuery2, [req.body.email], function(err2, results2, fields2) {
+            if (err2) {
+              return res.status(200).json({
+                status: -1,
+                message: err2
+              })
+            } else if (results2.length !== 1) {
+              return res.status.json({
+                status: -2,
+                message: "Not Valid Username/Passcode Combo"
+              })
+            } else {
+              bcrypt.compare(pswrd, resPass, function(err3, rresult) {
+                if (err3) {
+                  return res.status(200).json({
+                    status: -1,
+                    message: err3
+                  })
+                } else if (rresult) {
+                  connection.query(uQuery, [req.qbody.email], function(err3, results3, fields3) {
+                    if (err3) {
+                      return res.status(200).json({
+                        status: -1,
+                        message: err3
+                      })
+                    } else {
+                      return res.status(200).json({
+                        status: 0,
+                        message: "Account Hidden"
+                      })
+                    }
+                  })
+                } else {
+                  return res.status(200).json({
+                    status: -2,
+                    message: "Not Valid Username/Passcode Combo"
+                  })
+                }
+              })
+            }
+          })
+        }
+      })
+    }
   })
 app.listen(3001, function() {
   console.log("Server Started.")
