@@ -41,6 +41,7 @@ import Cookies from 'universal-cookie';
 //add better session check
 //Show in depth comment
 //if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
+//FIX THIS: Update Cyclical Connections between simplePost, indepth Pist, etc
 
 function App() {
   //Variables
@@ -1747,7 +1748,7 @@ function App() {
           </Card>
           )
         }
-      //Rerendering Functions -GETEMS
+      //Search Page
       function getSearchPage(){
         hideWriteForm();
         changeCode(
@@ -1775,6 +1776,82 @@ function App() {
           </div>
         )
       }
+      function handleSearch(event){
+        event.preventDefault();
+        //FIX THIS: HANDLE SESSIONID AND ID
+        //FIX THIS: DOESNT EVEN WORK
+        var title = document.getElementById("title").value;
+        var content = document.getElementById("content").value;
+        var username = document.getElementById("username").value;
+        var sDate = document.getElementById("sDate").value;
+        var url = serverLocation + "/search?";
+        var toJoin = [];
+        if (title){
+          console.log("Title: " + title);
+          toJoin.push("title=" + title);
+        }
+        if (content){
+          console.log("Content: " + content);
+          toJoin.push("content=" + content);
+        }
+        if (username){
+          console.log("Username: " + username);
+          toJoin("username=" + username);
+        }
+        if (sDate){
+          console.log("sdate: " + sDate);
+          toJoin.push("sDate=" + sDate);
+        }
+        if (cookies.get("sessionID")){
+          toJoin.push("sessionID=" + cookies.get("sessionID"));
+        }
+        if (cookies.get("id")){
+          toJoin.push("userID=" + cookies.get("id"));
+        }
+        url += toJoin.join('&')
+        url = encodeURI(url);
+        console.log(url);
+        //fetch and changecode to a new screen that displays all the posts
+        fetch(url)
+        .then(response=>response.json())
+        .then(data => {
+          console.log(data);
+          var listOfPosts = [];
+          for ( const key in data.contents){
+            // console.log(simplePost(data.contents[key]));
+            listOfPosts.push(simplePost(key,data.contents[key]))
+          }
+          if (listOfPosts.length === 0){
+            listOfPosts = (<div>There were no posts matching your criteria.</div>)
+          }
+          changeCode(
+            <div>
+            <h1> Search for a Post </h1>
+            <form onSubmit={handleSearch}>
+            <label htmlFor='title'>Search for Title:</label>
+            <br></br>
+            <input name='title' id='title' placeholder={title}></input>
+            <br></br>
+            <label htmlFor='content'>Search by Contents:</label>
+            <br></br>
+            <input name='content'  id='content' placeholder={content}></input>
+            <br></br>
+            <label htmlFor='username'>Search by Username:</label>
+            <br></br>
+            <input name='username' placeholder={username} id='username'></input>
+            <br></br>
+            <label htmlFor='date'>Search By Date:</label>
+            <br></br>
+            <input name='date' placeholder={sDate} type='date' id='sDate'></input>
+            <br></br><br></br>
+            <Button variant='dark' type="submit"> Submit </Button>
+            </form>
+            {listOfPosts}
+            </div>
+          )
+        })
+      }
+      ////////////////
       function getRegistrationPage(){
         hideWriteForm();
         // if (checkSessionID()){
@@ -1974,89 +2051,6 @@ function App() {
         //be able to delete Account
       }
       //Event Handlers
-      function handleSearch(event){
-        event.preventDefault();
-        //FIX THIS: HANDLE SESSIONID AND ID
-        //FIX THIS: DOESNT EVEN WORK
-        var title = document.getElementById("title").value;
-        var content = document.getElementById("content").value;
-        var username = document.getElementById("username").value;
-        var sDate = document.getElementById("sDate").value;
-        var url = serverLocation + "/search?";
-        var isBig = false;
-        if (title){
-          console.log("Title: " + title);
-          isBig = true;
-          url += "title=" + title;
-        }
-        if (content){
-          console.log("Content: " + content );
-          if (isBig){
-            url += "&content=" + content;
-          }else{
-            isBig = true;
-            url += "content=" + content;
-          }
-        }
-        if (username){
-          console.log("Username: " + username);
-          if (isBig){
-            url += "&username=" + username;
-          }else{
-            isBig = true;
-            url += "username=" + username;
-          }
-        }
-        if (sDate){
-          console.log("sdate: " + sDate);
-          if (isBig){
-            url += "&sdate=" + sDate
-          }else{
-            url += "sDate=" + sDate;
-          }
-        }
-        url = encodeURI(url);
-        console.log(url);
-        //fetch and changecode to a new screen that displays all the posts
-        fetch(url)
-        .then(response=>response.json())
-        .then(data => {
-          console.log(data);
-          var listOfPosts = [];
-          for ( const key in data.contents){
-            // console.log(simplePost(data.contents[key]));
-            listOfPosts.push(simplePost(key,data.contents[key]))
-          }
-          if (listOfPosts.length === 0){
-            listOfPosts = (<div>There were no posts matching your criteria.</div>)
-          }
-          changeCode(
-            <div>
-            <h1> Search for a Post </h1>
-            <form onSubmit={handleSearch}>
-            <label htmlFor='title'>Search for Title:</label>
-            <br></br>
-            <input name='title' id='title' placeholder={title}></input>
-            <br></br>
-            <label htmlFor='content'>Search by Contents:</label>
-            <br></br>
-            <input name='content'  id='content' placeholder={content}></input>
-            <br></br>
-            <label htmlFor='username'>Search by Username:</label>
-            <br></br>
-            <input name='username' placeholder={username} id='username'></input>
-            <br></br>
-            <label htmlFor='date'>Search By Date:</label>
-            <br></br>
-            <input name='date' placeholder={sDate} type='date' id='sDate'></input>
-            <br></br><br></br>
-            <Button variant='dark' type="submit"> Submit </Button>
-            </form>
-            {listOfPosts}
-            </div>
-          )
-        })
-      }
       function handleRegistration(event){
         event.preventDefault();
         // if (checkSessionID()){
