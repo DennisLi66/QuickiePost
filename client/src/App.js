@@ -28,6 +28,7 @@ import Cookies from 'universal-cookie';
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
+//NEED to be able to reach posts and comments from profile
 //FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID AND YOUR ID
 //REDO QUERIES - SOME NEED TO BE FIXED
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
@@ -40,13 +41,14 @@ import Cookies from 'universal-cookie';
 //add better session check
 //Show in depth comment
 //if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
+//FIX THIS FOCUS ON REMOVING ALL THESE HOOKS TO ALLOW CYCLICAL BEHAVIORS
+//FIX THIS one option i have is to put everything in a usecallback inside getHome THIS IS MOST LIKELY IT
+
+
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
   const cookies = React.useMemo(() => {return new Cookies()},[])
-  var id = cookies.get("id");
-  var sessionID = cookies.get("sessionID");
-  var expireTime = cookies.get("expireTime");
 
   const handleLogin = React.useCallback(
   (event) => {
@@ -158,11 +160,7 @@ function App() {
   },[handleLogin]
   )
     //Set up Functions
-  const showInDepthComment = React.useCallback(
-      (commentID) => {
-        console.log(commentID,sessionID,id)
-      },[sessionID,id]
-  )
+
   const showUserProfile = React.useCallback(
     (userID,startPos = 0, endPos = 10, variation = "") => {
       //FIX THIS: Rework to single fetch?
@@ -1204,6 +1202,75 @@ function App() {
       }
     },[cookies]
   )
+  const showInDepthComment = React.useCallback(
+      (commentID) => {
+        function editComment(){
+          var needsWork;
+        }
+        var serverString = serverLocation + "/comment?commentID=" + commentID +
+          (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
+          (cookies.get("id") ? "&id=" + cookies.get("id") : "");
+        fetch(serverString)
+          .then(response => response.json())
+          .then(data => {
+            //should display post and comment information
+            // status: 0,
+            // message: "Here's your comment.",
+            // comment: results.comments,
+            // commentID: results.commentID,
+            // commenterID: results.commenterID,
+            // commentVisibility: results.commentVisibility,
+            // commentDate: results.commentDate,
+            // commenterUsername: results.commenterUsername,
+            // commenterVisibility: results.commenterVisibility,
+            // commentLiked: results.commentLiked,
+            // postLiked: results.postLiked,
+            // posterID: results.authorID,
+            // postID: results.postID,
+            // title: results.title,
+            // content: results.content,
+            // postVisibility: results.postVisibility,
+            // postDate: results.postDate,
+            // posterUsername: results.posterUsername,
+            // posterVisibility: results.posterVisibility
+            var editButton;
+            var likePostButton;
+            var likeCommentButton;
+            if (data.commenterID === cookies.get("id")){
+              editButton = (
+                <Card.Body>
+                  <Button onClick={()=>{editComment()}}>Edit Comment</Button>
+                </Card.Body>
+              )
+            }
+            changeCode(
+              <div>
+                <Card>
+                <Card.Title>Comment Information</Card.Title>
+                <Card.Subtitle> {"Username: " + data.commenterUsername} </Card.Subtitle>
+                <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
+                <Card.Body> {data.comment} </Card.Body>
+                {editButton}
+                <Card.Body> Like Button </Card.Body>
+                <Card.Subtitle> {data.commentDate} </Card.Subtitle>
+                </Card>
+                <Card>
+                <Card.Title>Post Information</Card.Title>
+                <Card.Title>{data.title}</Card.Title>
+                <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
+                <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
+                <Card.Body> {data.content} </Card.Body>
+                <Card.Body> Like Button </Card.Body>
+                <Card.Subtitle> {data.postDate} </Card.Subtitle>
+                </Card>
+              </div>
+            )
+            ///FIX THIS: May need more details or beautification
+            //FIX THIS: Maybe Include the like button above?
+            //FIX ThIS: Need to add the associated links above
+          })
+      },[cookies]
+  )
   const showInDepthPost = React.useCallback(
     (postID,commentStart = 0, commentEnd = 10, pact = "") => {
       // console.log(postID);
@@ -1486,6 +1553,7 @@ function App() {
           transition: 'height 2s ease-in'
         }
       );
+      //FIX THIS: Need to Show Edit Post Functionality if Post Writer === USer
       var detect = cookies.get("sessionID") && cookies.get("id");
       var serverString = serverLocation + "/post?postID=" + postID;
       if (detect){
@@ -1583,25 +1651,6 @@ function App() {
   const simplePost = React.useCallback(
     (key,dict) => {
       var likeText;
-      // if (dict.Liked && dict.Liked === "Liked"){
-      // likeText = (
-      //   <Button onClick={()=>{showInDepthPost(dict.postID)}}>Unlike</Button>
-      // <br></br>
-      // <Button onClick={()=>{showInDepthPost(dict.postID)}}>
-      //   Comment
-      // </Button>
-      // <br></br>
-      // );
-      // }else{
-      // likeText = (
-      //   <Button onClick={()=>{showInDepthPost(dict.postID)}}>Like</Button>
-      // <br></br>
-      // <Button onClick={()=>{showInDepthPost(dict.postID)}}>
-      //   Comment
-      // </Button>
-      // <br></br>
-      // );
-      // }
       likeText = (
         <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
       )
@@ -2179,10 +2228,7 @@ function App() {
     //really only necessary if sessionID exists and timelimit is over
     //read sessionID and log out user if timeline is too old
     // console.log(expireTime);
-    if (expireTime !== "forever" && Date.now() >= expireTime){
-      // console.log(Date.now() > expireTime);
-      // console.log(Date.now() < expireTime);
-      // console.log("Error1")
+    if (cookies.get('expireTime') !== "forever" && Date.now() >= cookies.get('expireTime')){
       getExpiredHome();
       return true;
     }
@@ -2190,7 +2236,7 @@ function App() {
       return false;
     }
     var expiry = cookies.get("expireTime");
-    if (!expiry || (expiry !== "forever" && Date.now() >= expireTime)){
+    if (!expiry || (expiry !== "forever" && Date.now() >= expiry)){
       getExpiredHome();
       // console.log("Error2");
       return true;
@@ -2249,27 +2295,11 @@ function App() {
     cookies.remove("expireTime",{path:"/"})
     cookies.remove("name",{path:'/'});
     cookies.remove("id",{path:'/'});
-    sessionID = null;
-    expireTime = null;
-    id = null;
     changeLoggedOut(true);
     changeLoggedIn(false);
     fetch(serverLocation + "/posts")
       .then(response=>response.json())
       .then(data => {
-          // console.log(data.contents);
-          // for ( const key in data.contents){
-          //   // console.log(simplePost(data.contents[key]));
-          //   listOfPosts.push(simplePost(key,data.contents[key]))
-          // }
-          // console.log(listOfPosts);
-          // changeCode(
-          //   <div>
-          //   <div className='confMsg'> You have been logged out. </div>
-          //  <h1> QuickiePost </h1>
-          //   {listOfPosts}
-          //   </div>
-          // )
           getHome('exit');
       })
   }
@@ -2284,7 +2314,6 @@ function App() {
             for ( const key in data.contents){
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
-            // console.log(listOfPosts);
             if (listOfPosts.length === 0){
               listOfPosts = (<div> There are no posts to show.</div>)
             }
@@ -2295,10 +2324,9 @@ function App() {
               </div>
             )
         })
-
-  },[changeCode,simplePost,sessionID,id])
+  },[changeCode,simplePost])
   React.useEffect(() => {
-    if (id && (expireTime === "forever" || Date.now() < expireTime)){
+    if (cookies.get('id') && (cookies.get('expireTime') === "forever" || Date.now() < cookies.get('expireTime'))){
       console.log("Logged In");
       changeLoggedIn(true);
       changeLoggedOut(false);
@@ -2312,7 +2340,7 @@ function App() {
       cookies.remove("name",{path:'/'});
       cookies.remove("id",{path:'/'});
     }
-  },[expireTime,id,changeLoggedIn,changeLoggedOut,cookies])
+  },[changeLoggedIn,changeLoggedOut,cookies])
 
   return (
     <div className="App">
