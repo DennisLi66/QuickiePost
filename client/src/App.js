@@ -646,7 +646,7 @@ function App() {
           })
       }
       //Main Showers
-      function showOptions(username,posts,comments){
+      function showOptions(username,posts,comments,variation=null){
         changeMainBodyCSS(
           {
             height: 'auto',
@@ -670,8 +670,13 @@ function App() {
         var optionsMenu;
         if (cookies.get("sessionID") && cookies.get("id")){
           if (cookies.get('id') === userID){//isowner
+            var banner;
+            if (variation === "privacyChanged"){
+              banner = (<div className='confMsg'>Your visibility settings have successfully been changed.</div>)
+            }
             optionsMenu = (
               <div>
+                {banner}
                 <Button onClick={() => {showBlockedList()}}> View Blocked List </Button>
                 <br></br>
                 <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button>
@@ -1017,8 +1022,42 @@ function App() {
           </div>
         )
       }
-      function handleAccountPrivacyChange(){
-           var empty;
+      function handleAccountPrivacyChange(event){
+        event.preventDefault();
+        var sessionID = cookies.get("sessionID");
+        var id = cookies.get("id");
+        var visibility = document.getElementById("privacy").value;
+        var email = document.getElementById("email").value;
+        var pswrd = document.getElementById("pswrd").value;
+        const requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({email: email, password:pswrd, sessionID: sessionID, userID: id, visbility:visibility})
+        };
+        fetch(serverLocation + "/changeVisibility",requestSetup)
+          .then(response=>response.json())
+          .then(data=>{
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              if (visibility === "hidden"){
+                //remove all cookies and set them at home
+                cookies.remove("sessionID",{path: '/'});
+                cookies.remove("expireTime",{path:"/"})
+                cookies.remove("name",{path:'/'});
+                cookies.remove("id",{path:'/'});
+                changeLoggedOut(true);
+                changeLoggedIn(false);
+                changeCode(
+                  <div>You have successfully deactivated your account. You will be redirected in a few seconds.</div>
+                )
+                setTimeout(window.location.reload(),10000);
+              }else{
+                //redirect to options
+                showUserProfile(userID,0,10,"privacyChanged");
+              }
+            }
+          })
       }
       function showPrivacyTogglePage(){
         fetch(serverLocation + "/user?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID"))
@@ -1042,7 +1081,7 @@ function App() {
               {privacyText}
               <form onSubmit={handleAccountPrivacyChange}>
                 In order to change your visibility settings, you will need to enter your login details.
-                <input type='hidden' name='privacy' value={hiddenInput}></input>
+                <input type='hidden' id="privacy" name='privacy' value={hiddenInput}></input>
                 <br></br>
                 <label htmlFor='userEmail'>Email</label>
                 <br></br>
@@ -1140,6 +1179,8 @@ function App() {
               showComments(data.username,data.comments,startPos,endPos,data.posts)
             }else if (variation === "options"){
               showOptions(data.username,data.posts,data.comments);
+            }else if (variation === "privacyChanged"){
+              showOptions(data.username,data.posts,data.comments,"privacyChanged");
             }else{
               showPosts(data.username,data.posts,startPos,endPos,data.comments);
             }
