@@ -154,9 +154,9 @@ app.get("/posts", function(req, res) {
         })
       } else if (results) {
         // console.log(results);
-        var toPrep = {};
+        var toPrep = [];
         for (let i = 0; i < results.length; i++) {
-          toPrep[i] = {
+          toPrep.push({
             title: results[i].title,
             userID: results[i].userID,
             content: results[i].content,
@@ -165,7 +165,7 @@ app.get("/posts", function(req, res) {
             totalLikes: results[i].totalLikes,
             totalComments: results[i].totalComments,
             postID: results[i].postID
-          }
+          })
         }
         return res.status(200).json({
           status: 0,
