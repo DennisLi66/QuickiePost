@@ -268,30 +268,100 @@ app.get("/search", function(req, res) {
   }
   var toJoinQuery = [];
   var variables = [];
-  if (title){
+  if (title) {
     toJoinQuery.push(" AND title LIKE ?");
     variables.push('%' + title + '%');
   }
-  if (content){
+  if (content) {
     toJoinQuery.push(" AND content LIKE ?");
     variables.push('%' + content + '%');
   }
-  //Maybe make Day a range
-  if (sdate){
+  //FIX THIS? Maybe make Day a range
+  if (sdate) {
     toJoinQuery.push(' AND DATE(subDate) = ?');
     variables.push(sdate);
   }
-  if (username){
+  if (username) {
     toJoinQuery.push(" AND username = ?");
     variables.push(username);
   }
-  if (sessionID && userID){
+  if (sessionID && userID) {
     //logged in version -- perform cQuery -- do other one first
-        //update query to consider user being hidden or private
-    var cQuery;
-  }else{
+    //update query to consider user being hidden or private
+    var cQuery =
+      `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          message: err1,
+          status: -1
+        })
+      } else if (results1.length === 0) {
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      } else {
+        var sQuery =
+          `
+        SELECT * from posts
+        LEFT JOIN
+        (select userid,username,visibility,viewerID from users left join (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = users.userID) uzers
+        on uzers.userID = posts.userID
+        WHERE
+        posts.visibility != 'hidden'
+        AND uzers.visibility != 'hidden'
+        AND (posts.visibility != 'private' OR viewerID is not null)
+        AND (uzers.visibility != 'private' OR viewerID is not null)
+        `;
+        sQuery += toJoinQuery.join("");
+        var stuff = [userID].concat(variables);
+        connection.query(sQuery, stuff, function(err, results, fields) {
+          if (err) {
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          } else {
+            if (results.length > 0) {
+              var toPrep = [];
+              for (let i = 0; i < results.length; i++) {
+                toPrep.push({
+                  title: results[i].title,
+                  userID: results[i].userID,
+                  content: results[i].content,
+                  subDate: results[i].subDate,
+                  username: results[i].username
+                })
+              }
+              return res.status(200).json({
+                status: 0,
+                message: "Posts Returned.",
+                contents: toPrep
+              })
+            } else {
+              return res.status(200).json({
+                status: 1,
+                message: "No values returned."
+              })
+            }
+          }
+        })
+      }
+    })
+  } else {
     var sQuery =
-    `
+      `
     SELECT * from posts
     LEFT JOIN
     (select userid,username,visibility from users) uzers
@@ -300,24 +370,23 @@ app.get("/search", function(req, res) {
     AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
     `;
     sQuery += toJoinQuery.join("");
-    connection.query(sQuery,variables,function(err,results,fields){
-      if (err){
+    connection.query(sQuery, variables, function(err, results, fields) {
+      if (err) {
         return res.status(200).json({
           status: -1,
           message: err
         })
-      }
-      else{
+      } else {
         if (results.length > 0) {
-          var toPrep = {};
+          var toPrep = [];
           for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
+            toPrep.push({
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
               subDate: results[i].subDate,
               username: results[i].username
-            }
+            })
           }
           return res.status(200).json({
             status: 0,
@@ -562,7 +631,7 @@ app.route("/post")
       })
     }
   })
-  //Add Single POST
+  //Add Single POST FIX THIS: prolly need a session checked
   .put(function(req, res) {
     //GET ID
     var userID = req.query.userID;
@@ -625,7 +694,7 @@ app.route("/post")
   })
   //Edit Single POST
   .patch(function(req, res) {
-    //FIX THIS: Do Later, Im not sure how I want this
+    //FIX THIS: Do Later, Im not sure how I want this, rewrite simple
     //check userID
     //things can change - title, content, visibility
     if (!req.query.postID) {
@@ -981,7 +1050,7 @@ app.post("/login", function(req, res) {
 })
 
 app.route("/user")
-//FIX THIS: Need to account for owner
+  //FIX THIS: Need to account for owner
   //Get User and Associated Posts
   .get(function(req, res) {
     var userID = req.query.userID;
@@ -1809,6 +1878,7 @@ app.route("/commentsandposts")
       })
     }
   })
+//FIX THIS: WHEN BLOCKED OR BLOCKING DROP VIEWERSHIP
 app.route("/block")
   .get(function(req, res) {
     //get all users a person is blocking
@@ -2462,7 +2532,7 @@ app.route("changeVisibility")
                     message: err3
                   })
                 } else if (rresult) {
-                  connection.query(uQuery, [req.body.visibility,req.qbody.email], function(err3, results3, fields3) {
+                  connection.query(uQuery, [req.body.visibility, req.qbody.email], function(err3, results3, fields3) {
                     if (err3) {
                       return res.status(200).json({
                         status: -1,
