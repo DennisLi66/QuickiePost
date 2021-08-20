@@ -18,7 +18,7 @@ app.use(express.static("public"));
 app.use(cors({
   origin: 'http://localhost:3000',
   // credentials: true,
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200
 }));
 app.use(bodyParser.urlencoded({
   extended: true
@@ -253,579 +253,61 @@ app.get("/myfeed", function(req, res) {
   })
 })
 app.get("/search", function(req, res) {
+  //FIX THIS - INCLUDE SESSIONID AND USERID
   var title = req.query.title;
   var content = req.query.content;
   var sdate = req.query.sDate;
   var username = req.query.username;
+  var userID = req.query.userID;
+  var sessionID = req.query.sessionID;
   if (!title && !content && !sdate && !username) {
     return res.status(200).json({
       status: -1,
       message: "No valid search information included."
     })
-  } else if (title && content && sdate) {
+  }
+  var toJoinQuery = [];
+  var variables = [];
+  if (title){
+    toJoinQuery.push(" AND title LIKE ?");
+    variables.push('%' + title + '%');
+  }
+  if (content){
+    toJoinQuery.push(" AND content LIKE ?");
+    variables.push('%' + content + '%');
+  }
+  //Maybe make Day a range
+  if (sdate){
+    toJoinQuery.push(' AND DATE(subDate) = ?');
+    variables.push(sdate);
+  }
+  if (username){
+    toJoinQuery.push(" AND username = ?");
+    variables.push(username);
+  }
+  if (sessionID && userID){
+    //logged in version -- perform cQuery -- do other one first
+        //update query to consider user being hidden or private
+    var cQuery;
+  }else{
     var sQuery =
-      `
+    `
     SELECT * from posts
     LEFT JOIN
-    (select userid,username from users) uzers
+    (select userid,username,visibility from users) uzers
     on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?
-    AND content LIKE ?
-    AND DATE(subDate) = ?;
+    WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
+    AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
     `;
-    connection.query(sQuery, [title, '%' + content + '%', sdate], function(err, results, fields) {
-      if (err) {
+    sQuery += toJoinQuery.join("");
+    connection.query(sQuery,variables,function(err,results,fields){
+      if (err){
         return res.status(200).json({
           status: -1,
           message: err
         })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
       }
-    })
-  } else if (title && content && username) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?
-    AND content LIKE ?
-    AND username = ?;
-    `;
-    connection.query(sQuery, [title, '%' + content + '%', username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (title && username && sdate) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?
-    AND DATE(subDate) = ?;
-    AND username = ?;
-    `;
-    connection.query(sQuery, [title, sdate, username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (username && content && sdate) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND content LIKE ?
-    AND DATE(subDate) = ?
-    AND username = ?;
-    `;
-    connection.query(sQuery, ['%' + content + '%', sdate, username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (title && content) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?
-    AND content LIKE ?;
-    `;
-    connection.query(sQuery, [title, '%' + content + '%'], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (title && sdate) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?
-    AND DATE(subDate) = ?;
-    `;
-    connection.query(sQuery, [title, sdate], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (title && username) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?
-    AND username = ?;
-    `;
-    connection.query(sQuery, [title, username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (content && username) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND content LIKE ?
-    AND username = ?;
-    `;
-    connection.query(sQuery, ['%' + content + '%', username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (content && sdate) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND content LIKE ?
-    AND DATE(subDate) = ?;
-    `;
-    connection.query(sQuery, ['%' + content + '%', sdate], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (username && sdate) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND DATE(subDate) = ?;
-    AND username = ?;
-    `;
-    connection.query(sQuery, [sdate, username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (title) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND title = ?;
-    `;
-    connection.query(sQuery, [title], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (content) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND content LIKE ?;
-    `;
-    connection.query(sQuery, ['%' + content + '%'], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (sdate) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND DATE(subDate) = ?;
-    `;
-    connection.query(sQuery, [sdate], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
-        if (results.length > 0) {
-          var toPrep = {};
-          for (let i = 0; i < results.length; i++) {
-            toPrep[i] = {
-              title: results[i].title,
-              userID: results[i].userID,
-              content: results[i].content,
-              subDate: results[i].subDate,
-              username: results[i].username
-            }
-          }
-          return res.status(200).json({
-            status: 0,
-            message: "Posts Returned.",
-            contents: toPrep
-          })
-        } else {
-          return res.status(200).json({
-            status: 1,
-            message: "No values returned."
-          })
-        }
-      }
-    })
-  } else if (username) {
-    var sQuery =
-      `
-    SELECT * from posts
-    LEFT JOIN
-    (select userid,username from users) uzers
-    on uzers.userID = posts.userID
-    WHERE visibility != 'hidden' AND visibility != 'private'
-    AND username = ?;
-    `;
-    connection.query(sQuery, [username], function(err, results, fields) {
-      if (err) {
-        return res.status(200).json({
-          status: -1,
-          message: err
-        })
-      } else {
+      else{
         if (results.length > 0) {
           var toPrep = {};
           for (let i = 0; i < results.length; i++) {
