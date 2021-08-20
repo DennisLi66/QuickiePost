@@ -45,6 +45,7 @@ import Cookies from 'universal-cookie';
 
 function App() {
   //Variables
+  //FIX THIS DOT ENV
   const serverLocation = "http://localhost:3001";
   const cookies = React.useMemo(() => {return new Cookies()},[])
   //Important Variables
@@ -216,15 +217,7 @@ function App() {
                 cookies.set('id',data.userID,{path:'/'});
                 cookies.set('sessionID',data.sessionID,{path:'/'})
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-                changeNavToLoggedOut();
-                //FIX THIS JUST RELOAD THE PAGE
-                changeCode(
-                  <div>
-                      <h1> Congratulations! </h1>
-                      You now have a QuickiePost account.<br></br>
-                      Use the navigation bar to begin exploring.
-                  </div>
-                )
+                window.location.reload();
               }
             });
       }
@@ -548,7 +541,7 @@ function App() {
                     )
                   }
                   var paginationBar;
-                  if (data.blockedUsers.length > 10){
+                  if (data.listOfToView.length > 10){
                     var paginationSlots = [];
                     for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
                       paginationSlots.push(
@@ -570,7 +563,7 @@ function App() {
                   changeCode(
                     <div>
                     <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
-                    <h1> Users You're Viewing' </h1>
+                    <h1> Users You're Viewing </h1>
                     {paginationBar}
                     {tableOfUsers}
                     {paginationBar}
@@ -634,7 +627,7 @@ function App() {
                   )
                 }
                 var paginationBar;
-                if (data.blockedUsers.length > 10){
+                if (data.listOfToView.length > 10){
                   var paginationSlots = [];
                   for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
                     paginationSlots.push(
@@ -769,7 +762,7 @@ function App() {
                     <br></br>
                     <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button>
                     <br></br>
-                    <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Is Viewing Me</Button>
+                    <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Are Viewing You</Button>
                     <br></br>
                     <Button onClick={()=>{showPrivacyTogglePage()}}> Change Your Visibility </Button>
                     <br></br>
@@ -1165,6 +1158,7 @@ function App() {
                 }
                 changeCode(
                   <div>
+                  <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
                   {privacyText}
                   <form onSubmit={handleAccountPrivacyChange}>
                     In order to change your visibility settings, you will need to enter your login details.
@@ -1796,7 +1790,7 @@ function App() {
         }
         if (username){
           console.log("Username: " + username);
-          toJoin("username=" + username);
+          toJoin.push("username=" + username);
         }
         if (sDate){
           console.log("sdate: " + sDate);

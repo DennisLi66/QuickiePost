@@ -1,8 +1,4 @@
 //Things to Do
-//Cookies
-//MYSQL
-//POST Request for Password
-//GET Requests for Posts
 //Maybe Search By Hashtags?
 require('dotenv').config();
 const express = require("express");
@@ -2351,7 +2347,7 @@ app.route("/relationship")
       }
     })
   })
-app.route("whosviewingme")
+app.route("/whosviewingme")
   .get(function(req, res) {
     var cQuery =
       `
@@ -2411,7 +2407,7 @@ app.route("whosviewingme")
       }
     })
   })
-app.route("whoimviewing")
+app.route("/whoimviewing")
   .get(function(req, res) {
     var cQuery =
       `
