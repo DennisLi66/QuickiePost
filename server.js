@@ -1,5 +1,6 @@
 //Things to Do
 //Maybe Search By Hashtags?
+//FIX THIS make sure sessionID is considered
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -700,219 +701,103 @@ app.route("/post")
   })
   //Edit Single POST
   .patch(function(req, res) {
-    //FIX THIS: Do Later, Im not sure how I want this, rewrite simple
-    //check userID
+    //check postID, userID and sessionID
+    var postID = req.query.postID;
+    var userID = req.query.userID;
+    var sessionID = req.query.sessionID;
     //things can change - title, content, visibility
-    if (!req.query.postID) {
+    var title = req.query.title;
+    var content = req.query.content;
+    var visibility = req.query.visibility;
+    //Queries
+    if (!userID || !postID || !sessionID){
       return res.status(200).json({
         status: -1,
-        message: "No Post ID"
+        message: "Not Enough Information."
       })
     }
-    var userID = req.query.userID;
-    var visibility = req.query.visibility;
-    if (!userID) {
+    if (!title && !content && !visibility){
       return res.status(200).json({
         status: -1,
-        message: "User Not Logged In."
+        message: "Nothing to Change."
       })
-    } else {
-      if (!req.query.title && !req.query.content && !visibility) {
+    }
+    var cQuery =
+      `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          message: err1,
+          status: -1
+        })
+      } else if (results1.length === 0) {
         return res.status(200).json({
           status: -1,
-          message: "Not enough information."
+          message: "No Valid Session."
         })
-      } else if (req.query.title && req.query.content && visibility) {
-        var uQuery =
-          `
-      Update posts
-      SET title = ?, content = ?, visibility = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.title, req.query.content, req.query.visibility, req.query.postID], function(err, results, fields) {
-          if (err) {
+      } else {
+        var checkOwnerQuery =
+        `
+        SELECT * FROM posts WHERE postID = ? AND userID = ?;
+        `;
+        connection.query(checkOwnerQuery,[postID,userID],function(err2,results2,fields2){
+          if (err2){
             return res.status(200).json({
               status: -1,
-              message: err
+              message: err2
             })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
-            }
-          }
-        })
-      } else if (req.query.title && req.query.content) {
-        var uQuery =
-          `
-      Update posts
-      SET title = ?, content = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.title, req.query.content, req.query.postID], function(err, results, fields) {
-          if (err) {
-            return res.status(200).json({
+          }else if (results2.length === 0){
+            return res.status(200),json({
               status: -1,
-              message: err
+              message: "Post Not Found."
             })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
+          }else{
+            var setPositions = [];
+            var variables;
+            if (title){
+              setPositions.push(" title = ? ")
+              variables.push(title);
             }
-          }
-        })
-      } else if (req.query.title && req.query.visibility) {
-        var uQuery =
-          `
-      Update posts
-      SET title = ?, visiblity = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.title, req.query.visibility, req.query.postID], function(err, results, fields) {
-          if (err) {
-            return res.status(200).json({
-              status: -1,
-              message: err
+            if (content){
+              setPositions.push(" content = ? ");
+              variables.push(content);
+            }
+            if (visibility){
+              if (visibility === "public"){
+                  setPositions.push(" visibility = NULL ");
+              }else{
+                setPositions.push(" visibility = ? ");
+                variables.push(visibility);
+              }
+            }
+            variables.push(postID)
+            connection.query("UPDATE posts SET " + setPositions.join(",") +  " WHERE postID = ?",variables,function(err,results,fields){
+              if (err){
+                return res.status(200).json({
+                  status: -1,
+                  message: err
+                })
+              }else{
+                return res.status(200).json({
+                  status: 0,
+                  message: "Update Occured."
+                })
+              }
             })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
-            }
-          }
-        })
-      } else if (req.query.content && req.query.visibility) {
-        var uQuery =
-          `
-      Update posts
-      SET content = ?, visiblity = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.content, req.query.visibility, req.query.postID], function(err, results, fields) {
-          if (err) {
-            return res.status(200).json({
-              status: -1,
-              message: err
-            })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
-            }
-          }
-        })
-      } else if (req.query.content) {
-        var uQuery =
-          `
-      Update posts
-      SET content = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.content, req.query.postID], function(err, results, fields) {
-          if (err) {
-            return res.status(200).json({
-              status: -1,
-              message: err
-            })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
-            }
-          }
-        })
-      } else if (req.query.title) {
-        var uQuery =
-          `
-      Update posts
-      SET title = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.title, req.query.postID], function(err, results, fields) {
-          if (err) {
-            return res.status(200).json({
-              status: -1,
-              message: err
-            })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
-            }
-          }
-        })
-      } else if (req.query.visibility) {
-        var uQuery =
-          `
-      Update posts
-      SET visibility = ?
-      WHERE postID = ?
-      `;
-        connection.query(uQuery, [req.query.visbility, req.query.postID], function(err, results, fields) {
-          if (err) {
-            return res.status(200).json({
-              status: -1,
-              message: err
-            })
-          } else {
-            if (results.length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Nothing Was Updated."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Updated."
-              })
-            }
           }
         })
       }
-    }
+    })
   })
 // Register Account -- Requires Look up
 //FIX THIS: have message for duplicate entries
@@ -1060,6 +945,7 @@ app.route("/user")
   //FIX THIS: Need to account for owner
   //Get User and Associated Posts
   .get(function(req, res) {
+    //FIX THIS: SESSIONID
     var userID = req.query.userID;
     //Get hidden posts if mod or admin
     //Get private posts if mod, admin, or owner
@@ -1107,6 +993,7 @@ app.route("/user")
   })
   //Delete User (and maybe posts) // Set a user to hidden
   .delete(function(req, res) {
+    //FIX THIS SESSIONID
     var userID = req.query.userID;
     if (!userID) {
       return res.status(200).json({
@@ -1155,6 +1042,7 @@ app.route("/user")
   })
 app.route("/comment")
   .get(function(req, res) {
+        //FIX THIS SESSIONID
     var commentID = req.query.commentID;
     if (!commentID) {
       return res.status(200).json({
@@ -1317,9 +1205,10 @@ app.route("/comment")
     }
   })
   .patch(function(req, res) {
-
+    //FIX THIS
   })
   .put(function(req, res) {
+    //FIX THIS FOR PUBLIC
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content) {
       return res.status(200).json({
         status: -1,
