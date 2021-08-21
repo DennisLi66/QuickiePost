@@ -29,7 +29,6 @@ import Cookies from 'universal-cookie';
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
 //NEED to be able to reach posts and comments from profile
-//FIX THIS: SEARCH DOESNT YET CONSIDER SESSIONID AND YOUR ID
 //REDO QUERIES - SOME NEED TO BE FIXED
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
 //may need to add privacy to cookies
@@ -40,8 +39,9 @@ import Cookies from 'universal-cookie';
 //VIEWERSHIP ENABLEMENT
 //add better session check
 //Show in depth comment
-//if a profile is your own, have an additional tab that lets you hide delete your account or posts or comments
+//DELETE POSTS AND COMMENTS
 //FIX THIS: Update Cyclical Connections between simplePost, indepth Pist, etc
+//MAke sure to test everything
 
 function App() {
   //Variables
@@ -1638,89 +1638,94 @@ function App() {
           fetch(serverString)
             .then(response=>response.json())
             .then(data => {
-              console.log(data);
-              var listOfComments = [];
-              for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
-                var comment = data.comments[key];
-                var likeButton = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);
-                if (detect){
-                  likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
-                  if (comment.commentLiked && comment.commentLiked === "Liked"){
-                    likeButton = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID)}>Unlike</Button>)
+              if (data.status === -1){
+                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }
+              else{
+                console.log(data);
+                var listOfComments = [];
+                for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
+                  var comment = data.comments[key];
+                  var likeButton = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);
+                  if (detect){
+                    likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID)}>Like</Button>);
+                    if (comment.commentLiked && comment.commentLiked === "Liked"){
+                      likeButton = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID)}>Unlike</Button>)
+                    }
                   }
-                }
-                listOfComments.push(
-                  <ListGroup.Item key={key}>
-                    <Card>
-                    <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
-                    <Card.Header> {comment.commentDate} </Card.Header>
-                    <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
-                    <Card.Footer> Likes: {comment.commentLikes}
-                    <br></br>
-                    {likeButton}
-                    </Card.Footer>
-                    </Card>
-                  </ListGroup.Item>
-                )
-              }
-              if (listOfComments.length === 0){
-                listOfComments = (<div> This post has no visible comments. </div>)
-              }
-              var paginationBar;
-              if (data.comments.length > 10){
-                var paginationSlots = [];
-                for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
-                  paginationSlots.push(
-                    //FIX THIS: add more posts to be able to check this
-                    <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
+                  listOfComments.push(
+                    <ListGroup.Item key={key}>
+                      <Card>
+                      <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
+                      <Card.Header> {comment.commentDate} </Card.Header>
+                      <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
+                      <Card.Footer> Likes: {comment.commentLikes}
+                      <br></br>
+                      {likeButton}
+                      </Card.Footer>
+                      </Card>
+                    </ListGroup.Item>
                   )
                 }
-                paginationBar = (
-                 <ul className="nav nav-tabs">
-                  <li className="nav-item dropdown">
-                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
-                    <ul className="dropdown-menu">
-                      {paginationSlots}
-                    </ul>
-                  </li>
-                </ul>)
-              }
-              var postLikedText = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);;
-              if (detect){
-                postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
-                if (data.likedPost && data.likedPost === "Liked"){
-                  postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
+                if (listOfComments.length === 0){
+                  listOfComments = (<div> This post has no visible comments. </div>)
                 }
+                var paginationBar;
+                if (data.comments.length > 10){
+                  var paginationSlots = [];
+                  for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
+                    paginationSlots.push(
+                      //FIX THIS: add more posts to be able to check this
+                      <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
+                    )
+                  }
+                  paginationBar = (
+                   <ul className="nav nav-tabs">
+                    <li className="nav-item dropdown">
+                      <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                      <ul className="dropdown-menu">
+                        {paginationSlots}
+                      </ul>
+                    </li>
+                  </ul>)
+                }
+                var postLikedText = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);;
+                if (detect){
+                  postLikedText = (<Button onClick={() => {handlePostLike(data.postID)}}>Like</Button>);
+                  if (data.likedPost && data.likedPost === "Liked"){
+                    postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
+                  }
+                }
+                var writeCommentButton = (<Button onClick={() => {displayInnerLogin()}}>Add Comment</Button>);
+                if (detect){
+                  writeCommentButton = (<Button onClick={() => {displayCommentWriter()}}>Add Comment</Button>)
+                }
+                var confrimation = (<div></div>);
+                if (pact && pact==='Add'){
+                  confrimation = (<div className='confMsg'> </div>)
+                }
+                changeInDepthCode(
+                  <Card>
+                    <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
+                    <Card.Header><h1>{data.title}</h1></Card.Header>
+                    {confrimation}
+                    <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
+                    <br></br>
+                    Likes: {data.totalLikes}
+                    <br></br>
+                    {postLikedText}
+                    </Card.Header>
+                    <Card.Body> {data.content} </Card.Body>
+                    <ListGroup>
+                    <h2> Comments </h2>
+                    {writeCommentButton}
+                    <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+                    {listOfComments}
+                    <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+                    </ListGroup>
+                  </Card>
+                );
               }
-              var writeCommentButton = (<Button onClick={() => {displayInnerLogin()}}>Add Comment</Button>);
-              if (detect){
-                writeCommentButton = (<Button onClick={() => {displayCommentWriter()}}>Add Comment</Button>)
-              }
-              var confrimation = (<div></div>);
-              if (pact && pact==='Add'){
-                confrimation = (<div className='confMsg'> </div>)
-              }
-              changeInDepthCode(
-                <Card>
-                  <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
-                  <Card.Header><h1>{data.title}</h1></Card.Header>
-                  {confrimation}
-                  <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
-                  <br></br>
-                  Likes: {data.totalLikes}
-                  <br></br>
-                  {postLikedText}
-                  </Card.Header>
-                  <Card.Body> {data.content} </Card.Body>
-                  <ListGroup>
-                  <h2> Comments </h2>
-                  {writeCommentButton}
-                  <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-                  {listOfComments}
-                  <div className='centerAlignPaginationBar'> {paginationBar}  </div>
-                  </ListGroup>
-                </Card>
-              );
             })}
       function simplePost(key,dict){
           var likeText;

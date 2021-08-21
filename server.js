@@ -426,30 +426,28 @@ app.route("/post")
       //FIX THIS THE QUERY BELOW NEEDS TO BE FIXED -- FIX THIS QUERY-- FIX THIS QUERY-- FIX THIS QUERY-- FIX THIS QUERY
       var sQuery =
         `
-      SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
-      users.visibility as commenterVisibility, ifnull(commentLikes,0) as commentLikes, comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
-      posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility,
-      if (isLiked.userID is null, "Unliked","Liked") as postLiked, if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
-      FROM posts
-      left join comments on posts.postID = comments.postID
-      left join users on users.userID = comments.userID
-      left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes
-      on totalLikes.postID = posts.postID
-      left join (select * from users) uzers on uzers.userID = posts.userID
-      left join (select count(*) as commentLikes, commentID from commentLikes group by commentID) commentLikes
-      ON commentLikes.commentID = comments.commentID
-      LEFT JOIN (select * from likes WHERE userID = ?) isLiked
-      ON isLiked.postID = posts.postID
-      LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked
-      on commentLiked.commentID = comments.commentID
-      LEFT JOIN (select * from viewers WHERE viewerID = ?) commentViewers
-      ON commentViewers.posterID = comments.userID
-      LEFT JOIN (select * from viewers where viewerID = ?) postViewers
-      ON postViewers.posterID = posts.userID
-      WHERE posts.postID = ?
-      AND posts.visibility != 'hidden' AND (posts.visibility != 'private' OR  postViewers.viewerID is not null)
-      AND comments.visibility != 'hidden' AND (comments.visibility != 'private'  OR commentViewers.viewerID is not null)
-      ORDER BY comments.submissionDate
+        SELECT * FROM (
+        SELECT
+        posts.postID as postID, comments.commentID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
+        users.visibility as commenterVisibility, ifnull(commentLikes,0) as commentLikes,
+        comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
+        posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility,
+        if (isLiked.userID is null, "Unliked","Liked") as postLiked, if (commentLiked.userID is null,"Unliked","Liked") as commentLiked,  postViewers.viewerID as viewerID
+        FROM posts
+        left join comments on posts.postID = comments.postID
+        left join users on users.userID = comments.userID
+        left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes on totalLikes.postID = posts.postID
+        left join (select * from users) uzers on uzers.userID = posts.userID
+        left join (select count(*) as commentLikes, commentID from commentLikes group by commentID) commentLikes ON commentLikes.commentID = comments.commentID
+        LEFT JOIN (select * from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
+        LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked on commentLiked.commentID = comments.commentID
+        LEFT JOIN (select * from viewers WHERE viewerID = ?) commentViewers ON commentViewers.posterID = comments.userID
+        LEFT JOIN (select * from viewers where viewerID = ?) postViewers ON postViewers.posterID = posts.userID
+        ) bigQuery
+        WHERE postID = ?
+        AND postVisibility != 'hidden'  AND (postVisibility != 'private' OR viewerID is not null)
+        AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
+        ORDER BY commentDate;
       `;
       connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
@@ -632,6 +630,7 @@ app.route("/post")
     //GET ID
     var userID = req.query.userID;
     var sessionID = req.query.sessionID;
+    var visiblity = req.query.visibility;
     if (!userID || !sessionID) {
       return res.status(200).json({
         status: -1,
@@ -639,7 +638,7 @@ app.route("/post")
       })
     } else {
       //query string has a max length of 2048 characters
-      if (!req.query.title || !req.query.contents || !req.query.visibility) {
+      if (!req.query.title || !req.query.contents || !visibility) {
         return res.status(200).json({
           status: -1,
           message: "Not enough information provided."
@@ -666,11 +665,22 @@ app.route("/post")
               message: errorr
             })
           } else {
-            var iQuery =
+            var iQuery;
+            var variables = [];
+            if (visibility === "public"){
+              iQuery =
               `
-          INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
-          `;
-            connection.query(iQuery, [userID, req.query.title, req.query.contents, req.query.visibility], function(err, results, fields) {
+              INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,NULL,NOW());
+              `;
+              variables = [userID, req.query.title, req.query.contents];
+            }else{
+              iQuery =
+              `
+              INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
+              `;
+              variables = [userID, req.query.title, req.query.contents, visibility];
+            }
+            connection.query(iQuery, variables, function(err, results, fields) {
               if (err) {
                 return res.status(200).json({
                   status: -1,
@@ -700,18 +710,19 @@ app.route("/post")
       })
     }
     var userID = req.query.userID;
+    var visibility = req.query.visibility;
     if (!userID) {
       return res.status(200).json({
         status: -1,
         message: "User Not Logged In."
       })
     } else {
-      if (!req.query.title && !req.query.content && !req.query.visibility) {
+      if (!req.query.title && !req.query.content && !visibility) {
         return res.status(200).json({
           status: -1,
           message: "Not enough information."
         })
-      } else if (req.query.title && req.query.content && req.query.visibility) {
+      } else if (req.query.title && req.query.content && visibility) {
         var uQuery =
           `
       Update posts
@@ -924,8 +935,8 @@ app.post("/register", function(req, res) {
           message: e2rr
         })
       } else {
-        var iQuery = "INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES (?,?,?,?,?)";
-        connection.query(iQuery, [username, email, hash, 'public', 'user'], function(err, results, fields) {
+        var iQuery = "INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES (?,?,?,NULL,?)";
+        connection.query(iQuery, [username, email, hash, 'user'], function(err, results, fields) {
           if (err && err.sqlState === '23000') {
             console.log("Already Exists");
             return res.status(200).json({
