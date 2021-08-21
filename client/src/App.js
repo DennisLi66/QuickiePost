@@ -2022,27 +2022,27 @@ function App() {
           getExpiredHome()
         }
         else{
-        changeMainBodyCSS(
-          {
-            height: 'auto',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeInDepthCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeWriteFormCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        showUserProfile(cookies.get("id"));
+          changeMainBodyCSS(
+            {
+              height: 'auto',
+              transition: 'height 2s ease-in'
+            }
+          );
+          changeInDepthCSS(
+            {
+              height: '0%',
+              display: 'none',
+              transition: 'height 2s ease-in'
+            }
+          );
+          changeWriteFormCSS(
+            {
+              height: '0%',
+              display: 'none',
+              transition: 'height 2s ease-in'
+            }
+          );
+          showUserProfile(cookies.get("id"));
         }
         //get all posts
         //be able to set Visibility

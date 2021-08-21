@@ -1,6 +1,8 @@
 //Things to Do
 //Maybe Search By Hashtags?
 //FIX THIS make sure sessionID is considered
+//Comments and users and get users might be the same thing
+
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -250,7 +252,6 @@ app.get("/myfeed", function(req, res) {
   })
 })
 app.get("/search", function(req, res) {
-  //FIX THIS - INCLUDE SESSIONID AND USERID
   var title = req.query.title;
   var content = req.query.content;
   var sdate = req.query.sDate;
@@ -424,7 +425,6 @@ app.route("/post")
       sessions
       ON sessions.userID = a.userID AND sessions.sessionDate = a.high
       `;
-      //FIX THIS THE QUERY BELOW NEEDS TO BE FIXED -- FIX THIS QUERY-- FIX THIS QUERY-- FIX THIS QUERY-- FIX THIS QUERY
       var sQuery =
         `
         SELECT * FROM (
@@ -514,6 +514,8 @@ app.route("/post")
         }
       })
     } else {
+      //FIX thIS: this query may have a bad reaction to something, not sure though
+      //FIX THIS: may need to include comments here
       var sQuery =
         `
       SELECT comments.commentID, posts.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
@@ -581,8 +583,9 @@ app.route("/post")
   })
   //Change Post Visibility to Hidden
   .delete(function(req, res) {
-    //FIX THIS: Will Need to Establish Permissions
+    //FIX THIS: Will Need to Establish Permissions based on mod powers
     var userID = req.query.userID;
+    var sessionID = req.query.sessionID;
     if (!userID) {
       return res.status(200).json({
         status: -1,
@@ -601,7 +604,7 @@ app.route("/post")
       var uQuery = `
         UPDATE posts
         SET visibility = "hidden"
-        WHERE postID = 3;
+        WHERE postID = ?;
         `;
       connection.query(uQuery, [req.query.postid], function(err, results, fields) {
         if (err) {
@@ -626,7 +629,7 @@ app.route("/post")
       })
     }
   })
-  //Add Single POST FIX THIS: prolly need a session checked
+  //Add Single POST
   .put(function(req, res) {
     //GET ID
     var userID = req.query.userID;
@@ -800,7 +803,6 @@ app.route("/post")
     })
   })
 // Register Account -- Requires Look up
-//FIX THIS: have message for duplicate entries
 app.post("/register", function(req, res) {
   var email = req.body.email;
   var pswrd = req.body.pswrd;
@@ -942,7 +944,7 @@ app.post("/login", function(req, res) {
 })
 
 app.route("/user")
-  //FIX THIS: Need to account for owner
+  //FIX THIS: Different but very similar purpose to comments and posts
   //Get User and Associated Posts
   .get(function(req, res) {
     //FIX THIS: SESSIONID
@@ -992,57 +994,8 @@ app.route("/user")
 
   })
   //Delete User (and maybe posts) // Set a user to hidden
-  .delete(function(req, res) {
-    //FIX THIS SESSIONID
-    var userID = req.query.userID;
-    if (!userID) {
-      return res.status(200).json({
-        status: -1,
-        message: "User ID Not Given."
-      })
-    } else {
-      var uQuery =
-        `
-    Update posts
-    SET visibility = 'hidden'
-    WHERE userID = ?;
-    Update users
-    SET visibility = 'hidden'
-    WHERE userID = ?;
-    `;
-      connection.query(uQuery, [req.query.userID, req.query.userID], function(err, results, fields) {
-        if (err) {
-          console.log(err);
-          return res.status(200).json({
-            status: -1,
-            message: err
-          })
-        } else {
-          if (results[0].length === 0) {
-            return res.status(200).json({
-              status: -1,
-              message: "There were no valid users with that ID."
-            })
-          } else {
-            if (results[0].length === 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "There were no valid users with that ID."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "User Updated."
-              })
-            }
-          }
-        }
-      })
-    }
-  })
 app.route("/comment")
   .get(function(req, res) {
-        //FIX THIS SESSIONID
     var commentID = req.query.commentID;
     if (!commentID) {
       return res.status(200).json({
@@ -1208,7 +1161,6 @@ app.route("/comment")
     //FIX THIS
   })
   .put(function(req, res) {
-    //FIX THIS FOR PUBLIC
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content) {
       return res.status(200).json({
         status: -1,
@@ -1232,6 +1184,14 @@ app.route("/comment")
       `
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
     `;
+    var variables = [req.query.postID, req.query.userID, req.query.content, privacy]
+    if (privacy === 'public'){
+      iQuery =
+      `
+          INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),NULL);
+      `;
+      variables = [req.query.postID, req.query.userID, req.query.content]
+    }
     connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
@@ -1244,7 +1204,7 @@ app.route("/comment")
           message: "No Valid Session."
         })
       } else {
-        connection.query(iQuery, [req.query.postID, req.query.userID, req.query.content, privacy], function(err2, results2, fields) {
+        connection.query(iQuery, variables, function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
               message: err2,
@@ -2367,7 +2327,7 @@ app.route("/whoimviewing")
       }
     })
   })
-app.route("changeVisibility")
+app.route("/changeVisibility")
   .post(function(req, res) {
     if (!req.body.sessionID || !req.body.userID || !req.body.password || !req.body.email || !req.body.visibility) {
       return res.status(200).json({
@@ -2391,7 +2351,7 @@ app.route("changeVisibility")
         `
       SELECT * FROM users WHERE email = ?;
       `;
-      var uQuery = // update user
+      var uQuery = // update user and thier p
         `
       UPDATE users
       SET visibility = ?
@@ -2454,6 +2414,17 @@ app.route("changeVisibility")
       })
     }
   })
+
+
+//Admin Actions
+app.route("/admin")
+  .get(function(req,res){
+
+  })
+
+
+
+
 app.listen(3001, function() {
   console.log("Server Started.")
 });
