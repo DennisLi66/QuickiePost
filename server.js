@@ -1159,6 +1159,87 @@ app.route("/comment")
   })
   .patch(function(req, res) {
     //FIX THIS
+    var sessionID = req.query.sessionID;
+    var userID = req.query.userID;
+    var commentID = req.query.commentID;
+    //can change comments and visibility
+    var comments = req.query.comments;
+    var visibility = req.query.visibility;
+    visibility = !visibility ? 'public' :  visibility;
+    if (!sessionID || !userID || !commentID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    if (!visibility && !comments){
+      return res.status(200).json({
+        status: -1,
+        message: "No search terms."
+      })
+    }
+    var cQuery =
+      `
+    SELECT * FROM
+    (select userID,max(sessionDate) as high from sessions group by userID) a
+    RIGHT JOIN
+    (
+    Select * from sessions WHERE userID = ? AND sessionID = ? AND
+    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+    )
+    sessions
+    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+    `;
+    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          message: err1,
+          status: -1
+        })
+      } else if (results1.length === 0) {
+        return res.status(200).json({
+          status: -1,
+          message: "No Valid Session."
+        })
+      } else {
+        //update
+        var updateQuery =
+        `
+        UPDATE COMMENTS
+        SET
+        WHERE postID = ? AND userID = ?;
+        `
+        var updateStrings = [];
+        var variables = [];
+        if (comments){
+          updateStrings.push(" COMMENTS = ? ");
+          variables.push(comments);
+        }
+        if (visibility){
+          if (visibility === "public"){
+            updateStrings.push(" VISIBILITY = NULL ");
+          }else{
+            updateStrings.push(" VISIBILITY = ? ");
+            variables.push(visibility)
+          }
+        }
+        variables.push(commentID);
+        variables.push(userID);
+        connection.query("UPDATE COMMENTS SET " + updateStrings.join("") + "WHERE commentID = ? AND userID = ?",variables,function(err,results,fields){
+          if (err){
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "Update Occured."
+            })
+          }
+        })
+      }
+    })
   })
   .put(function(req, res) {
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content) {
