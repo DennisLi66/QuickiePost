@@ -53,4 +53,5 @@ ORDER BY commentDate
 
 -- -- AND NOT comments.visibility = 'hidden' 
 -- -- AND (comments.visibility != 'private'  OR commentViewers.viewerID is not null)
-
+;
+select * from comments WHERE visibility = "public" OR visibility is null

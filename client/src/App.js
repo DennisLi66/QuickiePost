@@ -79,7 +79,7 @@ function App() {
     () => {
       //handlePostLike
       function handlePostLike(postID,origin,details = ""){
-
+        //broad use function - rewrite others
       }
       //Navbar Changers
       function changeNavToLoggedIn(){
@@ -1287,9 +1287,24 @@ function App() {
                 }
               })
           }}
-      function showInDepthComment(commentID){
-        function handleEditComment(){
-          var needswork;
+      function showInDepthComment(commentID,designation = ""){
+        function handleEditComment(event){
+          //send privacy comments sessionID and userID //FIX THIS: TEST LATER
+          event.preventDefault();
+          const requestSetup = {
+              method: 'PATCH',
+          }
+          fetch(serverLocation + "/comment?sessionID=" + cookies.get("sessionID") +
+          "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
+          + "&comments=" + document.getElementById("comments").value,requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === -1){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else{
+                showInDepthComment(commentID,"conf");
+              }
+            })
         }
         function handleVisiToggle(){
           var visibility;
@@ -1332,16 +1347,14 @@ function App() {
                 </textarea>
                 <h4> Visibility </h4>
                 {visibilityToggle}
-                <Button onClick={handleEditComment}> Submit Changes </Button>
+                <Button onClick={handleEditComment} type='submit'> Submit Changes </Button>
               </form>
             </div>
           )
         }
-        console.log(commentID);
         var serverString = serverLocation + "/comment?commentID=" + commentID +
           (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
           (cookies.get("id") ? "&userID=" + cookies.get("id") : "");
-        console.log(serverString);
         fetch(serverString)
           .then(response => response.json())
           .then(data => {
@@ -1349,6 +1362,10 @@ function App() {
             var editButton;
             var likePostButton;
             var likeCommentButton;
+            var msgData;
+            if (designation === "conf"){
+              <div className='confMsg'> Your comment has changed successfully. </div>
+            }
             if (data.commenterID === cookies.get("id")){
               editButton = (
                 <Card.Body>
@@ -1358,6 +1375,7 @@ function App() {
             }
             changeCode(
               <div>
+                {msgData}
                 <Card>
                 <Card.Title>Comment Information</Card.Title>
                 <Card.Subtitle> {"Username: " + data.commenterUsername} </Card.Subtitle>
@@ -1397,7 +1415,7 @@ function App() {
                 if (data.status === -1){
                   changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
                 }else{
-                  showInDepthPost(postID);
+                  showInDepthPost(postID,"changed");
                 }
               })
           }
