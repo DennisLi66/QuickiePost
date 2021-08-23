@@ -32,14 +32,14 @@ import Cookies from 'universal-cookie';
 //REDO QUERIES - SOME NEED TO BE FIXED
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
 //may need to add privacy to cookies
-//editing posts and comments]
+//editing posts and comments] DO NEXT NEXT ENXT NEXYEUYGDYGDWHOHDUOWDUUIWDHWDIWUBDIWIDBIWBIWDII
 //rewrite post pages to include pagination
 //LOGIN page should check if user is currently hidden
 //recheck queries
 //VIEWERSHIP ENABLEMENT
 //add better session check
 //Show in depth comment
-//DELETE POSTS AND COMMENTS
+//DELETE POSTS AND COMMENTS NEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT N N
 //FIX THIS: Update Cyclical Connections between simplePost, indepth Pist, etc
 //MAke sure to test everything
 
@@ -77,6 +77,10 @@ function App() {
   //
   const getHome = React.useCallback(
     () => {
+      //handlePostLike
+      function handlePostLike(postID,origin,details = ""){
+
+      }
       //Navbar Changers
       function changeNavToLoggedIn(){
         changeNavBar(
@@ -1284,71 +1288,100 @@ function App() {
               })
           }}
       function showInDepthComment(commentID){
-            function editComment(){
-              var needsWork;
+        function handleEditComment(){
+          var needswork;
+        }
+        function handleVisiToggle(){
+          var visibility;
+          if (document.getElementByID('privacySwitch').checked){
+            visibility = "private"
+          }else{
+            visibility = "public";
+          }
+          showEditComment(visibility,document.getElementById('comments').value);
+        }
+        function showEditComment(visibility,comments){
+          var visibilityToggle;
+          if (!visibility || visibility === "public"){
+            visibilityToggle = (
+              <div>
+                Anyone can see your post.
+                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                onChange={handleVisiToggle}
+                ></input>
+              </div>
+                          )
+          }else{
+            visibilityToggle = (
+              <div>
+                Only you and your viewers will be able to see this tweet.
+                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                onChange={handleVisiToggle} checked
+                ></input>
+              </div>
+                          )
+          }
+          changeCode(
+            <div>
+              <Button variant='dark' onClick={() => {showInDepthComment(commentID)}} className='exitButton'>Cancel</Button>
+              Editing Comment
+              <form>
+                <h4> Comments </h4>
+                <textarea className='noResize' rows='5' cols='50'
+                 maxLength="200" id="comments" name="comments" autoComplete="off" value={comments} required>
+                </textarea>
+                <h4> Visibility </h4>
+                {visibilityToggle}
+                <Button onClick={handleEditComment}> Submit Changes </Button>
+              </form>
+            </div>
+          )
+        }
+        console.log(commentID);
+        var serverString = serverLocation + "/comment?commentID=" + commentID +
+          (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
+          (cookies.get("id") ? "&userID=" + cookies.get("id") : "");
+        console.log(serverString);
+        fetch(serverString)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            var editButton;
+            var likePostButton;
+            var likeCommentButton;
+            if (data.commenterID === cookies.get("id")){
+              editButton = (
+                <Card.Body>
+                  <Button onClick={()=>{showEditComment(data.commentVisibility,data.comment)}}>Edit Comment</Button>
+                </Card.Body>
+              )
             }
-            var serverString = serverLocation + "/comment?commentID=" + commentID +
-              (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
-              (cookies.get("id") ? "&id=" + cookies.get("id") : "");
-            fetch(serverString)
-              .then(response => response.json())
-              .then(data => {
-                //should display post and comment information
-                // status: 0,
-                // message: "Here's your comment.",
-                // comment: results.comments,
-                // commentID: results.commentID,
-                // commenterID: results.commenterID,
-                // commentVisibility: results.commentVisibility,
-                // commentDate: results.commentDate,
-                // commenterUsername: results.commenterUsername,
-                // commenterVisibility: results.commenterVisibility,
-                // commentLiked: results.commentLiked,
-                // postLiked: results.postLiked,
-                // posterID: results.authorID,
-                // postID: results.postID,
-                // title: results.title,
-                // content: results.content,
-                // postVisibility: results.postVisibility,
-                // postDate: results.postDate,
-                // posterUsername: results.posterUsername,
-                // posterVisibility: results.posterVisibility
-                var editButton;
-                var likePostButton;
-                var likeCommentButton;
-                if (data.commenterID === cookies.get("id")){
-                  editButton = (
-                    <Card.Body>
-                      <Button onClick={()=>{editComment()}}>Edit Comment</Button>
-                    </Card.Body>
-                  )
-                }
-                changeCode(
-                  <div>
-                    <Card>
-                    <Card.Title>Comment Information</Card.Title>
-                    <Card.Subtitle> {"Username: " + data.commenterUsername} </Card.Subtitle>
-                    <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
-                    <Card.Body> {data.comment} </Card.Body>
-                    {editButton}
-                    <Card.Body> Like Button </Card.Body>
-                    <Card.Subtitle> {data.commentDate} </Card.Subtitle>
-                    </Card>
-                    <Card>
-                    <Card.Title>Post Information</Card.Title>
-                    <Card.Title>{data.title}</Card.Title>
-                    <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
-                    <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
-                    <Card.Body> {data.content} </Card.Body>
-                    <Card.Body> Like Button </Card.Body>
-                    <Card.Subtitle> {data.postDate} </Card.Subtitle>
-                    </Card>
-                  </div>
-                )
-                ///FIX THIS: May need more details or beautification
-                //FIX THIS: Maybe Include the like button above?
-                //FIX ThIS: Need to add the associated links above
-              })}
+            changeCode(
+              <div>
+                <Card>
+                <Card.Title>Comment Information</Card.Title>
+                <Card.Subtitle> {"Username: " + data.commenterUsername} </Card.Subtitle>
+                <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
+                <Card.Body> {data.comment} </Card.Body>
+                {editButton}
+                <Card.Body> Like Button </Card.Body>
+                <Card.Subtitle> {data.commentDate} </Card.Subtitle>
+                </Card>
+                <Card>
+                <Card.Title>Post Information</Card.Title>
+                <Card.Title>{data.title}</Card.Title>
+                <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
+                <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
+                <Card.Body> {data.content} </Card.Body>
+                <Card.Body> Like Button </Card.Body>
+                <Card.Subtitle> {data.postDate} </Card.Subtitle>
+                </Card>
+              </div>
+            )
+            ///FIX THIS: May need more details or beautification
+            //FIX THIS: Maybe Include the like button above?
+            //FIX ThIS: Need to add the associated links above
+          })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
           // console.log(postID);
           function handlePostLike(postID){
@@ -1658,7 +1691,7 @@ function App() {
                       <Card>
                       <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
                       <Card.Header> {comment.commentDate} </Card.Header>
-                      <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.postID,data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
+                      <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
                       <Card.Footer> Likes: {comment.commentLikes}
                       <br></br>
                       {likeButton}

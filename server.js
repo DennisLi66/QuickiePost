@@ -996,6 +996,7 @@ app.route("/user")
   //Delete User (and maybe posts) // Set a user to hidden
 app.route("/comment")
   .get(function(req, res) {
+    //REWORK THIS ROUTE
     var commentID = req.query.commentID;
     if (!commentID) {
       return res.status(200).json({
@@ -1007,6 +1008,7 @@ app.route("/comment")
       var userID = req.query.userID;
       if (!sessionID || !userID) {
         //can pull not friendly private comments
+        //FIX THIS QUERY
         var sQuery =
           `
         select commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
@@ -1030,7 +1032,7 @@ app.route("/comment")
           } else if (result.length === 0) {
             return res.status(200).json({
               status: -1,
-              message: "No such post."
+              message: "No such comment exists."
             })
           } else {
             // console.log(results);
@@ -1125,7 +1127,7 @@ app.route("/comment")
               } else if (results2.length === 0) {
                 return res.status(200).json({
                   status: -1,
-                  message: err2
+                  message: "No such comment."
                 })
               } else {
                 var results = results2[0];
