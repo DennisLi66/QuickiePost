@@ -77,9 +77,21 @@ function App() {
   //
   const getHome = React.useCallback(
     () => {
-      //handlePostLike
+      //handlers
+      function handleLoginOrigin(postID,origin,details = ""){
+
+      }
       function handlePostLike(postID,origin,details = ""){
         //broad use function - rewrite others
+      }
+      function handlePostUnlike(postID,origin,details = ""){
+
+      }
+      function handleCommentLike(commentID,origin,details = ""){
+
+      }
+      function handleCommentUnlike(commentID,origin,details = ""){
+
       }
       //Navbar Changers
       function changeNavToLoggedIn(){
@@ -1360,8 +1372,30 @@ function App() {
           .then(data => {
             console.log(data);
             var editButton;
-            var likePostButton;
-            var likeCommentButton;
+            var likePostButton = (
+              <Button onClick={() => {handleLoginOrigin(data.postID,"","")}}> Like </Button>
+            );
+            if (data.postLiked && data.postLiked === "Liked"){
+              likePostButton = (
+                <Button onClick={() => {handlePostUnlike(data.postID,"","")}}> Unlike </Button>
+              )
+            }else if (data.postLiked && data.postLiked === "Unliked"){
+              likePostButton = (
+                <Button onClick={() => {handlePostLike(data.postID,"","")}}> Like </Button>
+              )
+            }
+            var likeCommentButton = (
+              <Button onClick={() => {handleCommentLike(data.commentID,"","")}}> Like </Button>
+            );
+            if (data.commentLiked && data.commentLiked === "Liked"){
+              likeCommentButton = (
+                <Button onClick={() => {handleCommentUnlike(data.commentID,"","")}}> Unlike </Button>
+              )
+            }else if (data.commentLiked && data.commentLiked === "Unliked"){
+              likeCommentButton = (
+                <Button onClick={() => {handleCommentUnlike(data.commentID,"","")}}> Like </Button>
+              )
+            }
             var msgData;
             if (designation === "conf"){
               <div className='confMsg'> Your comment has changed successfully. </div>
@@ -1382,7 +1416,7 @@ function App() {
                 <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
                 <Card.Body> {data.comment} </Card.Body>
                 {editButton}
-                <Card.Body> Like Button </Card.Body>
+                <Card.Body> {likeCommentButton} </Card.Body>
                 <Card.Subtitle> {data.commentDate} </Card.Subtitle>
                 </Card>
                 <Card>
@@ -1391,7 +1425,7 @@ function App() {
                 <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
                 <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
                 <Card.Body> {data.content} </Card.Body>
-                <Card.Body> Like Button </Card.Body>
+                <Card.Body> {likePostButton} </Card.Body>
                 <Card.Subtitle> {data.postDate} </Card.Subtitle>
                 </Card>
               </div>
