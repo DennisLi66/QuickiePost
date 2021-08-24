@@ -104,13 +104,40 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                     //commentID
+                }else{
+                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
                 }
               }
             })
         }
       }
-      function handlePostUnlike(postID,origin,details = ""){
-
+      function handlePostUnlike(postID,origin,commentID = 0, userID = 0, startPos = 0, endPos = 0){
+        if (!cookies.get("sessionID") || !cookies.get("userID")){
+          handleLoginOrigin(postID,origin,userID,startPos,endPos);
+        }else{
+          var sessionID = cookies.get('sessionID');
+          var id = cookies.get('id');
+          const requestSetup = {
+              method: 'DELETE',
+          }
+          fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === -1){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else{
+                if (origin === "userProfile"){
+                  showUserProfile(userID,startPos,endPos,"posts");
+                }else if (origin === "indepthPost"){
+                  showInDepthPost(postID,"changed");
+                }else if (origin === "indepthComment"){
+                  showInDepthComment(commentID,"changed");
+                }else{
+                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                }
+              }
+            })
+        }
       }
       function handleCommentLike(commentID,origin,details = ""){
 
@@ -1061,7 +1088,7 @@ function App() {
               if (detect){
                 likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Like</Button>);
                 if (dict.isLiked === "Liked"){
-                  likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,startPos,endPos)}}>Unlike </Button>);
+                  likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Unlike </Button>);
                 }
               }
               listOfShownPosts.push(
@@ -1221,22 +1248,6 @@ function App() {
               )
           }
           //Likers
-          function handlePostUnlike(postID,start,end){
-            var sessionID = cookies.get('sessionID');
-            var id = cookies.get('id');
-            const requestSetup = {
-                method: 'DELETE',
-            }
-            fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
-              .then(response => response.json())
-              .then(data => {
-                if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
-                }else{
-                  showUserProfile(userID,start,end,"posts");
-                }
-              })
-          }
           function handleCommentLike(commentID,start,end){
             var sessionID = cookies.get('sessionID');
             var id = cookies.get('id');
@@ -1386,7 +1397,7 @@ function App() {
             );
             if (data.postLiked && data.postLiked === "Liked"){
               likePostButton = (
-                <Button onClick={() => {handlePostUnlike(data.postID,"","")}}> Unlike </Button>
+                <Button onClick={() => {handlePostUnlike(data.postID,"indepthComment",commentID)}}> Unlike </Button>
               )
             }else if (data.postLiked && data.postLiked === "Unliked"){
               likePostButton = (
@@ -1444,23 +1455,6 @@ function App() {
             //FIX ThIS: Need to add the associated links above
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
-          // console.log(postID);
-          function handlePostUnlike(postID){
-            var sessionID = cookies.get('sessionID');
-            var id = cookies.get('id');
-            const requestSetup = {
-                method: 'DELETE',
-            }
-            fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
-              .then(response => response.json())
-              .then(data => {
-                if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
-                }else{
-                  showInDepthPost(postID);
-                }
-              })
-          }
           function handleCommentLike(commentID,pos){
             var sessionID = cookies.get('sessionID');
             var id = cookies.get('id');
@@ -1770,7 +1764,7 @@ function App() {
                 if (detect){
                   postLikedText = (<Button onClick={() => {handlePostLike(data.postID,"indepthPost")}}>Like</Button>);
                   if (data.likedPost && data.likedPost === "Liked"){
-                    postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID)}}>Unlike</Button>)
+                    postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID,"indepthPost")}}>Unlike</Button>)
                   }
                 }
                 var writeCommentButton = (<Button onClick={() => {displayInnerLogin()}}>Add Comment</Button>);
