@@ -44,7 +44,7 @@ connection.connect();
 
 // Get All Posts
 app.get("/posts", function(req, res) {
-  //Should change to get username as well
+  //works as intended currently
   var sQuery =
     `
   SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, ifnull(totalComments,0) as totalComments, subDate FROM
@@ -77,7 +77,7 @@ app.get("/posts", function(req, res) {
     sessions
     ON sessions.userID = a.userID AND sessions.sessionDate = a.high
     `;
-    sQuery =
+    sQuery = //works
       `
     SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, if(desig.userID is null,'Unliked','Liked') as Liked,  ifnull(totalComments,0) as totalComments, subDate FROM
     ( SELECT * from posts
@@ -198,7 +198,7 @@ app.get("/myfeed", function(req, res) {
   sessions
   ON sessions.userID = a.userID AND sessions.sessionDate = a.high
   `
-  var sQuery =
+  var sQuery = //works
     `
   select * from posts
   LEFT JOIN viewers ON
@@ -310,7 +310,7 @@ app.get("/search", function(req, res) {
           message: "No Valid Session."
         })
       } else {
-        var sQuery =
+        var sQuery = //works
           `
         SELECT * from posts
         LEFT JOIN
@@ -358,8 +358,8 @@ app.get("/search", function(req, res) {
       }
     })
   } else {
-    var sQuery =
-      `
+    var sQuery = //works
+    `
     SELECT * from posts
     LEFT JOIN
     (select userid,username,visibility from users) uzers

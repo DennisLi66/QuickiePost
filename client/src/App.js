@@ -21,7 +21,6 @@ import Cookies from 'universal-cookie';
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
-//Block List
 //Notifcation List
 //FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post //Account for not having any posts or comments
 //change color of posts and comments to better differentiate them
@@ -29,6 +28,7 @@ import Cookies from 'universal-cookie';
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
 //NEED to be able to reach posts and comments from profile
+//FIX THIS add login page to indepthcomments and make sure redirecting to getLogin rather than handleLogin
 //REDO QUERIES - SOME NEED TO BE FIXED
 //FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
 //may need to add privacy to cookies
@@ -77,10 +77,41 @@ function App() {
   //
   const getHome = React.useCallback(
     () => {
-      //handlers
-      function handleLoginOrigin(postID,origin,details = ""){
+      //Move things around
+      //Edit Posts
+      function showEditPost(){
 
       }
+      function handleEditPost(){
+
+      }
+      //Edit Comments
+      function showEditComment(){
+
+      }
+      function handleEditComment(){
+
+      }
+      //Edit Both
+      function handleVisiToggle(){
+
+      }
+      function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
+        if (origin === ""){
+          getHome();
+        }else if (origin === "userProfileOptions"){
+          showUserProfile(userID,0,0,"options");
+        }else if (origin === "indepthPost"){
+          showInDepthPost(postID,startPos,endPos);
+        }else if (origin === "userProfilePosts"){
+          showUserProfile(userID,startPos,endPos,"posts");
+        }else if (origin === "userProfileComments"){
+          showUserProfile(userID,startPos,endPos,"comments");
+        }else if (origin === "indepthComment"){
+          showInDepthComment(commentID);
+        }
+      }
+      //like handlers
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0){
         //broad use function - rewrite others
         if (!cookies.get("sessionID") || !cookies.get("userID")){
@@ -267,7 +298,7 @@ function App() {
           </Navbar>
         )
       }
-      //Login Functions
+      //Login Functions --Rework FIX THIS
       function handleLogin(event){
           event.preventDefault();
           var email = document.getElementById("userEmail").value;
@@ -341,143 +372,46 @@ function App() {
               }
             });
       }
-      function getLoginPage(){
+      function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         hideWriteForm();
+        var cancelButton;
+        if (origin !== ""){
+          cancelButton = (<Button variant='dark' onClick={() => {cancel(origin,postID,commentID,userID,startPos,endPos)}} className='exitButton'>Cancel</Button>);
+        }
         changeCode(
-          <form onSubmit={handleLogin}>
-            <h1> Login Page </h1>
-            <label htmlFor='userEmail'>Email</label>
-            <br></br>
-            <input type="email" name="userEmail" id="userEmail" required></input>
-            <br></br>
-            <label htmlFor="pswrd" >Password</label>
-            <br></br>
-            <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-            <br></br><br></br>
-            <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-            <label className="switch">
-            <input type="checkbox" id='rememberMe'
-            ></input>
-            <span className="slider round"></span>
-            </label>
-            <br></br><br></br>
-            <Button variant='dark' type="submit"> Login </Button>
-          </form>
+          <div>
+            {cancelButton}
+            <form onSubmit={() => {handleLogin()}}>
+              <h1> Login Page </h1>
+              <label htmlFor='userEmail'>Email</label>
+              <br></br>
+              <input type="email" name="userEmail" id="userEmail" required></input>
+              <br></br>
+              <label htmlFor="pswrd" >Password</label>
+              <br></br>
+              <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+              <br></br><br></br>
+              <label htmlFor="rememberMe"> Remember Me?</label><br></br>
+              <label className="switch">
+              <input type="checkbox" id='rememberMe'
+              ></input>
+              <span className="slider round"></span>
+              </label>
+              <br></br><br></br>
+              <Button variant='dark' type="submit"> Login </Button>
+            </form>
+          </div>
         )
+      }
+      function handleLoginOrigin(origin,postID,userID,startPos,endPos){
+        var needsWork;
       }
         //Set up Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Rework to single fetch?
           //FIX THIS: check if changingcss is really needed?
           //Login Functions
-          function cancel(start,end,variation){
-            showUserProfile(userID,start,end,variation)
-          }
-          function innerHandleLogin(event,start,end,variation){
-            event.preventDefault();
-            var email = document.getElementById("userEmail").value;
-            var pswrd = document.getElementById("pswrd").value;
-            var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
-            const requestSetup = {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
-            };
-            fetch(serverLocation+"/login",requestSetup)
-              .then(response => response.json())
-              .then(data => {
-                console.log(data);
-                if (data.status === -2){ //Invalid Combination
-                  changeCode(
-                    <div>
-                    <div className="errMsg">That was not an existing email/password combination.</div>
-                    <Button onClick={()=>{showUserProfile(userID,start,end,variation)}}> Cancel </Button>
-                    <br></br>
-                    <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
-                      <h1> Login Page </h1>
-                      <label htmlFor='userEmail'>Email</label>
-                      <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
-                      <br></br>
-                      <label htmlFor="pswrd" >Password</label>
-                      <br></br>
-                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br><br></br>
-                      <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                      <label className="switch">
-                      <input type="checkbox" id='rememberMe'
-                      ></input>
-                      <span className="slider round"></span>
-                      </label>
-                      <br></br><br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-                    </form>
-                    </div>
-                  )
-                }else if (data.status === -1){///Other Error
-                  changeCode(
-                    <div>
-                      <div className="errMsg">There was an error. Please try again.</div>
-                    <Button onClick={()=>{showUserProfile(userID,start,end,variation)}}> Cancel </Button>
-                    <br></br>
-                    <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
-                      <h1> Login Page </h1>
-                      <label htmlFor='userEmail'>Email</label>
-                      <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
-                      <br></br>
-                      <label htmlFor="pswrd" >Password</label>
-                      <br></br>
-                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br><br></br>
-                      <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                      <label className="switch">
-                      <input type="checkbox" id='rememberMe'
-                      ></input>
-                      <span className="slider round"></span>
-                      </label>
-                      <br></br><br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-                    </form>
-                    </div>
-                  )
-                }else if (data.status === 0){//No Error
-                  cookies.set('name',data.username,{path:'/'});
-                  cookies.set('id',data.userID,{path:'/'});
-                  cookies.set('sessionID',data.sessionID,{path:'/'})
-                  cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-                  changeNavToLoggedIn();
-                  showUserProfile(userID,start,end,variation);
-                }
-              });
-          }
-          function innerLoginPage(username,start,end,variation){
-            changeCode(
-              <div>
-              <Button onClick={()=>{cancel(username,start,end,variation)}}> Cancel </Button>
-              <br></br>
-              <form onSubmit={(event) => {innerHandleLogin(event,start,end,variation)}}>
-                <h1> Login Page </h1>
-                <label htmlFor='userEmail'>Email</label>
-                <br></br>
-                <input type="email" name="userEmail" id="userEmail" required></input>
-                <br></br>
-                <label htmlFor="pswrd" >Password</label>
-                <br></br>
-                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                <br></br><br></br>
-                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                <label className="switch">
-                <input type="checkbox" id='rememberMe'
-                ></input>
-                <span className="slider round"></span>
-                </label>
-                <br></br><br></br>
-                <Button variant='dark' type="submit"> Login </Button>
-              </form>
-              </div>
-            )
-          }
+          //just reload the page at this point
           //Block List functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
@@ -999,7 +933,7 @@ function App() {
                 <div>
                 You will need to be logged in to view these options.
                 <br></br>
-                <Button onClick={() => {innerLoginPage(username,startPos,endPos,'options')}}> Login </Button>
+                <Button onClick={() => {getLoginPage("userProfileOptions",0,userID,startPos,endPos)}}> Login </Button>
                 </div>
               );
               changeCode(
@@ -1043,7 +977,7 @@ function App() {
               }
             );
             var listOfShownComments = [];
-            var likeText = (<Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'comments')}}>Like</Button>);
+            var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfileComments",0,userID,startPos,endPos)}}>Like</Button>);
             for (let i = start; i < (Math.min(end,comments.length)); i++){
               var dict = comments[i];
               if (cookies.get('sessionID') && cookies.get('id')){
@@ -1136,7 +1070,7 @@ function App() {
             var detect = cookies.get('id') && cookies.get('sessionID');
             for (let i = start; i < (Math.min(end,posts.length)); i++){
               var dict = posts[i];
-              var likeText = (<Button className='likeText' onClick={() => {innerLoginPage(username,start,end,'posts')}}>Like</Button>);
+              var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfilePosts",0,userID,startPos,endPos)}}>Like</Button>);
               if (detect){
                 likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Like</Button>);
                 if (dict.isLiked === "Liked"){
@@ -1472,113 +1406,7 @@ function App() {
             //FIX ThIS: Need to add the associated links above
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
-          function displayInnerLogin(){
-            hideWriteForm();
-            changeCode(
-              <div>
-              <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
-              <form onSubmit={handleInnerLogin}>
-                <h1> Login Page </h1>
-                <label htmlFor='userEmail'>Email</label>
-                <br></br>
-                <input type="email" name="userEmail" id="userEmail" required></input>
-                <br></br>
-                <label htmlFor="pswrd" >Password</label>
-                <br></br>
-                <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                <br></br><br></br>
-                <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                <label className="switch">
-                <input type="checkbox" id='rememberMe'
-                ></input>
-                <span className="slider round"></span>
-                </label>
-                <br></br><br></br>
-                <Button variant='dark' type="submit"> Login </Button>
-              </form>
-              </div>
-            )
-          }
-          function handleInnerLogin(event){
-            event.preventDefault();
-            var email = document.getElementById("userEmail").value;
-            var pswrd = document.getElementById("pswrd").value;
-            var rememberMe = document.getElementById("rememberMe").checked ? "forever" : "hour";
-            const requestSetup = {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({email: email, pswrd:pswrd, rememberMe: rememberMe})
-            };
-            fetch(serverLocation+"/login",requestSetup)
-              .then(response => response.json())
-              .then(data => {
-                if (data.status === -2){ //Invalid Combination
-                  changeCode(
-                    <div>
-                    <div className="errMsg">That was not an existing email/password combination.</div>
-                    <Button onClick={cancel}> Cancel </Button>
-                    <br></br>
-                    <form onSubmit={(event) => {handleInnerLogin(event)}}>
-                      <h1> Login Page </h1>
-                      <label htmlFor='userEmail'>Email</label>
-                      <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
-                      <br></br>
-                      <label htmlFor="pswrd" >Password</label>
-                      <br></br>
-                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br><br></br>
-                      <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                      <label className="switch">
-                      <input type="checkbox" id='rememberMe'
-                      ></input>
-                      <span className="slider round"></span>
-                      </label>
-                      <br></br><br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-                    </form>
-                    </div>
-                  )
-                }else if (data.status === -1){///Other Error
-                  changeCode(
-                    <div>
-                      <div className="errMsg">There was an error. Please try again.</div>
-                    <Button onClick={cancel}> Cancel </Button>
-                    <br></br>
-                    <form onSubmit={(event) => {handleInnerLogin(event)}}>
-                      <h1> Login Page </h1>
-                      <label htmlFor='userEmail'>Email</label>
-                      <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
-                      <br></br>
-                      <label htmlFor="pswrd" >Password</label>
-                      <br></br>
-                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br><br></br>
-                      <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                      <label className="switch">
-                      <input type="checkbox" id='rememberMe'
-                      ></input>
-                      <span className="slider round"></span>
-                      </label>
-                      <br></br><br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-                    </form>
-                    </div>
-                  )
-                }else if (data.status === 0){//No Error
-                  cookies.set('name',data.username,{path:'/'});
-                  cookies.set('id',data.userID,{path:'/'});
-                  cookies.set('sessionID',data.sessionID,{path:'/'})
-                  cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-                  changeNavToLoggedIn();
-                  showInDepthPost(postID,commentStart,commentEnd)
-                }
-              });
-          }
-          function cancel(){
-            showInDepthPost(postID,commentStart,commentEnd);
-          }
+          //Other
           function displayCommentWriter(){
             hideWriteForm();
             changeCode(
@@ -1700,7 +1528,7 @@ function App() {
                 var listOfComments = [];
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
                   var comment = data.comments[key];
-                  var likeButton = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);
+                  var likeButton = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);
                   if (detect){
                     likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Like</Button>);
                     if (comment.commentLiked && comment.commentLiked === "Liked"){
@@ -1743,14 +1571,14 @@ function App() {
                     </li>
                   </ul>)
                 }
-                var postLikedText = (<Button onClick={() => {displayInnerLogin()}}>Like</Button>);;
+                var postLikedText = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);;
                 if (detect){
                   postLikedText = (<Button onClick={() => {handlePostLike(data.postID,"indepthPost")}}>Like</Button>);
                   if (data.likedPost && data.likedPost === "Liked"){
                     postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID,"indepthPost")}}>Unlike</Button>)
                   }
                 }
-                var writeCommentButton = (<Button onClick={() => {displayInnerLogin()}}>Add Comment</Button>);
+                var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);
                 if (detect){
                   writeCommentButton = (<Button onClick={() => {displayCommentWriter()}}>Add Comment</Button>)
                 }
