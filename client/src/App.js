@@ -115,7 +115,7 @@ function App() {
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0){
         //broad use function - rewrite others
         if (!cookies.get("sessionID") || !cookies.get("userID")){
-          handleLoginOrigin(postID,origin,commentID,userID,startPos,endPos);
+          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           const requestSetup = {
               method: 'PUT',
@@ -144,7 +144,7 @@ function App() {
       }
       function handlePostUnlike(postID,origin,commentID = 0, userID = 0, startPos = 0, endPos = 0){
         if (!cookies.get("sessionID") || !cookies.get("userID")){
-          handleLoginOrigin(postID,origin,commentID,userID,startPos,endPos);
+          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -172,7 +172,7 @@ function App() {
       }
       function handleCommentLike(commentID,origin,postID = 0, userID = 0, startPos = 0, endPos = 0){
         if (!cookies.get("sessionID") || !cookies.get("userID")){
-          handleLoginOrigin(postID,origin,commentID,userID,startPos,endPos);
+          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -201,7 +201,7 @@ function App() {
       }
       function handleCommentUnlike(commentID,origin,postID = 0, userID = 0, startPos = 0, endPos = 0){
         if (!cookies.get("sessionID") || !cookies.get("userID")){
-          handleLoginOrigin(postID,origin,commentID,userID,startPos,endPos);
+          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -299,7 +299,7 @@ function App() {
         )
       }
       //Login Functions --Rework FIX THIS
-      function handleLogin(event){
+      function handleLogin(event,origin,postID,commentID,userID,startPos,endPos){
           event.preventDefault();
           var email = document.getElementById("userEmail").value;
           var pswrd = document.getElementById("pswrd").value;
@@ -314,74 +314,49 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -2){ //Invalid Combination
-                changeCode(
-                  <div>
-                    <div className="errMsg">That was not an existing email/password combination.</div>
-                    <form onSubmit={handleLogin}>
-                      <h1> Login Page </h1>
-                      <label htmlFor='userEmail'>Email</label>
-                      <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
-                      <br></br>
-                      <label htmlFor="pswrd" >Password</label>
-                      <br></br>
-                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br><br></br>
-                      <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                      <label className="switch">
-                      <input type="checkbox" id='rememberMe'
-                      ></input>
-                      <span className="slider round"></span>
-                      </label>
-                      <br></br><br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-                    </form>
-                  </div>
-                )
+                getLoginPage(origin,postID,commentID,userID,startPos,endPos);
               }else if (data.status === -1){///Other Error
-                changeCode(
-                  <div>
-                    <div className="errMsg">There was an error. Please try again.</div>
-                    <form onSubmit={handleLogin}>
-                      <h1> Login Page </h1>
-                      <label htmlFor='userEmail'>Email</label>
-                      <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
-                      <br></br>
-                      <label htmlFor="pswrd" >Password</label>
-                      <br></br>
-                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                      <br></br><br></br>
-                      <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                      <label className="switch">
-                      <input type="checkbox" id='rememberMe'
-                      ></input>
-                      <span className="slider round"></span>
-                      </label>
-                      <br></br><br></br>
-                      <Button variant='dark' type="submit"> Login </Button>
-                    </form>
-                  </div>
-                )
+                getLoginPage(origin,postID,commentID,userID,startPos,endPos);
               }else if (data.status === 0){//No Error
                 cookies.set('name',data.username,{path:'/'});
                 cookies.set('id',data.userID,{path:'/'});
                 cookies.set('sessionID',data.sessionID,{path:'/'})
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-                window.location.reload();
+                if (origin === ""){
+                  window.location.reload();
+                }else if (origin === "userProfileOptions"){
+                  showUserProfile(userID,0,0,"options");
+                }else if (origin === "indepthPost"){
+                  showInDepthPost(postID,startPos,endPos);
+                }else if (origin === "userProfilePosts"){
+                  showUserProfile(userID,startPos,endPos,"posts");
+                }else if (origin === "userProfileComments"){
+                  showUserProfile(userID,startPos,endPos,"comments");
+                }else if (origin === "indepthComment"){
+                  showInDepthComment(commentID);
+                }
               }
             });
       }
-      function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
+      function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
         hideWriteForm();
         var cancelButton;
         if (origin !== ""){
           cancelButton = (<Button variant='dark' onClick={() => {cancel(origin,postID,commentID,userID,startPos,endPos)}} className='exitButton'>Cancel</Button>);
         }
+        var overheadMsg;
+        if (msg === "conf"){
+          overheadMsg = (<div className="confMsg">You have successfully registered.</div>)
+        }else if (msg === "err"){
+          overheadMsg = (<div className="errMsg">There was an error. Please try again.</div>);
+        }else if (msg === "badCombo"){
+          overheadMsg = (<div className="errMsg">That was not a valid username/password combination.</div>);
+        }
         changeCode(
           <div>
+            {overheadMsg}
             {cancelButton}
-            <form onSubmit={() => {handleLogin()}}>
+            <form onSubmit={(event) => {handleLogin(event,origin = "",postID,commentID,userID,startPos,endPos)}}>
               <h1> Login Page </h1>
               <label htmlFor='userEmail'>Email</label>
               <br></br>
@@ -402,9 +377,6 @@ function App() {
             </form>
           </div>
         )
-      }
-      function handleLoginOrigin(origin,postID,userID,startPos,endPos){
-        var needsWork;
       }
         //Set up Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
@@ -1344,7 +1316,7 @@ function App() {
             console.log(data);
             var editButton;
             var likePostButton = (
-              <Button onClick={() => {handleLoginOrigin(data.postID,"","")}}> Like </Button>
+              <Button onClick={() => {getLoginPage("indepthComment",0,commentID,0,0,0)}}> Like </Button>
             );
             if (data.postLiked && data.postLiked === "Liked"){
               likePostButton = (
@@ -1978,30 +1950,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === 0){
-                changeCode(
-                  <div>
-                  <div className='confMsg'>You have been registered.</div>
-                  <form onSubmit={handleLogin}>
-                    <h1> Login Page </h1>
-                    <label htmlFor='userEmail'>Email</label>
-                    <br></br>
-                    <input type="email" name="userEmail" id="userEmail" required></input>
-                    <br></br>
-                    <label htmlFor="pswrd" >Password</label>
-                    <br></br>
-                    <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                    <br></br><br></br>
-                    <label htmlFor="rememberMe"> Remember Me?</label><br></br>
-                    <label className="switch">
-                    <input type="checkbox" id='rememberMe'
-                    ></input>
-                    <span className="slider round"></span>
-                    </label>
-                    <br></br><br></br>
-                    <Button variant='dark' type="submit"> Login </Button>
-                  </form>
-                  </div>
-                )
+                getLoginPage("",0,0,0,0,0,"conf");
               }
               else if (data.status === -1){//Various Error
                 changeCode(
