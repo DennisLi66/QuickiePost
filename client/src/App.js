@@ -38,7 +38,7 @@ import Cookies from 'universal-cookie';
 //recheck queries
 //VIEWERSHIP ENABLEMENT
 //add better session check
-//Show in depth comment
+//FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //DELETE POSTS AND COMMENTS NEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT N N
 //FIX THIS: Update Cyclical Connections between simplePost, indepth Pist, etc
 //MAke sure to test everything
@@ -78,6 +78,8 @@ function App() {
   const getHome = React.useCallback(
     () => {
       //Move things around
+      //Deleting Posts
+
       //Edit Posts
       function showEditPost(){
 
@@ -86,16 +88,71 @@ function App() {
 
       }
       //Edit Comments
-      function showEditComment(){
+      function showEditComment(commentID,origin,postID,startPos,endPos,comments = "",visibility = ""){
+        function displayChangedCode(comments,visibility){
+          var visibilityToggle;
+          if (!visibility || visibility === "public"){
+            visibilityToggle = (
+              <div>
+                Anyone can see your post.
+                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}}
+                ></input>
+              </div>
+            )
+          }else{
+            visibilityToggle = (
+              <div>
+                Only you and your viewers will be able to see this tweet.
+                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}} checked
+                ></input>
+              </div>
+            )
+          }
+          changeCode(
+            <div>
+              <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+              Editing Comment
+              <form>
+                <h4> Comments </h4>
+                <textarea className='noResize' rows='5' cols='50'
+                 maxLength="200" id="comments" name="comments" autoComplete="off" value={comments} required>
+                </textarea>
+                <h4> Visibility </h4>
+                {visibilityToggle}
+                <Button onClick={() => {handleEditComment(commentID,origin,postID,startPos,endPos)}} type='submit'> Submit Changes </Button>
+              </form>
+            </div>
+          )
+        }
+        if (!cookies.get("sessionID") || !cookies.get("id")){
+          cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+        }
+        if (comments !== "" || visibility !== ""){
+          displayChangedCode(comments,visibility)
+        }else{
+          fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
+            .then(response => response.json())
+            .then(data => {
+              console.log(data);
+              displayChangedCode(data.comments,data.commentVisibility);
+            })
+        }
+      }
+      function handleEditComment(commentID,origin,postID,startPos,endPos){
 
       }
-      function handleEditComment(){
-
+      function handleCommentVisiToggle(commentID,origin,postID,startPos,endPos){
+        var visibility;
+        if (document.getElementByID('privacySwitch').checked){
+          visibility = "private"
+        }else{
+          visibility = "public";
+        }
+        showEditComment(commentID,origin,postID,startPos,endPos,document.getElementById('comments').value,visibility);
       }
       //Edit Both
-      function handleVisiToggle(){
-
-      }
       function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         if (origin === ""){
           getHome();
@@ -1243,70 +1300,6 @@ function App() {
               })
           }}
       function showInDepthComment(commentID,designation = ""){
-        function handleEditComment(event){
-          //send privacy comments sessionID and userID //FIX THIS: TEST LATER
-          event.preventDefault();
-          const requestSetup = {
-              method: 'PATCH',
-          }
-          fetch(serverLocation + "/comment?sessionID=" + cookies.get("sessionID") +
-          "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
-          + "&comments=" + document.getElementById("comments").value,requestSetup)
-            .then(response => response.json())
-            .then(data => {
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
-              }else{
-                showInDepthComment(commentID,"conf");
-              }
-            })
-        }
-        function handleVisiToggle(){
-          var visibility;
-          if (document.getElementByID('privacySwitch').checked){
-            visibility = "private"
-          }else{
-            visibility = "public";
-          }
-          showEditComment(visibility,document.getElementById('comments').value);
-        }
-        function showEditComment(visibility,comments){
-          var visibilityToggle;
-          if (!visibility || visibility === "public"){
-            visibilityToggle = (
-              <div>
-                Anyone can see your post.
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={handleVisiToggle}
-                ></input>
-              </div>
-                          )
-          }else{
-            visibilityToggle = (
-              <div>
-                Only you and your viewers will be able to see this tweet.
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={handleVisiToggle} checked
-                ></input>
-              </div>
-                          )
-          }
-          changeCode(
-            <div>
-              <Button variant='dark' onClick={() => {showInDepthComment(commentID)}} className='exitButton'>Cancel</Button>
-              Editing Comment
-              <form>
-                <h4> Comments </h4>
-                <textarea className='noResize' rows='5' cols='50'
-                 maxLength="200" id="comments" name="comments" autoComplete="off" value={comments} required>
-                </textarea>
-                <h4> Visibility </h4>
-                {visibilityToggle}
-                <Button onClick={handleEditComment} type='submit'> Submit Changes </Button>
-              </form>
-            </div>
-          )
-        }
         var serverString = serverLocation + "/comment?commentID=" + commentID +
           (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
           (cookies.get("id") ? "&userID=" + cookies.get("id") : "");
