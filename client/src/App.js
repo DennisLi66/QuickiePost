@@ -114,14 +114,14 @@ function App() {
             <div>
               <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
               Editing Comment
-              <form>
+              <form onSubmit={(event) => {handleEditComment(event,commentID,origin,postID,startPos,endPos)}}>
                 <h4> Comments </h4>
                 <textarea className='noResize' rows='5' cols='50'
                  maxLength="200" id="comments" name="comments" autoComplete="off" value={comments} required>
                 </textarea>
                 <h4> Visibility </h4>
                 {visibilityToggle}
-                <Button onClick={() => {handleEditComment(commentID,origin,postID,startPos,endPos)}} type='submit'> Submit Changes </Button>
+                <Button onClick={(event) => {handleEditComment(event,commentID,origin,postID,startPos,endPos)}} type='submit'> Submit Changes </Button>
               </form>
             </div>
           )
@@ -140,8 +140,27 @@ function App() {
             })
         }
       }
-      function handleEditComment(commentID,origin,postID,startPos,endPos){
-
+      function handleEditComment(event,commentID,origin,postID,startPos,endPos){
+        //send privacy comments sessionID and userID //FIX THIS: TEST LATER
+        event.preventDefault();
+        const requestSetup = {
+            method: 'PATCH',
+        }
+        fetch(serverLocation + "/comment?sessionID=" + cookies.get("sessionID") +
+        "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
+        + "&comments=" + document.getElementById("comments").value,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else if (origin === "indepthComment"){
+              showInDepthComment(commentID,"conf");
+            }else if (origin === "indepthPost"){
+              showInDepthPost(postID,startPos,endPos,"Add")
+            }else if (origin === "userProfile"){
+              showUserProfile(cookies.get("id"),startPos,endPos,"comments")
+            }
+          })
       }
       function handleCommentVisiToggle(commentID,origin,postID,startPos,endPos){
         var visibility;
