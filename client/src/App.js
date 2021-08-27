@@ -81,8 +81,61 @@ function App() {
       //Deleting Posts
 
       //Edit Posts
-      function showEditPost(){
-
+      function showEditPost(postID,origin,commentID,startPos,endPos,title = "",content = "", visibility = ""){
+        function displayChangedCode(title,content,visibility){
+          var visibilityToggle;
+          if (!visibility || visibility === "public"){
+            visibilityToggle = (
+              <div>
+                Anyone can see your post.
+                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}}
+                ></input>
+              </div>
+            )
+          }else{
+            visibilityToggle = (
+              <div>
+                Only you and your viewers will be able to see this tweet.
+                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}} checked
+                ></input>
+              </div>
+            )
+          }
+          changeCode(
+            <div>
+              <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+              Editing Post
+              <form onSubmit={(event) => {handleEditPost(event,postID,origin,commentID,startPos,endPos)}}>
+                <h4> Post </h4>
+                <input id='title' name='title' value={title}></input>
+                <textarea className='noResize' rows='5' cols='50'
+                 maxLength="200" id="comments" name="content" autoComplete="off" value={content} required>
+                </textarea>
+                <h4> Visibility </h4>
+                {visibilityToggle}
+                <Button onClick={(event) => {handleEditPost(event,postID,origin,commentID,startPos,endPos)}} type='submit'> Submit Changes </Button>
+              </form>
+            </div>
+          )
+        }
+        if (!cookies.get("sessionID") || !cookies.get("id")){
+          cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+        }else if (title !== "" || content !== "" || visibility !== ""){
+          displayChangedCode(title,content,visibility)
+        }else{
+          fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
+            .then(response => response.json())
+            .then(data => {
+              console.log(data)
+              if (data.authorID === cookies.get("id")){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else{
+                displayChangedCode(data.title,data.content,data.postVisibility);
+              }
+            })
+        }
       }
       function handleEditPost(){
 
@@ -128,15 +181,18 @@ function App() {
         }
         if (!cookies.get("sessionID") || !cookies.get("id")){
           cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
-        }
-        if (comments !== "" || visibility !== ""){
+        } else if (comments !== "" || visibility !== ""){
           displayChangedCode(comments,visibility)
         }else{
           fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
             .then(response => response.json())
             .then(data => {
               console.log(data);
-              displayChangedCode(data.comments,data.commentVisibility);
+              if (cookies.get("id") !== data.commenterID){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else{
+                displayChangedCode(data.comments,data.commentVisibility);
+              }
             })
         }
       }
@@ -185,6 +241,9 @@ function App() {
           showUserProfile(userID,startPos,endPos,"comments");
         }else if (origin === "indepthComment"){
           showInDepthComment(commentID);
+        }
+        else if (origin === "userProfile"){
+          showUserProfile(userID);
         }
       }
       //like handlers
