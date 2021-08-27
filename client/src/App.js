@@ -80,7 +80,7 @@ function App() {
       //Move things around
       //Deleting Posts
 
-      //Edit Posts
+      //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON
       function showEditPost(postID,origin,commentID,startPos,endPos,title = "",content = "", visibility = ""){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
@@ -137,8 +137,25 @@ function App() {
             })
         }
       }
-      function handleEditPost(){
-
+      function handleEditPost(event,postID,origin,commentID,startPos,endPos){
+        event.preventDefault();
+        const requestSetup = {
+            method: 'PATCH',
+        }
+        fetch(serverLocation + "/post?postID="+ postID + "&sessionID=" + cookies.get("sessionID") +
+        "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
+        + "&title=" + document.getElementById("title").value
+        + "&content=" + document.getElementById("content").value,requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else if (origin === "indepthPost"){
+              showInDepthPost(postID,startPos,endPos,"Edit");
+            }else if (origin === "userProfile"){
+              showUserProfile(cookies.get("id"),startPos,endPos,"posts")
+            }
+          })
       }
       //Edit Comments
       function showEditComment(commentID,origin,postID,startPos,endPos,comments = "",visibility = ""){
@@ -202,7 +219,7 @@ function App() {
         const requestSetup = {
             method: 'PATCH',
         }
-        fetch(serverLocation + "/comment?sessionID=" + cookies.get("sessionID") +
+        fetch(serverLocation + "/comment?commentID="+ commentID + "&sessionID=" + cookies.get("sessionID") +
         "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
         + "&comments=" + document.getElementById("comments").value,requestSetup)
           .then(response => response.json())
@@ -210,9 +227,9 @@ function App() {
             if (data.status === -1){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else if (origin === "indepthComment"){
-              showInDepthComment(commentID,"conf");
+              showInDepthComment(commentID,"changed");
             }else if (origin === "indepthPost"){
-              showInDepthPost(postID,startPos,endPos,"Add")
+              showInDepthPost(postID,startPos,endPos,"Edit")
             }else if (origin === "userProfile"){
               showUserProfile(cookies.get("id"),startPos,endPos,"comments")
             }
@@ -1627,7 +1644,9 @@ function App() {
                 }
                 var confrimation = (<div></div>);
                 if (pact && pact==='Add'){
-                  confrimation = (<div className='confMsg'> </div>)
+                  confrimation = (<div className='confMsg'> Your post was added. </div>)
+                } else if (pact && pact==='Edit'){
+                  confrimation = (<div className='confMsg'> Your post was edited. </div>)
                 }
                 changeInDepthCode(
                   <Card>
