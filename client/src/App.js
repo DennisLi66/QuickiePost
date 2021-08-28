@@ -129,38 +129,38 @@ function App() {
             })
         }
       }
-      //Deleting Comments
+      //Deleting Comments //FIX THIS ADD DELETE BUTTONS
       function showDeleteCommentConfirmation(commentID,origin,postID,startPos,endPos){
-        // if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
-        //   cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
-        // }else{
-        //   fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
-        //     .then(response => response.json())
-        //     .then(data => {
-        //       if (data.authorID !== cookies.get("id")){
-        //         changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
-        //       }else{
-        //         changeCode(
-        //           <div>
-        //             <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
-        //             Editing Post
-        //             <form onSubmit={(event) => {handleDeletePost(event)}}>
-        //               <h4> Deleting A Post </h4>
-        //               <h5> Are You Sure You Want To Delete This Post?</h5>
-        //               <Card>
-        //               <Card.Title>{data.title}</Card.Title>
-        //               <Card.Body>{data.content}</Card.Body>
-        //               </Card>
-        //               <Button onClick={(event) => {handleDeletePost(event)}} type='submit'> Do Delete </Button>
-        //               <Button onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
-        //             </form>
-        //           </div>
-        //         )
-        //       }
-        //     })
-        // }
+        if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
+          cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+        }
+        else{
+          fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
+            .then(response => response.json())
+            .then(data => {
+              if (data.authorID !== cookies.get("id")){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else{
+                changeCode(
+                  <div>
+                    <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+                    Editing Post
+                    <form>
+                      <h4> Deleting A Comment </h4>
+                      <h5> Are You Sure You Want To Delete This Comment?</h5>
+                      <Card>
+                      <Card.Body>{data.comments}</Card.Body>
+                      </Card>
+                      <Button onClick={() => {handleDeleteComment(commentID,origin,postID,startPos,endPos)}} type='submit'> Do Delete </Button>
+                      <Button onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
+                    </form>
+                  </div>
+                )
+              }
+            })
+        }
       }
-      function handleDeleteComment(){
+      function handleDeleteComment(commentID,origin,postID,startPos,endPos){
 
       }
       //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON SOMEWHERE
