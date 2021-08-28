@@ -161,7 +161,25 @@ function App() {
         }
       }
       function handleDeleteComment(commentID,origin,postID,startPos,endPos){
-
+        if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
+          getLoginPage(origin,postID,0,cookies.get("id"),startPos,endPos)
+        }
+        else{
+          const requestSetup = {
+              method: 'DELETE',
+          };
+          fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"),requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === -1){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else if (origin === "indepthPost" || origin === "indepthComment"){
+                showInDepthPost(postID,startPos,endPos,"commentDeleted")
+              }else if (origin === "userProfile"){
+                showUserProfile(cookies.get("id"),startPos,endPos,"commentDeleted")
+              }
+            })
+        }
       }
       //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON SOMEWHERE
       function showEditPost(postID,origin,commentID,startPos,endPos,title = "",content = "", visibility = ""){
@@ -1323,6 +1341,8 @@ function App() {
             var msg;
             if (variation === "Delete"){
               msg = (<div className='confMsg'> Your post was deleted. </div>)
+            }else if (variation === "commentDeleted"){
+              msg = (<div className='confMsg'> Your comment was deleted. </div>)
             }
             changeCode(
               <div>
@@ -1462,7 +1482,9 @@ function App() {
                 }else if (variation === "privacyChanged"){
                   showOptions(data.username,data.posts,data.comments,"privacyChanged");
                 }else if (variation === "postDelete"){
-                      showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
+                  showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
+                }else if (variation === "commentDeleted"){
+                  showPosts(data.username,data.posts,startPos,endPos,data.comments,"commentDeleted");
                 }
                 else{
                   showPosts(data.username,data.posts,startPos,endPos,data.comments);
@@ -1741,7 +1763,9 @@ function App() {
                 }
                 else if (pact && pact === "Delete"){
                       confrimation = (<div className='confMsg'> Your post was deleted. </div>)
-                }
+                } else if (pact && pact === "Delete"){
+                    confrimation = (<div className='confMsg'> Your comment was deleted. </div>)
+              }
                 changeInDepthCode(
                   <Card>
                     <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
