@@ -78,7 +78,7 @@ function App() {
   const getHome = React.useCallback(
     () => {
       //Move things around
-      //Deleting Posts
+      //Deleting Posts //FIX THIS ADD DELETE BUTTONS
       function showDeletePostConfirmation(postID,origin,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -93,14 +93,14 @@ function App() {
                   <div>
                     <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
                     Editing Post
-                    <form onSubmit={(event) => {handleDeletePost(event)}}>
+                    <form>
                       <h4> Deleting A Post </h4>
                       <h5> Are You Sure You Want To Delete This Post?</h5>
                       <Card>
                       <Card.Title>{data.title}</Card.Title>
                       <Card.Body>{data.content}</Card.Body>
                       </Card>
-                      <Button onClick={(event) => {handleDeletePost(event)}} type='submit'> Do Delete </Button>
+                      <Button onClick={() => {handleDeletePost(postID,origin,startPos,endPos)}} type='submit'> Do Delete </Button>
                       <Button onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
                     </form>
                   </div>
@@ -109,12 +109,56 @@ function App() {
             })
         }
       }
-      function handleDeletePost(){
-
+      function handleDeletePost(postID,origin,startPos,endPos){
+        if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
+          getLoginPage(origin,postID,0,cookies.get("id"),startPos,endPos)
+        }else{
+          const requestSetup = {
+              method: 'DELETE',
+          }
+          fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"),requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === -1){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else if (origin === "indepthPost"){
+                showInDepthPost(postID,startPos,endPos,"Delete");
+              }else if (origin === "userProfile"){
+                showUserProfile(cookies.get("id"),startPos,endPos,"posts","postDelete")
+              }
+            })
+        }
       }
       //Deleting Comments
-      function showDeleteCommentConfirmation(){
-
+      function showDeleteCommentConfirmation(commentID,origin,postID,startPos,endPos){
+        // if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
+        //   cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+        // }else{
+        //   fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
+        //     .then(response => response.json())
+        //     .then(data => {
+        //       if (data.authorID !== cookies.get("id")){
+        //         changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+        //       }else{
+        //         changeCode(
+        //           <div>
+        //             <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+        //             Editing Post
+        //             <form onSubmit={(event) => {handleDeletePost(event)}}>
+        //               <h4> Deleting A Post </h4>
+        //               <h5> Are You Sure You Want To Delete This Post?</h5>
+        //               <Card>
+        //               <Card.Title>{data.title}</Card.Title>
+        //               <Card.Body>{data.content}</Card.Body>
+        //               </Card>
+        //               <Button onClick={(event) => {handleDeletePost(event)}} type='submit'> Do Delete </Button>
+        //               <Button onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
+        //             </form>
+        //           </div>
+        //         )
+        //       }
+        //     })
+        // }
       }
       function handleDeleteComment(){
 
@@ -1208,7 +1252,7 @@ function App() {
               </div>
             )
           }
-          function showPosts(username,posts,start,end,comments){
+          function showPosts(username,posts,start,end,comments, variation = ""){
             changeMainBodyCSS(
               {
                 height: 'auto',
@@ -1276,8 +1320,13 @@ function App() {
             if (listOfShownPosts.length === 0){
               listOfShownPosts = (<div>This user has no posts to show.</div>)
             }
+            var msg;
+            if (variation === "Delete"){
+              msg = (<div className='confMsg'> Your post was deleted. </div>)
+            }
             changeCode(
               <div>
+              {msg}
               <h1> {username}'s Profile </h1>
               <ul className="nav nav-tabs justify-content-center">
                 <li className="nav-item">
@@ -1412,7 +1461,10 @@ function App() {
                   showOptions(data.username,data.posts,data.comments);
                 }else if (variation === "privacyChanged"){
                   showOptions(data.username,data.posts,data.comments,"privacyChanged");
-                }else{
+                }else if (variation === "postDelete"){
+                      showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
+                }
+                else{
                   showPosts(data.username,data.posts,startPos,endPos,data.comments);
                 }
               })
@@ -1686,6 +1738,9 @@ function App() {
                   confrimation = (<div className='confMsg'> Your post was added. </div>)
                 } else if (pact && pact==='Edit'){
                   confrimation = (<div className='confMsg'> Your post was edited. </div>)
+                }
+                else if (pact && pact === "Delete"){
+                      confrimation = (<div className='confMsg'> Your post was deleted. </div>)
                 }
                 changeInDepthCode(
                   <Card>
