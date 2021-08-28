@@ -79,8 +79,47 @@ function App() {
     () => {
       //Move things around
       //Deleting Posts
+      function showDeletePostConfirmation(postID,origin,startPos,endPos){
+        if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
+          cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+        }else{
+          fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
+            .then(response => response.json())
+            .then(data => {
+              if (data.authorID !== cookies.get("id")){
+                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              }else{
+                changeCode(
+                  <div>
+                    <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+                    Editing Post
+                    <form onSubmit={(event) => {handleDeletePost(event)}}>
+                      <h4> Deleting A Post </h4>
+                      <h5> Are You Sure You Want To Delete This Post?</h5>
+                      <Card>
+                      <Card.Title>{data.title}</Card.Title>
+                      <Card.Body>{data.content}</Card.Body>
+                      </Card>
+                      <Button onClick={(event) => {handleDeletePost(event)}} type='submit'> Do Delete </Button>
+                      <Button onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
+                    </form>
+                  </div>
+                )
+              }
+            })
+        }
+      }
+      function handleDeletePost(){
 
-      //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON
+      }
+      //Deleting Comments
+      function showDeleteCommentConfirmation(){
+
+      }
+      function handleDeleteComment(){
+
+      }
+      //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON SOMEWHERE
       function showEditPost(postID,origin,commentID,startPos,endPos,title = "",content = "", visibility = ""){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
@@ -120,7 +159,7 @@ function App() {
             </div>
           )
         }
-        if (!cookies.get("sessionID") || !cookies.get("id")){
+        if (!cookies.get("sessionID") || !cookies.get("id")){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
         }else if (title !== "" || content !== "" || visibility !== ""){
           displayChangedCode(title,content,visibility)
@@ -129,7 +168,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               console.log(data)
-              if (data.authorID === cookies.get("id")){
+              if (data.authorID !== cookies.get("id")){
                 changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
               }else{
                 displayChangedCode(data.title,data.content,data.postVisibility);
