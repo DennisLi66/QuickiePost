@@ -182,7 +182,7 @@ function App() {
         }
       }
       //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON SOMEWHERE
-      function showEditPost(postID,origin,commentID,startPos,endPos,title = "",content = "", visibility = ""){
+      function showEditPost(postID,origin,startPos,endPos,title = "",content = "", visibility = ""){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
           if (!visibility || visibility === "public"){
@@ -190,7 +190,7 @@ function App() {
               <div>
                 Anyone can see your post.
                 <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}}
+                onChange={() => {handleCommentVisiToggle(0,origin,postID,startPos,endPos)}}
                 ></input>
               </div>
             )
@@ -199,16 +199,16 @@ function App() {
               <div>
                 Only you and your viewers will be able to see this tweet.
                 <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}} checked
+                onChange={() => {handleCommentVisiToggle(0,origin,postID,startPos,endPos)}} checked
                 ></input>
               </div>
             )
           }
           changeCode(
             <div>
-              <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+              <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
               Editing Post
-              <form onSubmit={(event) => {handleEditPost(event,postID,origin,commentID,startPos,endPos)}}>
+              <form onSubmit={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}}>
                 <h4> Post </h4>
                 <input id='title' name='title' value={title}></input>
                 <textarea className='noResize' rows='5' cols='50'
@@ -216,20 +216,20 @@ function App() {
                 </textarea>
                 <h4> Visibility </h4>
                 {visibilityToggle}
-                <Button onClick={(event) => {handleEditPost(event,postID,origin,commentID,startPos,endPos)}} type='submit'> Submit Changes </Button>
+                <Button onClick={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}} type='submit'> Submit Changes </Button>
               </form>
             </div>
           )
         }
         if (!cookies.get("sessionID") || !cookies.get("id")){ //should replace with check sessionID FIX THIS
-          cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+          cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
         }else if (title !== "" || content !== "" || visibility !== ""){
           displayChangedCode(title,content,visibility)
         }else{
           fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
             .then(response => response.json())
             .then(data => {
-              console.log(data)
+              console.log(data);
               if (data.authorID !== cookies.get("id")){
                 changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
               }else{
@@ -1302,6 +1302,14 @@ function App() {
                   likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Unlike </Button>);
                 }
               }
+              var ownerAbilities;
+              if (userID === cookies.get("id")){
+                ownerAbilities = (
+                  <Card.Body>
+                    <Button onClick={showEditPost(dict.postID,"userProfile",startPos,endPos)}> Edit Post </Button>
+                  </Card.Body>
+                )
+              }
               listOfShownPosts.push(
                 <Card key={i}>
                   <Card.Title> {dict.title} </Card.Title>
@@ -1313,6 +1321,7 @@ function App() {
                   <br></br>
                   {likeText}
                   </Card.Body>
+                  {ownerAbilities}
                 </Card>
               )
             }
@@ -1766,6 +1775,14 @@ function App() {
                 } else if (pact && pact === "Delete"){
                     confrimation = (<div className='confMsg'> Your comment was deleted. </div>)
               }
+                var ownerAbilities;
+                if (data.authorID === cookies.get("id")){
+                  ownerAbilities = (
+                    <Card.Body>
+                      <Button onClick={showEditPost(data.postID,"indepthPost",commentStart,commentEnd)}> Edit Post </Button>
+                    </Card.Body>
+                  )
+                }
                 changeInDepthCode(
                   <Card>
                     <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
@@ -1785,6 +1802,7 @@ function App() {
                     {listOfComments}
                     <div className='centerAlignPaginationBar'> {paginationBar}  </div>
                     </ListGroup>
+                    {ownerAbilities}
                   </Card>
                 );
               }
