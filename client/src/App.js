@@ -1307,6 +1307,8 @@ function App() {
                 ownerAbilities = (
                   <Card.Body>
                     <Button onClick={showEditPost(dict.postID,"userProfile",startPos,endPos)}> Edit Post </Button>
+                    <br></br>
+                    <Button onClick={showDeletePostConfirmation(dict.postID,"indepthPost",startPos,endPos)}> Delete Post </Button>
                   </Card.Body>
                 )
               }
@@ -1780,6 +1782,8 @@ function App() {
                   ownerAbilities = (
                     <Card.Body>
                       <Button onClick={showEditPost(data.postID,"indepthPost",commentStart,commentEnd)}> Edit Post </Button>
+                      <br></br>
+                      <Button onClick={showDeletePostConfirmation(postID,"indepthPost",commentStart,commentEnd)}> Delete Post </Button>
                     </Card.Body>
                   )
                 }
