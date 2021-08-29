@@ -1211,6 +1211,14 @@ function App() {
                   likeText = (<Button className='likeText'onClick={() => {handleCommentUnlike(comments[i].commentID,"userProfile",0,userID,start,end)}}>Unlike </Button>);
                 }
               }
+              var ownerAbilities;
+              if (cookies.get("id") === userID){
+                ownerAbilities = (
+                  <Card.Body>
+                  <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button>
+                  </Card.Body>
+                )
+              }
               listOfShownComments.push(
                 <Card key={i}>
                   <Card.Title> {dict.title} </Card.Title>
@@ -1222,6 +1230,7 @@ function App() {
                   <br></br>
                   {likeText}
                   </Card.Body>
+                  {ownerAbilities}
                 </Card>
               )
             }
@@ -1551,20 +1560,21 @@ function App() {
                 <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
               )
             }
-            var msgData;
+            var ownerAbilities;
             if (designation === "changed"){
               <div className='confMsg'> Your comment has changed successfully. </div>
             }
             if (data.commenterID === cookies.get("id")){
-              editButton = (
+              ownerAbilities = (
                 <Card.Body>
-                  <Button onClick={()=>{showEditComment(data.commentVisibility,data.comment)}}>Edit Comment</Button>
+                  <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
+                  <br></br>
+                  <Button> Delete Comment </Button>
                 </Card.Body>
               )
             }
             changeCode(
               <div>
-                {msgData}
                 <Card>
                 <Card.Title>Comment Information</Card.Title>
                 <Card.Subtitle> {"Username: " + data.commenterUsername} </Card.Subtitle>
@@ -1583,6 +1593,7 @@ function App() {
                 <Card.Body> {likePostButton} </Card.Body>
                 <Card.Subtitle> {data.postDate} </Card.Subtitle>
                 </Card>
+                {ownerAbilities}
               </div>
             )
             ///FIX THIS: May need more details or beautification
@@ -1719,6 +1730,14 @@ function App() {
                       likeButton = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Unlike</Button>)
                     }
                   }
+                  var commentownerAbilities;
+                  if (cookies.userID === comment.commenterID){
+                    commentownerAbilities = (
+                      <Card.Body>
+                        <Button onClick={()=>{showEditComment(key,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
+                      </Card.Body>
+                    )
+                  }
                   listOfComments.push(
                     <ListGroup.Item key={key}>
                       <Card>
@@ -1729,6 +1748,7 @@ function App() {
                       <br></br>
                       {likeButton}
                       </Card.Footer>
+                      {commentownerAbilities}
                       </Card>
                     </ListGroup.Item>
                   )
