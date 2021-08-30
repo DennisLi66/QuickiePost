@@ -62,6 +62,7 @@ app.get("/posts", function(req, res) {
   LEFT JOIN
   (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
   ON comments.postID = posts.postID
+  ORDER BY posts.subDate desc
   `
   var variables = [];
   if (req.query.userID && req.query.sessionID) {
@@ -96,7 +97,8 @@ app.get("/posts", function(req, res) {
     on desig.postID = posts.postID
     LEFT JOIN
     (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
-    ON comments.postID = posts.postID;
+    ON comments.postID = posts.postID
+    ORDER BY posts.subDate desc;
     `;
     variables.push(req.query.userID);
     connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
@@ -321,6 +323,7 @@ app.get("/search", function(req, res) {
         AND uzers.visibility != 'hidden'
         AND (posts.visibility != 'private' OR viewerID is not null)
         AND (uzers.visibility != 'private' OR viewerID is not null)
+        ORDER BY posts.subDate desc
         `;
         sQuery += toJoinQuery.join("");
         var stuff = [userID].concat(variables);
@@ -367,6 +370,7 @@ app.get("/search", function(req, res) {
     on uzers.userID = posts.userID
     WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
     AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
+    ORDER BY posts.subDate desc
     `;
     sQuery += toJoinQuery.join("");
     console.log(sQuery);
@@ -451,7 +455,7 @@ app.route("/post")
         WHERE postID = ?
         AND postVisibility != 'hidden'  AND (postVisibility != 'private' OR viewerID is not null)
         AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
-        ORDER BY commentDate;
+        ORDER BY commentDate DESC;
       `;
       connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
@@ -533,7 +537,7 @@ app.route("/post")
         WHERE
         posts.postID = ? AND
         posts.visibility != 'hidden' AND posts.visibility != 'private'
-        ORDER BY comments.submissionDate
+        ORDER BY comments.submissionDate DESC
       `;
       connection.query(sQuery, [req.query.postID], function(err, results, fields) {
         if (err) {

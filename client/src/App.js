@@ -11,42 +11,34 @@ import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
 //!!!PRIORITY
-//REMOVE KEY ELEMENT FROM SIMPLE POST PARAMETERS
+//Return posts and comments
 //Redo write post page
-//Rework seach Expanding a post from search throws error
-////////////////
-//check all buttons are in () => {} format
-//Search needs to be reworked on server side
-//INCLUDE Private posts for self users
 //Need to integrate the impact of being blocked
+//check all buttons are in () => {} format
+//Notifcation List
+//comments and posts should sort by recebt furst
+//Make home page paginatied
+//NEED to be able to reach posts and comments from profile
+//LOGIN page should check if user is currently hidden
+////////////////
+//INCLUDE Private posts for self users
 //add a highlight effect to the pagination bar
-//Some posts do not work when logged in.
 //Make sure all appropirate functions check session
 //Add fine tuning to posts after submission and in my posts
 //change getPosts to SELECT posts where post != private and user != private
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
 //FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
-//Notifcation List
-//FIX THIS EDIT BOTH STARTUP AND NORMAL showindepth post //Account for not having any posts or comments
 //change color of posts and comments to better differentiate them
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
-//NEED to be able to reach posts and comments from profile
-//FIX THIS add login page to indepthcomments and make sure redirecting to getLogin rather than handleLogin
 //REDO QUERIES - SOME NEED TO BE FIXED
-//FIX THIS MAKE SURE POSTS AND COMMENTS ARE PROPERLY SORTED
 //may need to add privacy to cookies
-//editing posts and comments] DO NEXT NEXT ENXT NEXYEUYGDYGDWHOHDUOWDUUIWDHWDIWUBDIWIDBIWBIWDII
 //rewrite post pages to include pagination
-//LOGIN page should check if user is currently hidden
-//recheck queries
-//VIEWERSHIP ENABLEMENT
+//VIEWERSHIP ENABLEMENT Check if it works
 //add better session check
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
-//DELETE POSTS AND COMMENTS NEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT NNEXT N N
-//FIX THIS: Update Cyclical Connections between simplePost, indepth Pist, etc
 //MAke sure to test everything
 
 function App() {
@@ -1219,6 +1211,7 @@ function App() {
                 ownerAbilities = (
                   <Card.Body>
                   <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button>
+                  <br></br>
                   <Button onClick={()=>{showDeleteCommentConfirmation(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}> Delete Comment </Button>
                   </Card.Body>
                 )

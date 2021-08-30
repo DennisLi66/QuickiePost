@@ -22,3 +22,7 @@
         AND postVisibility != 'hidden'  AND (postVisibility != 'private' OR viewerID is not null)
         AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
         ORDER BY commentDate;
+
+
+
+	
