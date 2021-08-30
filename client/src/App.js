@@ -10,6 +10,7 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
+//check all buttons are in () => {} format
 //Search needs to be reworked on server side
 //INCLUDE Private posts for self users
 //Need to integrate the impact of being blocked
@@ -382,7 +383,7 @@ function App() {
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"posts");
-                  //userID, start, end
+                  // userID, start, end
                 }else if (origin === "indepthPost"){
                   showInDepthPost(postID,"changed");
                 }else if (origin === "indepthComment"){
@@ -504,9 +505,6 @@ function App() {
             <Nav.Link
             onClick={getSearchPage}
             >Search</Nav.Link>
-            <Nav.Link
-            onClick={getMyPosts}
-            >My Posts</Nav.Link>
             <Nav.Link
             onClick={getProfile}
             >My Profile</Nav.Link>
@@ -751,7 +749,7 @@ function App() {
             fetch(serverLocation + "/block?sessionID=" + sessionID + "&userID=" + id + "&blockedID=" + profileID,requestSetup)
               .then(response => response.json())
               .then(data => {
-                // console.log(data);
+                console.log(data);
                 if (data.status === -1){
                   changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
                 }else{
@@ -1316,9 +1314,9 @@ function App() {
               if (userID === cookies.get("id")){
                 ownerAbilities = (
                   <Card.Body>
-                    <Button onClick={showEditPost(dict.postID,"userProfile",startPos,endPos)}> Edit Post </Button>
+                    <Button onClick={() => {showEditPost(posts[i].postID,"userProfile",startPos,endPos)}}> Edit Post </Button>
                     <br></br>
-                    <Button onClick={showDeletePostConfirmation(dict.postID,"indepthPost",startPos,endPos)}> Delete Post </Button>
+                    <Button onClick={() => {showDeletePostConfirmation(posts[i].postID,"indepthPost",startPos,endPos)}}> Delete Post </Button>
                   </Card.Body>
                 )
               }
@@ -1447,7 +1445,8 @@ function App() {
               })
           }
           function showPrivacyTogglePage(){
-            fetch(serverLocation + "/user?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID"))
+            //fetch visibility
+            fetch(serverLocation + "/user!?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID"))
               .then(response => response.json())
               .then(data=>{
                 var privacyText;
@@ -1490,7 +1489,7 @@ function App() {
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
           if (sessionID && id){
-            fetch(serverLocation + "/commentsandposts?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
+            fetch(serverLocation + "/user?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
               .then(response => response.json())
               .then(data=>{
                 // console.log(data)
@@ -1513,7 +1512,7 @@ function App() {
               })
           }else{
             //ask for unlogged in posts
-            fetch(serverLocation + "/commentsandposts?profileID=" + userID)
+            fetch(serverLocation + "/user?profileID=" + userID)
               .then(response => response.json())
               .then(data => {
                 if (variation === "posts"){
@@ -1804,9 +1803,9 @@ function App() {
                 if (data.authorID === cookies.get("id")){
                   ownerAbilities = (
                     <Card.Body>
-                      <Button onClick={showEditPost(data.postID,"indepthPost",commentStart,commentEnd)}> Edit Post </Button>
+                      <Button onClick={() => {showEditPost(data.postID,"indepthPost",commentStart,commentEnd)}}> Edit Post </Button>
                       <br></br>
-                      <Button onClick={showDeletePostConfirmation(postID,"indepthPost",commentStart,commentEnd)}> Delete Post </Button>
+                      <Button onClick={() => {showDeletePostConfirmation(postID,"indepthPost",commentStart,commentEnd)}}> Delete Post </Button>
                     </Card.Body>
                   )
                 }
@@ -2067,35 +2066,6 @@ function App() {
         );
       }
       //LOGGED IN GETEMS
-      function getMyPosts(){ //change visibility possible here
-        hideWriteForm();
-        if (checkSessionID()){
-          return;
-        }
-        var listOfPosts = [];
-        fetch(serverLocation + "/user?userID=" + cookies.get("id"))
-          .then(response=>response.json())
-          .then(data => {
-            console.log(data);
-            for ( const key in data.posts){
-              // console.log(data.posts[key]);
-              if (data.posts[key].content){
-                listOfPosts.push(simplePost(key,data.posts[key]))
-              }
-            }
-            if (listOfPosts.length === 0){
-              listOfPosts = (
-                <div> You either haven't written any posts, or they've all been deleted.</div>
-              )
-            }
-            changeCode(
-              <div>
-              <h1> QuickiePost - Your Posts </h1>
-              {listOfPosts}
-              </div>
-            )
-          })
-      }
       function getMyFeed(){
         hideWriteForm();
         if (checkSessionID()){
@@ -2262,6 +2232,7 @@ function App() {
         }
       }
       function handleWritePost(event){
+        //FIX THIS: REWORK
         event.preventDefault();
         if (checkSessionID()){
           return;
@@ -2277,30 +2248,11 @@ function App() {
         + content + "&visibility=" + privacy + '&userID=' + cookies.get('id') + "&sessionID=" + cookies.get(sessionID),requestSetup)
           .then(response => response.json())
           .then(data => {
-            hideWriteForm();
-            var listOfPosts = [];
-            fetch(serverLocation + "/user?userID=" + cookies.get("id"))
-              .then(response=>response.json())
-              .then(data => {
-                console.log(data);
-                for ( const key in data.posts){
-                  // console.log(data.posts[key]);
-                  if (data.posts[key].content){
-                    listOfPosts.push(simplePost(key,data.posts[key]))
-                  }
-                }
-                if (listOfPosts.length === 0){
-                  listOfPosts = (
-                    <div> You either haven't written any posts, or they've all been deleted.</div>
-                  )
-                }
-                changeCode(
-                  <div>
-                  <h1> QuickiePost - Your Posts </h1>
-                  {listOfPosts}
-                  </div>
-                )
-              })
+            if (data.status !== 0){
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else{
+              showUserProfile(cookies.get("id"),0,10,"posts");
+            }
           });
       }
       function handlePrivacyChecked(){
