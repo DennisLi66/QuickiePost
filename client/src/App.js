@@ -1216,6 +1216,7 @@ function App() {
                 ownerAbilities = (
                   <Card.Body>
                   <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button>
+                  <Button onClick={()=>{showDeleteCommentConfirmation(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}> Delete Comment </Button>
                   </Card.Body>
                 )
               }
@@ -1569,7 +1570,7 @@ function App() {
                 <Card.Body>
                   <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
                   <br></br>
-                  <Button> Delete Comment </Button>
+                  <Button onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
                 </Card.Body>
               )
             }
@@ -1735,6 +1736,8 @@ function App() {
                     commentownerAbilities = (
                       <Card.Body>
                         <Button onClick={()=>{showEditComment(key,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
+                        <br></br>
+                        <Button onClick={()=>{showDeleteCommentConfirmation(key,"indepthComment",postID,commentStart,commentEnd)}}> Delete Comment </Button>
                       </Card.Body>
                     )
                   }
