@@ -16,7 +16,6 @@ import Cookies from 'universal-cookie';
 //Need to integrate the impact of being blocked
 //check all buttons are in () => {} format
 //Notifcation List
-//comments and posts should sort by recebt furst
 //Make home page paginatied
 //NEED to be able to reach posts and comments from profile
 //LOGIN page should check if user is currently hidden
@@ -630,8 +629,6 @@ function App() {
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Rework to single fetch?
           //FIX THIS: check if changingcss is really needed?
-          //Login Functions
-          //just reload the page at this point
           //Block List functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
@@ -1218,7 +1215,7 @@ function App() {
               }
               listOfShownComments.push(
                 <Card key={i}>
-                  <Card.Title> {dict.title} </Card.Title>
+                  <Card.Subtitle> <div className='linkText' onClick={() => {showInDepthComment(comments[i].commentID,0,10)}}>View Comment</div> </Card.Subtitle>
                   <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
                   <Card.Body> {dict.comments} </Card.Body>
                   <Card.Subtitle> {dict.subDate} </Card.Subtitle>
@@ -1321,6 +1318,7 @@ function App() {
               listOfShownPosts.push(
                 <Card key={i}>
                   <Card.Title> {dict.title} </Card.Title>
+                  <Card.Subtitle> <div className='linkText' onClick={() => {showInDepthPost(posts[i].postID,0,10)}}>View Post</div> </Card.Subtitle>
                   <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
                   <Card.Body> {dict.content} </Card.Body>
                   <Card.Subtitle> {dict.subDate} </Card.Subtitle>
@@ -1575,7 +1573,7 @@ function App() {
               <div>
                 <Card>
                 <Card.Title>Comment Information</Card.Title>
-                <Card.Subtitle> {"Username: " + data.commenterUsername} </Card.Subtitle>
+                <Card.Subtitle> <div className="linkText" onClick={() => {showUserProfile(data.commenterID)}}>{"Username: " + data.commenterUsername}</div> </Card.Subtitle>
                 <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
                 <Card.Body> {data.comment} </Card.Body>
                 {editButton}
@@ -1596,7 +1594,6 @@ function App() {
             )
             ///FIX THIS: May need more details or beautification
             //FIX THIS: Maybe Include the like button above?
-            //FIX ThIS: Need to add the associated links above
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
           //Other
@@ -2361,15 +2358,16 @@ function App() {
             for (let key = 0; key < data.contents.length; key++){
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
-              if (listOfPosts.length === 0){
-                listOfPosts = (<div> There are no posts to show.</div>)
-              }
-              changeCode(
-                <div>
-               <h1> QuickiePost </h1>
-                {listOfPosts}
-                </div>
-              )
+            if (listOfPosts.length === 0){
+              listOfPosts = (<div> There are no posts to show.</div>)
+            }
+            //FIX THIS ADD PAGINATION
+            changeCode(
+              <div>
+             <h1> QuickiePost </h1>
+              {listOfPosts}
+              </div>
+            )
           })
     },[serverLocation,cookies,changeCode,privacySwitchDescriptor])
 
