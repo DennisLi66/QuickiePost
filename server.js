@@ -335,6 +335,7 @@ app.get("/search", function(req, res) {
               var toPrep = [];
               for (let i = 0; i < results.length; i++) {
                 toPrep.push({
+                  postID: results[i].postID,
                   title: results[i].title,
                   userID: results[i].userID,
                   content: results[i].content,
@@ -368,6 +369,7 @@ app.get("/search", function(req, res) {
     AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
     `;
     sQuery += toJoinQuery.join("");
+    console.log(sQuery);
     connection.query(sQuery, variables, function(err, results, fields) {
       if (err) {
         return res.status(200).json({
@@ -379,6 +381,7 @@ app.get("/search", function(req, res) {
           var toPrep = [];
           for (let i = 0; i < results.length; i++) {
             toPrep.push({
+              postID: results[i].postID,
               title: results[i].title,
               userID: results[i].userID,
               content: results[i].content,
@@ -449,7 +452,7 @@ app.route("/post")
         AND postVisibility != 'hidden'  AND (postVisibility != 'private' OR viewerID is not null)
         AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
         ORDER BY commentDate;
-      `; //works
+      `;
       connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
@@ -462,6 +465,7 @@ app.route("/post")
             message: "No Valid Session."
           })
         } else {
+          console.log(req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.postID);
           connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.postID], function(err, results, fields) {
             if (err) {
               console.log(err);
@@ -473,7 +477,7 @@ app.route("/post")
               if (results.length === 0) {
                 return res.status(200).json({
                   status: -2,
-                  message: "There was no post with that ID."
+                  message: "There was no post with that ID. ERR1"
                 })
               } else {
                 var toPrep = [];
@@ -542,7 +546,7 @@ app.route("/post")
           if (results.length === 0) {
             return res.status(200).json({
               status: -2,
-              message: "There was no post with that ID."
+              message: "There was no post with that ID. ERR2"
             })
           } else {
             var toPrep = [];

@@ -10,6 +10,11 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 //things ill Need
+//!!!PRIORITY
+//REMOVE KEY ELEMENT FROM SIMPLE POST PARAMETERS
+//Redo write post page
+//Rework seach Expanding a post from search throws error
+////////////////
 //check all buttons are in () => {} format
 //Search needs to be reworked on server side
 //INCLUDE Private posts for self users
@@ -1715,11 +1720,11 @@ function App() {
           fetch(serverString)
             .then(response=>response.json())
             .then(data => {
-              if (data.status === -1){
+              console.log(data);
+              if (data.status === -1 || data.status === -2){
                   changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
               }
               else{
-                console.log(data);
                 var listOfComments = [];
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
                   var comment = data.comments[key];
@@ -1834,24 +1839,20 @@ function App() {
               }
             })}
       function simplePost(key,dict){
-          var likeText;
-          likeText = (
-            <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
-          )
-          return (
-          <Card key={key}>
-            <Card.Title> {dict.title} </Card.Title>
-            <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-            <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
-            <Card.Body> {dict.content} </Card.Body>
-            <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-            <Card.Body>
-            Likes: {dict.totalLikes} Comments: {dict.totalComments}
-            <br></br>
-            {likeText}
-            </Card.Body>
-          </Card>
-          )
+        return (
+        <Card key={key}>
+          <Card.Title> {dict.title} </Card.Title>
+          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+          <Card.Body> {dict.content} </Card.Body>
+          <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+          <Card.Body>
+          Likes: {dict.totalLikes} Comments: {dict.totalComments}
+          <br></br>
+          <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+          </Card.Body>
+        </Card>
+        )
         }
       //Search Page
       function getSearchPage(){
@@ -1915,15 +1916,14 @@ function App() {
         }
         url += toJoin.join('&')
         url = encodeURI(url);
-        console.log(url);
+        // console.log(url);
         //fetch and changecode to a new screen that displays all the posts
         fetch(url)
         .then(response=>response.json())
         .then(data => {
           console.log(data);
           var listOfPosts = [];
-          for ( const key in data.contents){
-            // console.log(simplePost(data.contents[key]));
+          for (let key = 0; key < data.contents.length; key++){
             listOfPosts.push(simplePost(key,data.contents[key]))
           }
           if (listOfPosts.length === 0){
@@ -2078,8 +2078,7 @@ function App() {
           .then(response=>response.json())
           .then(data =>{
             console.log(data);
-            for ( const key in data.contents){
-              // console.log(simplePost(data.contents[key]));
+            for (let key = 0; key < data.contents.length; key++){
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
             // console.log(listOfPosts);
@@ -2322,8 +2321,7 @@ function App() {
           .then(response=>response.json())
           .then(data => {
               // console.log(data.contents);
-              for ( const key in data.contents){
-                // console.log(simplePost(data.contents[key]));
+              for (let key = 0; key < data.contents.length; key++){
                 listOfPosts.push(simplePost(key,data.contents[key]))
               }
               // console.log(listOfPosts);
@@ -2367,9 +2365,9 @@ function App() {
         fetch(serverLocation + "/posts")
           .then(response=>response.json())
           .then(data => {
-              for ( const key in data.contents){
-                listOfPosts.push(simplePost(key,data.contents[key]))
-              }
+            for (let key = 0; key < data.contents.length; key++){
+              listOfPosts.push(simplePost(key,data.contents[key]))
+            }
               if (listOfPosts.length === 0){
                 listOfPosts = (<div> There are no posts to show.</div>)
               }
