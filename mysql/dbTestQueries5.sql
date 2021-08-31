@@ -25,21 +25,40 @@
         ORDER BY commentDate;
 
 
-
+    -- get posts which user has liked
 	SELECT * 
 	FROM (
 	select 
 		posts.postID as postID, posts.userID as userID , users.userName as username,title, content, posts.visibility as postVisibility, users.visibility as userVisibility,viewerID, subDate
 		from posts 
-		left join likes
-		ON likes.postID = posts.postID
-		left join users on users.userID = posts.postID
+		left join likes ON likes.postID = posts.postID
+		left join users on users.userID = posts.userID
 		left join (select * from viewers WHERE viewerID = 3) viewers on users.userID = viewers.posterID
 		WHERE likes.userID = 3
 		order by subDate desc
     ) posts
     WHERE postVisibility != 'hidden' AND userVisibility != 'hidden'
-   AND postVisibility != 'private'
-   AND userVisibility != 'private'
-    
-    -- get posts which user has liked
+   AND ((postVisibility != 'private'AND userVisibility != 'private') OR userID = 3 OR viewerID is not null)
+    ;
+--    get comments which user has liked
+SELECT * FROM
+(
+select 
+comments.commentID as commentID, comments.postID as postID, comments.userID as commenterID, comments.comments, comments.visibility as commentVisibility, 
+posts.userID as posterID, comments.submissionDate as commentDate, title, content, posts.visibility as postVisibility, 
+posts.subDate as postDate, users.userName as username, users.visibility as commenterVisibility, 
+pusers.visibility as posterVisibility, viewers.viewerID as commentViewerID, viewerz.viewerID as postViewerID
+from comments
+left join posts on posts.postID = comments.postID
+left join users on users.userID = comments.userID
+left join users as pusers on pusers.userID = posts.userID
+left join (select * from viewers WHERE viewerID = 3) viewers on comments.userID = viewers.posterID
+left join (select * from viewers WHERE viewerID = 3) viewerz on posts.userID = viewers.posterID
+left join commentLikes on commentLikes.commentID = comments.commentID
+WHERE commentLikes.userID = 3
+order by submissionDate desc
+) comments
+WHERE commentVisibility != 'hidden' AND postVisibility != 'hidden' AND commenterVisibility != 'hidden'
+AND ((commenterVisibility != 'private' AND commentVisibility != 'private') OR commentViewerID is not null OR commenterID = 3)
+AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVisibility is not null OR posterID = 3)
+;

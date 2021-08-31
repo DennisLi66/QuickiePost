@@ -340,7 +340,7 @@ app.get("/search", function(req, res) {
     })
   } else {
     var sQuery = //works
-    `
+      `
     SELECT * from posts
     LEFT JOIN
     (select userid,username,visibility from users) uzers
@@ -434,7 +434,7 @@ app.route("/post")
             message: "No Valid Session."
           })
         } else {
-          console.log(req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.postID);
+          console.log(req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.postID);
           connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.postID], function(err, results, fields) {
             if (err) {
               console.log(err);
@@ -630,15 +630,15 @@ app.route("/post")
           } else {
             var iQuery;
             var variables = [];
-            if (visibility === "public"){
+            if (visibility === "public") {
               iQuery =
-              `
+                `
               INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,NULL,NOW());
               `;
               variables = [userID, req.query.title, req.query.contents];
-            }else{
+            } else {
               iQuery =
-              `
+                `
               INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
               `;
               variables = [userID, req.query.title, req.query.contents, visibility];
@@ -672,13 +672,13 @@ app.route("/post")
     var content = req.query.content;
     var visibility = req.query.visibility;
     //Queries
-    if (!userID || !postID || !sessionID){
+    if (!userID || !postID || !sessionID) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
       })
     }
-    if (!title && !content && !visibility){
+    if (!title && !content && !visibility) {
       return res.status(200).json({
         status: -1,
         message: "Nothing to Change."
@@ -697,47 +697,47 @@ app.route("/post")
         })
       } else {
         var checkOwnerQuery =
-        `
+          `
         SELECT * FROM posts WHERE postID = ? AND userID = ?;
         `;
-        connection.query(checkOwnerQuery,[postID,userID],function(err2,results2,fields2){
-          if (err2){
+        connection.query(checkOwnerQuery, [postID, userID], function(err2, results2, fields2) {
+          if (err2) {
             return res.status(200).json({
               status: -1,
               message: err2
             })
-          }else if (results2.length === 0){
-            return res.status(200),json({
+          } else if (results2.length === 0) {
+            return res.status(200), json({
               status: -1,
               message: "Post Not Found."
             })
-          }else{
+          } else {
             var setPositions = [];
             var variables;
-            if (title){
+            if (title) {
               setPositions.push(" title = ? ")
               variables.push(title);
             }
-            if (content){
+            if (content) {
               setPositions.push(" content = ? ");
               variables.push(content);
             }
-            if (visibility){
-              if (visibility === "public"){
-                  setPositions.push(" visibility = NULL ");
-              }else{
+            if (visibility) {
+              if (visibility === "public") {
+                setPositions.push(" visibility = NULL ");
+              } else {
                 setPositions.push(" visibility = ? ");
                 variables.push(visibility);
               }
             }
             variables.push(postID)
-            connection.query("UPDATE posts SET " + setPositions.join(",") +  " WHERE postID = ?",variables,function(err,results,fields){
-              if (err){
+            connection.query("UPDATE posts SET " + setPositions.join(",") + " WHERE postID = ?", variables, function(err, results, fields) {
+              if (err) {
                 return res.status(200).json({
                   status: -1,
                   message: err
                 })
-              }else{
+              } else {
                 return res.status(200).json({
                   status: 0,
                   message: "Update Occured."
@@ -1134,7 +1134,7 @@ app.route("/user")
   .patch(function(req, res) { //right now only visibility is updatable, maybe pswrd, maybe classification
 
   })
-  //Delete User (and maybe posts) // Set a user to hidden
+//Delete User (and maybe posts) // Set a user to hidden
 app.route("/comment")
   .get(function(req, res) {
     //REWORK THIS ROUTE
@@ -1296,14 +1296,14 @@ app.route("/comment")
     //can change comments and visibility
     var comments = req.query.comments;
     var visibility = req.query.visibility;
-    visibility = !visibility ? 'public' :  visibility;
-    if (!sessionID || !userID || !commentID){
+    visibility = !visibility ? 'public' : visibility;
+    if (!sessionID || !userID || !commentID) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
       })
     }
-    if (!visibility && !comments){
+    if (!visibility && !comments) {
       return res.status(200).json({
         status: -1,
         message: "No search terms."
@@ -1323,34 +1323,34 @@ app.route("/comment")
       } else {
         //update
         var updateQuery =
-        `
+          `
         UPDATE COMMENTS
         SET
         WHERE postID = ? AND userID = ?;
         `
         var updateStrings = [];
         var variables = [];
-        if (comments){
+        if (comments) {
           updateStrings.push(" COMMENTS = ? ");
           variables.push(comments);
         }
-        if (visibility){
-          if (visibility === "public"){
+        if (visibility) {
+          if (visibility === "public") {
             updateStrings.push(" VISIBILITY = NULL ");
-          }else{
+          } else {
             updateStrings.push(" VISIBILITY = ? ");
             variables.push(visibility)
           }
         }
         variables.push(commentID);
         variables.push(userID);
-        connection.query("UPDATE COMMENTS SET " + updateStrings.join("") + "WHERE commentID = ? AND userID = ?",variables,function(err,results,fields){
-          if (err){
+        connection.query("UPDATE COMMENTS SET " + updateStrings.join("") + "WHERE commentID = ? AND userID = ?", variables, function(err, results, fields) {
+          if (err) {
             return res.status(200).json({
               status: -1,
               message: err
             })
-          }else{
+          } else {
             return res.status(200).json({
               status: 0,
               message: "Update Occured."
@@ -1373,9 +1373,9 @@ app.route("/comment")
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
     `;
     var variables = [req.query.postID, req.query.userID, req.query.content, privacy]
-    if (privacy === 'public'){
+    if (privacy === 'public') {
       iQuery =
-      `
+        `
           INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),NULL);
       `;
       variables = [req.query.postID, req.query.userID, req.query.content]
@@ -2172,20 +2172,19 @@ app.route("/changeVisibility")
     }
   })
 app.route("/visibility")
-  .get(function(req,res){
+  .get(function(req, res) {
 
   })
 app.route("/mylikedposts")
-  .get(function(req,res){
-    if (!req.query.sessionID || !req.query.userID){
+  .get(function(req, res) {
+    if (!req.query.sessionID || !req.query.userID) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
       })
-    }
-    else{
-      var sQuery = //FIX THIS TO CONSIDER VISIBILITY
-      `
+    } else {
+      var sQuery =
+        `
       SELECT *
     	FROM (
     	select
@@ -2214,14 +2213,13 @@ app.route("/mylikedposts")
             message: "Non-Valid Session."
           })
         } else {
-          connection.query(sQuery,[req.query.userID,req.query.userID,req.query.userID],function(err,results,fields){
-            if (err){
+          connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
+            if (err) {
               return res.status(200).json({
                 message: err,
                 status: -1
               })
-            }
-            else{
+            } else {
               var toPrep = [];
               for (let i = 0; i < results.length; i++) {
                 toPrep.push({
@@ -2247,12 +2245,93 @@ app.route("/mylikedposts")
     }
   })
 app.route("/mylikedcomments")
-  .get(function(req,res){
-
+  .get(function(req, res) {
+    if (!req.query.sessionID || !req.query.userID) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    } else {
+      var sQuery =
+        `
+      SELECT * FROM
+      (
+      select
+      comments.commentID as commentID, comments.postID as postID, comments.userID as commenterID, comments.comments, comments.visibility as commentVisibility,
+      posts.userID as posterID, comments.submissionDate as commentDate, title, content, posts.visibility as postVisibility,
+      posts.subDate as postDate, users.userName as username, users.visibility as commenterVisibility,
+      pusers.visibility as posterVisibility, viewers.viewerID as commentViewerID, viewerz.viewerID as postViewerID
+      from comments
+      left join posts on posts.postID = comments.postID
+      left join users on users.userID = comments.userID
+      left join users as pusers on pusers.userID = posts.userID
+      left join (select * from viewers WHERE viewerID = ?) viewers on comments.userID = viewers.posterID
+      left join (select * from viewers WHERE viewerID = ?) viewerz on posts.userID = viewers.posterID
+      left join commentLikes on commentLikes.commentID = comments.commentID
+      WHERE commentLikes.userID = 3
+      order by submissionDate desc
+      ) comments
+      WHERE commentVisibility != 'hidden' AND postVisibility != 'hidden' AND commenterVisibility != 'hidden'
+      AND ((commenterVisibility != 'private' AND commentVisibility != 'private') OR commentViewerID is not null OR commenterID = ?)
+      AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVisibility is not null OR posterID = ?)
+      `;
+      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields1) {
+        if (err1) {
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        } else if (results1.length === 0) {
+          return res.status(200).json({
+            status: -1,
+            message: "Non-Valid Session."
+          })
+        } else {
+          connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
+            if (err) {
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            } else {
+              var toPrep = [];
+              for (let i = 0; i < results.length; i++) {
+                toPrep.push({
+                  commentID: results[i].commentID,
+                  commenterID: results[i].commenterID,
+                  comments: results[i].comments,
+                  commentVisibility: results[i].commentVisibility,
+                  posterID: results[i].posterID,
+                  commentDate: results[i].commentDate,
+                  postDate: results[i].postDate,
+                  commenterVisibility: results[i].commenterVisibility,
+                  posterVisibility: results[i].posterVisibility,
+                  commentViewerID: results[i].commentViewerID,
+                  postViewerID: results[i].postViewerID,
+                  title: results[i].title,
+                  userID: results[i].userID,
+                  content: results[i].content,
+                  subDate: results[i].subDate,
+                  username: results[i].username,
+                  postID: results[i].postID,
+                  postVisibility: results[i].postVisibility,
+                  userVisibility: results[i].userVisibility
+                })
+              }
+              return res.status(200).json({
+                status: 0,
+                message: "Request Received.",
+                contents: toPrep
+              })
+            }
+          })
+        }
+      })
+    }
   })
 //Admin Actions
 app.route("/admin")
-  .get(function(req,res){
+  .get(function(req, res) {
 
   })
 
