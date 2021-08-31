@@ -41,6 +41,19 @@ var connection = mysql.createConnection({
   multipleStatements: true
 })
 connection.connect();
+//Evergreen QUERY
+var cQuery =
+  `
+  SELECT * FROM
+  (select userID,max(sessionDate) as high from sessions group by userID) a
+  RIGHT JOIN
+  (
+  Select * from sessions WHERE userID = ? AND sessionID = ? AND
+  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+  )
+  sessions
+  ON sessions.userID = a.userID AND sessions.sessionDate = a.high;
+`;
 
 // Get All Posts
 app.get("/posts", function(req, res) {
@@ -66,18 +79,6 @@ app.get("/posts", function(req, res) {
   `
   var variables = [];
   if (req.query.userID && req.query.sessionID) {
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     sQuery = //works
       `
     SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, if(desig.userID is null,'Unliked','Liked') as Liked,  ifnull(totalComments,0) as totalComments, subDate FROM
@@ -188,18 +189,6 @@ app.get("/myfeed", function(req, res) {
   // console.log(req.query.userID);
   // console.log(req.query.sessionID);
   //check for valid sessions
-  var cQuery =
-    `
-  SELECT * FROM
-  (select userID,max(sessionDate) as high from sessions group by userID) a
-  RIGHT JOIN
-  (
-  Select * from sessions WHERE userID = ? AND sessionID = ? AND
-  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-  )
-  sessions
-  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-  `
   var sQuery = //works
     `
   select * from posts
@@ -288,18 +277,6 @@ app.get("/search", function(req, res) {
   if (sessionID && userID) {
     //logged in version -- perform cQuery -- do other one first
     //update query to consider user being hidden or private
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
@@ -420,18 +397,6 @@ app.route("/post")
         message: "Post ID Not Given."
       })
     } else if (req.query.userID && req.query.sessionID) {
-      var cQuery =
-        `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `;
       var sQuery =
         `
         SELECT * FROM (
@@ -656,19 +621,6 @@ app.route("/post")
         })
       } else {
         //search for valid session
-        var cQuery =
-          `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `
-
         connection.query(cQuery, [userID, sessionID], function(errorr, resultss, fieldss) {
           if (errorr) {
             return res.status(200).json({
@@ -732,18 +684,6 @@ app.route("/post")
         message: "Nothing to Change."
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
@@ -1101,18 +1041,6 @@ app.route("/user")
       AND users.visibility != 'hidden' AND
       (users.visibility != 'private' OR users.userID = ?);
       `;
-      var cQuery =
-        `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `;
       connection.query(cQuery, [userID, sessionID], function(cErr, cResults, cFields) {
         if (cErr) {
           return res.status(200).json({
@@ -1273,18 +1201,6 @@ app.route("/comment")
         })
       } else {
         //can pull friendly comments
-        var cQuery =
-          `
-        SELECT * FROM
-        (select userID,max(sessionDate) as high from sessions group by userID) a
-        RIGHT JOIN
-        (
-        Select * from sessions WHERE userID = ? AND sessionID = ? AND
-        (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-        )
-        sessions
-        ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-        `;
         var sQuery =
           `
         select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
@@ -1393,18 +1309,6 @@ app.route("/comment")
         message: "No search terms."
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
@@ -1464,18 +1368,6 @@ app.route("/comment")
       })
     }
     var privacy = (!req.query.privacy ? 'public' : req.query.privacy);
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var iQuery =
       `
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
@@ -1524,18 +1416,6 @@ app.route("/comment")
         message: "Not Enough Information"
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var eQuery =
       `
     UPDATE comments
@@ -1579,18 +1459,6 @@ app.route("/like")
         message: "Not Enough Information."
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var iQuery =
       `
     INSERT INTO likes (postID,userID) VALUES (?,?);
@@ -1631,18 +1499,6 @@ app.route("/like")
         message: "Not Enough Information."
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var dQuery =
       `
     DELETE FROM likes WHERE userID = ? AND postID = ?;
@@ -1683,18 +1539,6 @@ app.route("/likeComment")
         message: 'Not Enough Information'
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var iQuery =
       `
     INSERT INTO commentLikes (commentID,userID) VALUES (?,?);
@@ -1735,18 +1579,6 @@ app.route("/likeComment")
         message: "Not Enough Information."
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var dQuery =
       `
     DELETE FROM commentLikes WHERE userID = ? AND commentID = ?;
@@ -1783,18 +1615,6 @@ app.route("/likeComment")
 app.route("/block")
   .get(function(req, res) {
     //get all users a person is blocking
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var sQuery =
       `
     select blockedID,blockerID,userName from blocked
@@ -1851,18 +1671,6 @@ app.route("/block")
         status: -1
       })
     } else {
-      var cQuery =
-        `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `;
       var iQuery =
         `
       INSERT INTO blocked (blockedID,blockerID) VALUES (?,?);
@@ -1903,18 +1711,6 @@ app.route("/block")
         status: -1
       })
     } else {
-      var cQuery =
-        `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `;
       var dQuery =
         `
       DELETE FROM blocked WHERE blockedID = ? AND blockerID = ?;
@@ -1962,18 +1758,6 @@ app.route("/viewership")
         message: "Not Correctly Sent Information"
       })
     } else {
-      var cQuery =
-        `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `;
       var sQuery =
         `
       SELECT * FROM viewershipRequests WHERE
@@ -2050,18 +1834,6 @@ app.route("/viewership")
   })
   .patch(function(req, res) {
     //used to delete requests but not actual viewers
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var dQuery;
     var variables;
     if (!req.query.sessionID || !req.query.userID || !req.query.viewerID || !req.query.posterID) {
@@ -2115,18 +1887,6 @@ app.route("/viewership")
     }
   })
   .delete(function(req, res) {
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var dQuery =
       `
     DELETE from viewers WHERE posterID = ? AND viewerID = ?;
@@ -2175,18 +1935,6 @@ app.route("/relationship")
         status: -1
       })
     }
-    var cQuery =
-      `
-    SELECT * FROM
-    (select userID,max(sessionDate) as high from sessions group by userID) a
-    RIGHT JOIN
-    (
-    Select * from sessions WHERE userID = ? AND sessionID = ? AND
-    (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-    )
-    sessions
-    ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-    `;
     var sQuery =
       `
     SELECT base.userID as userID, if(blockingThem.blockerID is null,'false','true') as blockingThem, if(blockingMe.blockedID is null,'false','true') as blockingMe,
@@ -2254,18 +2002,6 @@ app.route("/relationship")
   })
 app.route("/whosviewingme")
   .get(function(req, res) {
-    var cQuery =
-      `
-  SELECT * FROM
-  (select userID,max(sessionDate) as high from sessions group by userID) a
-  RIGHT JOIN
-  (
-  Select * from sessions WHERE userID = ? AND sessionID = ? AND
-  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-  )
-  sessions
-  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-  `;
     var sQuery =
       `
     select viewerID,userName from viewers left join users on users.userID = viewers.viewerID WHERE viewers.posterID = ?;
@@ -2314,18 +2050,6 @@ app.route("/whosviewingme")
   })
 app.route("/whoimviewing")
   .get(function(req, res) {
-    var cQuery =
-      `
-  SELECT * FROM
-  (select userID,max(sessionDate) as high from sessions group by userID) a
-  RIGHT JOIN
-  (
-  Select * from sessions WHERE userID = ? AND sessionID = ? AND
-  (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-  )
-  sessions
-  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-  `;
     var sQuery =
       `
     select posterID,userName from viewers left join users on users.userID = viewers.posterID WHERE viewers.viewerID = ?;
@@ -2380,18 +2104,6 @@ app.route("/changeVisibility")
         message: "Not Enough Information."
       })
     } else {
-      var cQuery = //check session
-        `
-      SELECT * FROM
-      (select userID,max(sessionDate) as high from sessions group by userID) a
-      RIGHT JOIN
-      (
-      Select * from sessions WHERE userID = ? AND sessionID = ? AND
-      (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
-      )
-      sessions
-      ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-      `;
       var cQuery2 = // check user
         `
       SELECT * FROM users WHERE email = ?;
@@ -2460,6 +2172,81 @@ app.route("/changeVisibility")
     }
   })
 app.route("/visibility")
+  .get(function(req,res){
+
+  })
+app.route("/mylikedposts")
+  .get(function(req,res){
+    if (!req.query.sessionID || !req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    else{
+      var sQuery = //FIX THIS TO CONSIDER VISIBILITY
+      `
+      SELECT *
+    	FROM (
+    	select
+    		posts.postID as postID, posts.userID as userID , users.userName as username,title, content, posts.visibility as postVisibility, users.visibility as userVisibility,viewerID, subDate
+    		from posts
+    		left join likes
+    		ON likes.postID = posts.postID
+    		left join users on users.userID = posts.userID
+    		left join (select * from viewers WHERE viewerID = ?) viewers on users.userID = viewers.posterID
+    		WHERE likes.userID = ?
+    		order by subDate desc
+        ) posts
+        WHERE postVisibility != 'hidden' AND userVisibility != 'hidden'
+       AND ((postVisibility != 'private'AND userVisibility != 'private') OR userID = ? OR viewerID is not null)
+      order by subDate desc
+      `;
+      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields1) {
+        if (err1) {
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        } else if (results1.length === 0) {
+          return res.status(200).json({
+            status: -1,
+            message: "Non-Valid Session."
+          })
+        } else {
+          connection.query(sQuery,[req.query.userID,req.query.userID,req.query.userID],function(err,results,fields){
+            if (err){
+              return res.status(200).json({
+                message: err,
+                status: -1
+              })
+            }
+            else{
+              var toPrep = [];
+              for (let i = 0; i < results.length; i++) {
+                toPrep.push({
+                  title: results[i].title,
+                  userID: results[i].userID,
+                  content: results[i].content,
+                  subDate: results[i].subDate,
+                  username: results[i].username,
+                  postID: results[i].postID,
+                  postVisibility: results[i].postVisibility,
+                  userVisibility: results[i].userVisibility
+                })
+              }
+              return res.status(200).json({
+                status: 0,
+                message: "Request Received.",
+                contents: toPrep
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+app.route("/mylikedcomments")
   .get(function(req,res){
 
   })

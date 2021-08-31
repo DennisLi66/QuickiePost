@@ -17,13 +17,13 @@ import Cookies from 'universal-cookie';
 //check all buttons are in () => {} format
 //Notifcation List
 //Make home page paginatied
-//NEED to be able to reach posts and comments from profile
-//LOGIN page should check if user is currently hidden
-////////////////
 //INCLUDE Private posts for self users
+//LOGIN page should check if user is currently hidden
+//Viewing someone elses profile options while logged in is bugged
+////////////////
 //add a highlight effect to the pagination bar
 //Make sure all appropirate functions check session
-//Add fine tuning to posts after submission and in my posts
+//Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
@@ -629,6 +629,14 @@ function App() {
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Rework to single fetch?
           //FIX THIS: check if changingcss is really needed?
+          //My likedPosts
+          function showLikedPosts(){
+
+          }
+          //My LikedComments
+          function showLikedComments(){
+
+          }
           //Block List functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
