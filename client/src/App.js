@@ -13,7 +13,7 @@ import Cookies from 'universal-cookie';
 //!!!PRIORITY
 //Return posts and comments
 //Redo write post page
-//Need to integrate the impact of being blocked
+//Need to integrate the impact of being blocked; upgrade existing mysql queries
 //check all buttons are in () => {} format
 //Notifcation List
 //Make home page paginatied
@@ -27,7 +27,6 @@ import Cookies from 'universal-cookie';
 //change getPosts to SELECT posts where post != private and user != private
 //FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
-//FIX THIS IF LOGGED IN RETRIEVE POSTS WITH LIKES
 //change color of posts and comments to better differentiate them
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
@@ -629,11 +628,6 @@ function App() {
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Rework to single fetch?
           //FIX THIS: check if changingcss is really needed?
-          //My likedPosts
-          //My LikedComments
-          function showLikedComments(){
-
-          }
           //Block List functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
@@ -1094,12 +1088,117 @@ function App() {
                       <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
                     </li>
                     <li className="nav-item">
+                      <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                    </li>
+                    <li className="nav-item">
                       <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                     </li>
                   </ul>
                   <div>
                     {paginationBar}
                     {listOfPostsCode}
+                    {paginationBar}
+                  </div>
+                  </div>
+                )
+              })
+          }
+          function showLikedComments(username,posts,comments,firstPoint = 0,secondPoint = 10){
+            changeMainBodyCSS(
+              {
+                height: 'auto',
+                transition: 'height 2s ease-in'
+              }
+            );
+            changeInDepthCSS(
+              {
+                height: '0%',
+                display: 'none',
+                transition: 'height 2s ease-in'
+              }
+            );
+            changeWriteFormCSS(
+              {
+                height: '0%',
+                display: 'none',
+                transition: 'height 2s ease-in'
+              }
+            );
+            var userID = cookies.get("id");
+            var sessionID = cookies.get("sessionID");
+            fetch(serverLocation + "/mylikedcomments?sessionID=" + sessionID + "&userID=" + userID)
+              .then(response => response.json())
+              .then(data => {
+                var listOfComments;
+                var listOfCommentsCode;
+                if (data.contents.length === 0){
+                  listOfCommentsCode = (<div> You have not liked any comments that are still visible. </div>);
+                }else{
+                  for (let i = firstPoint;  i < Math.min(secondPoint,data.contents.length); i++){
+                    var dict = data.contents[i];
+                    listOfComments.push(
+                      <li key={i}>
+                      <Card>
+                        <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+                        <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+                        <Card.Body> {dict.comments} </Card.Body>
+                        <Card.Subtitle> {dict.commentDate} </Card.Subtitle>
+                        <Card.Body>
+                        <br></br>
+                        <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Post </Button>
+                        </Card.Body>
+                      </Card>
+                      </li>
+                    )
+                  }
+                  listOfCommentsCode = (
+                    <ul>
+                      {listOfComments}
+                    </ul>
+                  )
+                }
+                var paginationBar;
+                if (data.contents.length > 10){
+                  var paginationSlots = [];
+                  for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                    paginationSlots.push(
+                      <li><div className="dropdown-item" onClick={() => {showLikedComments(10 * i + 1,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                    )
+                  }
+                  paginationBar = (
+                    <ul className="nav nav-tabs">
+                      <li className="nav-item dropdown">
+                        <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                        <ul className="dropdown-menu">
+                          {paginationSlots}
+                        </ul>
+                      </li>
+                    </ul>
+                  )
+                }
+                changeCode(
+                  <div>
+                  <h1> {username}'s Profile </h1>
+                  <ul className="nav nav-tabs justify-content-center">
+                    <li className="nav-item">
+                      <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                    </li>
+                  </ul>
+                  <div>
+                    {paginationBar}
+                    {listOfCommentsCode}
                     {paginationBar}
                   </div>
                   </div>
@@ -1158,6 +1257,12 @@ function App() {
                     <li className="nav-item">
                       <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                     </li>
+                      <li className="nav-item">
+                        <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                      </li>
                     <li className="nav-item">
                       <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                     </li>
@@ -1365,9 +1470,14 @@ function App() {
             var likedPosts;
             if (cookies.get("id") && cookies.get("id") === userID){
               likedPosts = (
+                <div>
                 <li className="nav-item">
                   <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
                 </li>
+                <li className="nav-item">
+                  <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                </li>
+                </div>
               )
             }
             var msg;
@@ -1485,9 +1595,14 @@ function App() {
             var likedPosts;
             if (cookies.get("id") && cookies.get("id") === userID){
               likedPosts = (
+                <div>
                 <li className="nav-item">
                   <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
                 </li>
+                <li className="nav-item">
+                  <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                </li>
+                </div>
               )
             }
             changeCode(
