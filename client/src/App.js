@@ -630,9 +630,6 @@ function App() {
           //FIX THIS: Rework to single fetch?
           //FIX THIS: check if changingcss is really needed?
           //My likedPosts
-          function showLikedPosts(){
-
-          }
           //My LikedComments
           function showLikedComments(){
 
@@ -1006,6 +1003,109 @@ function App() {
               })
           }
           //Main Showers
+          function showLikedPosts(username,posts,comments,firstPoint = 0, secondPoint = 10){
+            changeMainBodyCSS(
+              {
+                height: 'auto',
+                transition: 'height 2s ease-in'
+              }
+            );
+            changeInDepthCSS(
+              {
+                height: '0%',
+                display: 'none',
+                transition: 'height 2s ease-in'
+              }
+            );
+            changeWriteFormCSS(
+              {
+                height: '0%',
+                display: 'none',
+                transition: 'height 2s ease-in'
+              }
+            );
+            var userID = cookies.get("id");
+            var sessionID = cookies.get("sessionID");
+            fetch(serverLocation + "/mylikedposts?sessionID=" + sessionID + "&userID=" + userID)
+              .then(response => response.json())
+              .then(data => {
+                var listOfPosts;
+                var listOfPostsCode;
+                if (data.contents.length === 0){
+                  listOfPostsCode = (<div> You have not liked any posts that are still visible. </div>)
+                }
+                else{
+                  for (let i = firstPoint; i < Math.min(secondPoint,data.contents.length); i++){
+                    //push a simple post?
+                    var dict = data.contents[i];
+                    listOfPosts.push(
+                      <li key={i}>
+                      <Card>
+                        <Card.Title> {dict.title} </Card.Title>
+                        <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+                        <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+                        <Card.Body> {dict.content} </Card.Body>
+                        <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+                        <Card.Body>
+                        Likes: {dict.totalLikes} Comments: {dict.totalComments}
+                        <br></br>
+                        <Button onClick={()=>{showInDepthPost(data.contents[i].postID)}}> Expand Post </Button>
+                        </Card.Body>
+                      </Card>
+                      </li>
+                    )
+                  }
+                  listOfPostsCode = (
+                    <ul>
+                      {listOfPosts}
+                    </ul>
+                  )
+                }
+                var paginationBar;
+                if (data.contents.length > 10){
+                  var paginationSlots = [];
+                  for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                    paginationSlots.push(
+                      <li><div className="dropdown-item" onClick={() => {showLikedPosts(10 * i + 1,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                    )
+                  }
+                  paginationBar = (
+                    <ul className="nav nav-tabs">
+                      <li className="nav-item dropdown">
+                        <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                        <ul className="dropdown-menu">
+                          {paginationSlots}
+                        </ul>
+                      </li>
+                    </ul>
+                  )
+                }
+                changeCode(
+                  <div>
+                  <h1> {username}'s Profile </h1>
+                  <ul className="nav nav-tabs justify-content-center">
+                    <li className="nav-item">
+                      <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                    </li>
+                    <li className="nav-item">
+                      <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                    </li>
+                  </ul>
+                  <div>
+                    {paginationBar}
+                    {listOfPostsCode}
+                    {paginationBar}
+                  </div>
+                  </div>
+                )
+              })
+          }
           function showOptions(username,posts,comments,variation=null){
             changeMainBodyCSS(
               {
@@ -1145,6 +1245,9 @@ function App() {
                           <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                         </li>
                         <li className="nav-item">
+                          <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                        </li>
+                        <li className="nav-item">
                           <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                         </li>
                       </ul>
@@ -1259,8 +1362,21 @@ function App() {
             if (listOfShownComments.length === 0){
               listOfShownComments = (<div>There are no comments to view.</div>)
             }
+            var likedPosts;
+            if (cookies.get("id") && cookies.get("id") === userID){
+              likedPosts = (
+                <li className="nav-item">
+                  <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                </li>
+              )
+            }
+            var msg;
+            if (variation === "commentDeleted"){
+              msg = (<div className='confMsg'> Your comment was deleted. </div>)
+            }
             changeCode(
               <div>
+              {msg}
               <h1> {username}'s Profile </h1>
               <ul className="nav nav-tabs justify-content-center">
                 <li className="nav-item">
@@ -1269,6 +1385,7 @@ function App() {
                 <li className="nav-item">
                   <div className="nav-link active" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                 </li>
+                {likedPosts}
                 <li className="nav-item">
                   <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                 </li>
@@ -1364,8 +1481,14 @@ function App() {
             var msg;
             if (variation === "Delete"){
               msg = (<div className='confMsg'> Your post was deleted. </div>)
-            }else if (variation === "commentDeleted"){
-              msg = (<div className='confMsg'> Your comment was deleted. </div>)
+            }
+            var likedPosts;
+            if (cookies.get("id") && cookies.get("id") === userID){
+              likedPosts = (
+                <li className="nav-item">
+                  <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                </li>
+              )
             }
             changeCode(
               <div>
@@ -1378,6 +1501,7 @@ function App() {
                 <li className="nav-item">
                   <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                 </li>
+                {likedPosts}
                 <li className="nav-item">
                   <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                 </li>
