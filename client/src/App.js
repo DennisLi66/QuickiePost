@@ -2307,7 +2307,7 @@ function App() {
         );
       }
       //LOGGED IN GETEMS
-      function getMyFeed(){
+      function getMyFeed(start = 0, end = 10){
         hideWriteForm();
         if (checkSessionID()){
           return;
@@ -2319,17 +2319,36 @@ function App() {
           .then(response=>response.json())
           .then(data =>{
             console.log(data);
-            for (let key = 0; key < data.contents.length; key++){
+            for (let key = start; key < Math.min(data.contents.length,end); key++){
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
-            //FIX THIS: ADD PAGINATION
             if (listOfPosts.length === 0){
               listOfPosts = (<div>You do not have any posts in your feed.</div>)
+            }
+            var paginationBar;
+            if (data.contents.length > 10){
+              var paginationSlots = [];
+              for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                paginationSlots.push(
+                  <li key={i}><div className="dropdown-item" onClick={() => {getMyFeed(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                )
+              }
+              paginationBar = (
+               <ul className="nav nav-tabs">
+                <li className="nav-item dropdown">
+                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                  <ul className="dropdown-menu">
+                    {paginationSlots}
+                  </ul>
+                </li>
+              </ul>)
             }
             changeCode(
               <div>
              <h1> QuickiePost - Your Feed</h1>
+             {paginationBar}
               {listOfPosts}
+              {paginationBar}
               </div>
             )
           })
