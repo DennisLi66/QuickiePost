@@ -16,10 +16,11 @@ import Cookies from 'universal-cookie';
 //Need to integrate the impact of being blocked; upgrade existing mysql queries
 //check all buttons are in () => {} format
 //Notifcation List
+//Cancelling a conferred viewership request does not appear to work
+//test showOptions features on other profiles
 //Make home page paginatied
 //INCLUDE Private posts for self users
 //LOGIN page should check if user is currently hidden
-//Viewing someone elses profile options while logged in is bugged
 //SHould memoize pagination so its faster
 //check that pagination is actually correct
 ////////////////
@@ -77,7 +78,7 @@ function App() {
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
       //Move things around
-      //Deleting Posts //FIX THIS ADD DELETE BUTTONS
+      //Deleting Posts
       function showDeletePostConfirmation(postID,origin,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -128,7 +129,7 @@ function App() {
             })
         }
       }
-      //Deleting Comments //FIX THIS ADD DELETE BUTTONS
+      //Deleting Comments
       function showDeleteCommentConfirmation(commentID,origin,postID,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -180,7 +181,7 @@ function App() {
             })
         }
       }
-      //Edit Posts --FIX THIS: NEED TO SHOW AN EDIT BUTTON SOMEWHERE
+      //Edit Posts
       function showEditPost(postID,origin,startPos,endPos,title = "",content = "", visibility = ""){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
@@ -629,7 +630,7 @@ function App() {
       }
         //Set up Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
-          //FIX THIS: Rework to single fetch?
+          //FIX THIS: Could memoize?
           //FIX THIS: check if changingcss is really needed?
           //Block List functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
@@ -693,7 +694,6 @@ function App() {
                   var paginationSlots = [];
                   for (let i = 0; i < Math.ceil(data.blockedUsers.length / 10); i++){
                     paginationSlots.push(
-                      //FIX THIS: add more posts to be able to check this
                       <li><div className="dropdown-item" onClick={() => {showBlockedList(10 * i,Math.min(10*i+10,data.blockedUsers.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.blockedUsers.length)}</div></li>
                     )
                   }
@@ -818,7 +818,7 @@ function App() {
                     var paginationSlots = [];
                     for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
                       paginationSlots.push(
-                        //FIX THIS: add more posts to be able to check this
+
                         <li><div className="dropdown-item" onClick={() => {showPeopleImViewing(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
                       )
                     }
@@ -904,7 +904,7 @@ function App() {
                   var paginationSlots = [];
                   for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
                     paginationSlots.push(
-                      //FIX THIS: add more posts to be able to check this
+
                       <li><div className="dropdown-item" onClick={() => {showPeopleViewingMe(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
                     )
                   }
@@ -1277,11 +1277,12 @@ function App() {
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
-                    var blockButton = (<Button variant='danger' onClick={blockUser}> Block User </Button>);
+                    console.log(data);
+                    var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
                     if (data.blockingThem && data.blockingThem === 'true'){
-                      blockButton = (<Button variant='danger' onClick={unblockUser}> Unblock User </Button>)
+                      blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
                     }
-                    var requestViewershipButton = (<Button variant='info' onClick={viewershipRequest(userID,cookies.get('id'),"poster")}> Request Viewership </Button>);
+                    var requestViewershipButton = (<Button variant='info' onClick={() => viewershipRequest(userID,cookies.get('id'),"poster")}> Request Viewership </Button>);
                     if (data.viewingThem && data.viewingThem === 'true'){
                       requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id"),0,10,"stopViewership")}}> Stop Viewing This User</Button>)
                     }
@@ -1304,7 +1305,7 @@ function App() {
                         </div>
                       )
                     }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
-                      requestViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
+                      requestViewershipButton = (<div>This user has not yet responded to your request for you to view them.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
                     }
                     var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
                     if (data.viewingMe && data.viewingMe === "true"){
@@ -1329,7 +1330,7 @@ function App() {
                           </div>
                         )
                     } else if (data.iHaveRequestedToViewMe && data.iHaveRequestedToViewMe === 'true'){
-                      conferViewershipButton = (<div>This user has not yet responded to your request.<br></br><Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Cancel Request</Button></div>)
+                      conferViewershipButton = (<div>This user has not yet responded to your request for them to view you.<br></br><Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Cancel Request</Button></div>)
                     }
                     optionsMenu = (
                       <div>
@@ -1452,7 +1453,7 @@ function App() {
               var paginationSlots = [];
               for (let i = 0; i < Math.ceil(comments.length / 10); i++){
                 paginationSlots.push(
-                  //FIX THIS: add more posts to be able to check this
+
                   <li><div className="dropdown-item" onClick={() => {showComments(username,comments,10 * i,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
                 )
               }
@@ -1951,7 +1952,6 @@ function App() {
               transition: 'height 2s ease-in'
             }
           );
-          //FIX THIS: Need to Show Edit Post Functionality if Post Writer === USer
           var detect = cookies.get("sessionID") && cookies.get("id");
           var serverString = serverLocation + "/post?postID=" + postID;
           if (detect){
@@ -2008,7 +2008,7 @@ function App() {
                   var paginationSlots = [];
                   for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
                     paginationSlots.push(
-                      //FIX THIS: add more posts to be able to check this
+
                       <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
                     )
                   }
@@ -2126,7 +2126,6 @@ function App() {
       function handleSearch(event){
         event.preventDefault();
         //FIX THIS: HANDLE SESSIONID AND ID
-        //FIX THIS: DOESNT EVEN WORK
         var title = document.getElementById("title").value;
         var content = document.getElementById("content").value;
         var username = document.getElementById("username").value;
@@ -2640,7 +2639,7 @@ function App() {
               var paginationSlots = [];
               for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
                 paginationSlots.push(
-                  //FIX THIS: add more posts to be able to check this
+
                   <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
                 )
               }
