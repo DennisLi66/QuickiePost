@@ -81,3 +81,9 @@ INSERT INTO blocked (blockedID,blockerID) VALUES
 (3,8),
 (4,8),
 (5,8)
+;
+
+-- Testing pagination
+Insert Into posts (userID,title,content,visibility,subDate) VALUES
+(5,"I like ladybugs.","They taste delicious.",'',NOW() - interval 25 minute),
+(5,"Speling Error","This sentence bad grammar.",'',NOW() - interval 20 minute)

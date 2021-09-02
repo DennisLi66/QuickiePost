@@ -20,6 +20,8 @@ import Cookies from 'universal-cookie';
 //INCLUDE Private posts for self users
 //LOGIN page should check if user is currently hidden
 //Viewing someone elses profile options while logged in is bugged
+//SHould memoize pagination so its faster
+//check that pagination is actually correct
 ////////////////
 //add a highlight effect to the pagination bar
 //Make sure all appropirate functions check session
@@ -73,7 +75,7 @@ function App() {
   const [navBar,changeNavBar] = React.useState();
   //
   const getHome = React.useCallback(
-    () => {
+    (beginPosition = 0,endPosition = 10) => {
       //Move things around
       //Deleting Posts //FIX THIS ADD DELETE BUTTONS
       function showDeletePostConfirmation(postID,origin,startPos,endPos){
@@ -483,7 +485,7 @@ function App() {
         changeNavBar(
           <Navbar bg="light" expand="lg" className='loggedInBar'>
         <Navbar.Brand
-        onClick={getHome}
+        onClick={() => getHome()}
         >QuickiePost</Navbar.Brand>
         <Navbar.Toggle aria-controls="navbarScroll" />
         <Navbar.Collapse id="navbarScroll">
@@ -493,7 +495,7 @@ function App() {
             navbarScroll
           >
             <Nav.Link
-            onClick={getHome}
+            onClick={() => getHome()}
             >Home</Nav.Link>
             <Nav.Link
             onClick={getMyFeed}
@@ -519,7 +521,7 @@ function App() {
         changeNavBar(
           <Navbar bg="light" expand="lg" className='loggedOutBar'>
         <Navbar.Brand
-        onClick={getHome}
+        onClick={() => getHome()}
         >QuickiePost</Navbar.Brand>
         <Navbar.Toggle aria-controls="navbarScroll" />
         <Navbar.Collapse id="navbarScroll">
@@ -529,7 +531,7 @@ function App() {
             navbarScroll
           >
             <Nav.Link
-            onClick={getHome}
+            onClick={() => getHome()}
             >Home</Nav.Link>
             <Nav.Link
             onClick={getRegistrationPage}
@@ -692,7 +694,7 @@ function App() {
                   for (let i = 0; i < Math.ceil(data.blockedUsers.length / 10); i++){
                     paginationSlots.push(
                       //FIX THIS: add more posts to be able to check this
-                      <li><div className="dropdown-item" onClick={() => {showBlockedList(10 * i + 1,Math.min(10*i+10,data.blockedUsers.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.blockedUsers.length)}</div></li>
+                      <li><div className="dropdown-item" onClick={() => {showBlockedList(10 * i,Math.min(10*i+10,data.blockedUsers.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.blockedUsers.length)}</div></li>
                     )
                   }
                   paginationBar = (
@@ -817,7 +819,7 @@ function App() {
                     for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
                       paginationSlots.push(
                         //FIX THIS: add more posts to be able to check this
-                        <li><div className="dropdown-item" onClick={() => {showPeopleImViewing(10 * i + 1,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                        <li><div className="dropdown-item" onClick={() => {showPeopleImViewing(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
                       )
                     }
                     paginationBar = (
@@ -903,7 +905,7 @@ function App() {
                   for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
                     paginationSlots.push(
                       //FIX THIS: add more posts to be able to check this
-                      <li><div className="dropdown-item" onClick={() => {showPeopleViewingMe(10 * i + 1,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                      <li><div className="dropdown-item" onClick={() => {showPeopleViewingMe(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
                     )
                   }
                   paginationBar = (
@@ -1061,7 +1063,7 @@ function App() {
                   var paginationSlots = [];
                   for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
                     paginationSlots.push(
-                      <li><div className="dropdown-item" onClick={() => {showLikedPosts(10 * i + 1,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                      <li><div className="dropdown-item" onClick={() => {showLikedPosts(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
                     )
                   }
                   paginationBar = (
@@ -1163,7 +1165,7 @@ function App() {
                   var paginationSlots = [];
                   for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
                     paginationSlots.push(
-                      <li><div className="dropdown-item" onClick={() => {showLikedComments(10 * i + 1,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                      <li><div className="dropdown-item" onClick={() => {showLikedComments(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
                     )
                   }
                   paginationBar = (
@@ -1451,7 +1453,7 @@ function App() {
               for (let i = 0; i < Math.ceil(comments.length / 10); i++){
                 paginationSlots.push(
                   //FIX THIS: add more posts to be able to check this
-                  <li><div className="dropdown-item" onClick={() => {showComments(username,comments,10 * i + 1,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
+                  <li><div className="dropdown-item" onClick={() => {showComments(username,comments,10 * i,Math.min(10*i+10,comments.length),posts)}}>{10 * i + 1} through {Math.min(10*i+10,comments.length)}</div></li>
                 )
               }
               paginationBar = (
@@ -1572,7 +1574,7 @@ function App() {
               var paginationSlots = [];
               for (let i = 0; i < Math.ceil(posts.length/10); i++){
                 paginationSlots.push(
-                  <li key={10*i+1}><div className="dropdown-item" onClick={() => {showPosts(username,posts,10 * i + 1,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
+                  <li key={10*i+1}><div className="dropdown-item" onClick={() => {showPosts(username,posts,10 * i,Math.min(10*i+10,posts.length),comments)}}>{10 * i + 1} through {Math.min(10*i+10,posts.length)}</div></li>
                 )
               }
               paginationBar = (
@@ -2007,7 +2009,7 @@ function App() {
                   for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
                     paginationSlots.push(
                       //FIX THIS: add more posts to be able to check this
-                      <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i + 1,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
+                      <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
                     )
                   }
                   paginationBar = (
@@ -2077,6 +2079,7 @@ function App() {
               }
             })}
       function simplePost(key,dict){
+        //FIX THIS: Maybe be able to like from the simple post?
         return (
         <Card key={key}>
           <Card.Title> {dict.title} </Card.Title>
@@ -2319,7 +2322,7 @@ function App() {
             for (let key = 0; key < data.contents.length; key++){
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
-            // console.log(listOfPosts);
+            //FIX THIS: ADD PAGINATION
             if (listOfPosts.length === 0){
               listOfPosts = (<div>You do not have any posts in your feed.</div>)
             }
@@ -2607,17 +2610,37 @@ function App() {
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
-            for (let key = 0; key < data.contents.length; key++){
+            for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
               listOfPosts.push(simplePost(key,data.contents[key]))
             }
             if (listOfPosts.length === 0){
               listOfPosts = (<div> There are no posts to show.</div>)
             }
-            //FIX THIS ADD PAGINATION
+            var paginationBar;
+            if (data.contents.length > 10){
+              var paginationSlots = [];
+              for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                paginationSlots.push(
+                  //FIX THIS: add more posts to be able to check this
+                  <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                )
+              }
+              paginationBar = (
+               <ul className="nav nav-tabs">
+                <li className="nav-item dropdown">
+                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                  <ul className="dropdown-menu">
+                    {paginationSlots}
+                  </ul>
+                </li>
+              </ul>)
+            }
             changeCode(
               <div>
              <h1> QuickiePost </h1>
+             {paginationBar}
               {listOfPosts}
+              {paginationBar}
               </div>
             )
           })
