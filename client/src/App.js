@@ -23,6 +23,7 @@ import Cookies from 'universal-cookie';
 //LOGIN page should check if user is currently hidden
 //SHould memoize pagination so its faster
 //check that pagination is actually correct
+//Maybe use nodemailer to reactivate account.
 ////////////////
 //add a highlight effect to the pagination bar
 //Make sure all appropirate functions check session
@@ -586,7 +587,25 @@ function App() {
                   showInDepthComment(commentID);
                 }
               }
+              else if (data.status === -3){//Account Was Hidden
+                changeCode(
+                  <div>
+                    <h1> Account Not Active </h1>
+                    <div>
+                      Your account is currently deactivated, {data.username}. You can choose to reactivate your account,
+                      but your public posts and comments will once again be publicly viewable, and users who are allowed to view
+                      you will be able to see your private posts and comments.
+                      <br></br>
+                      If you would like to reactivate your account, you can receive an email to do so.
+                      <Button onClick={getHome}> Cancel Logging In </Button> <Button> Reactivate Account </Button>
+                    </div>
+                  </div>
+                )
+              }
             });
+      }
+      function sendActivationAccountMessage(){
+        //Make a random code and send it in email
       }
       function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
         hideWriteForm();

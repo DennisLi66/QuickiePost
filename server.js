@@ -827,55 +827,66 @@ app.post("/login", function(req, res) {
                 message: err3
               })
             } else if (rresult) {
-              //Create a Session ID
-              var sessionID = randomatic('Aa0', 20);
-              if (rememberMe === 'hour') {
-                var iQuery =
-                  `
-                INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"HOUR");
-                `
-                connection.query(iQuery, [sessionID, results[0].userID], function(err, rresults, fields) {
-                  if (err) {
-                    return res.status(200).json({
-                      status: -1,
-                      message: err
-                    })
-                  } else {
-                    return res.status(200).json({
-                      status: 0,
-                      message: "Confirmation.",
-                      userID: results[0].userID,
-                      username: results[0].userName,
-                      sessionID: sessionID
-                    })
-                  }
-                })
-              } else if (rememberMe === 'forever') {
-                var iQuery =
-                  `
-                INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"FOREVER");
-                `
-                connection.query(iQuery, [sessionID, results[0].userID], function(err, rresults, fields) {
-                  if (err) {
-                    return res.status(200).json({
-                      status: -1,
-                      message: err
-                    })
-                  } else {
-                    return res.status(200).json({
-                      status: 0,
-                      message: "Confirmation.",
-                      userID: results[0].userID,
-                      username: results[0].userName,
-                      sessionID: sessionID
-                    })
-                  }
-                })
-              } else {
+              if (results[0].visibility === "hidden"){
                 return res.status(200).json({
-                  status: -1,
-                  message: "Remember Me Not Included Properly."
+                  status: -3,
+                  message: "Hidden Account",
+                  rememberMe: rememberMe,
+                  userID: results[0].userID,
+                  username: results[0].userName
                 })
+              }
+              else{
+                //Create a Session ID
+                var sessionID = randomatic('Aa0', 20);
+                if (rememberMe === 'hour') {
+                  var iQuery =
+                    `
+                  INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"HOUR");
+                  `
+                  connection.query(iQuery, [sessionID, results[0].userID], function(err, rresults, fields) {
+                    if (err) {
+                      return res.status(200).json({
+                        status: -1,
+                        message: err
+                      })
+                    } else {
+                      return res.status(200).json({
+                        status: 0,
+                        message: "Confirmation.",
+                        userID: results[0].userID,
+                        username: results[0].userName,
+                        sessionID: sessionID
+                      })
+                    }
+                  })
+                } else if (rememberMe === 'forever') {
+                  var iQuery =
+                    `
+                  INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"FOREVER");
+                  `
+                  connection.query(iQuery, [sessionID, results[0].userID], function(err, rresults, fields) {
+                    if (err) {
+                      return res.status(200).json({
+                        status: -1,
+                        message: err
+                      })
+                    } else {
+                      return res.status(200).json({
+                        status: 0,
+                        message: "Confirmation.",
+                        userID: results[0].userID,
+                        username: results[0].userName,
+                        sessionID: sessionID
+                      })
+                    }
+                  })
+                } else {
+                  return res.status(200).json({
+                    status: -1,
+                    message: "Remember Me Not Included Properly."
+                  })
+                }
               }
             } else {
               return res.status(200).json({
