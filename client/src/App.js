@@ -31,6 +31,7 @@ import Cookies from 'universal-cookie';
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
+//have a remaining characters tracker for writing post
 //REDO QUERIES - SOME NEED TO BE FIXED
 //may need to add privacy to cookies
 //rewrite post pages to include pagination
@@ -2599,7 +2600,11 @@ function App() {
         changeNavToLoggedOut();
       }
       var listOfPosts = [];
-        fetch(serverLocation + "/posts")
+      var extensionString = "";
+      if (cookies.get("id") && cookies.get("sessionID")){
+        extensionString = "?sessionID=" + cookies.get("sessionID") + "&id=" + cookies.get("id");
+      }
+        fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
             for (let key = 0; key < data.contents.length; key++){
