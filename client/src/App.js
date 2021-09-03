@@ -597,15 +597,18 @@ function App() {
                       you will be able to see your private posts and comments.
                       <br></br>
                       If you would like to reactivate your account, you can receive an email to do so.
-                      <Button onClick={getHome}> Cancel Logging In </Button> <Button> Reactivate Account </Button>
+                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.rememberMe)}> Reactivate Account </Button>
                     </div>
                   </div>
                 )
               }
             });
       }
-      function sendActivationAccountMessage(){
+      function sendActivationAccountMessage(userID,rememberMe){
         //Make a random code and send it in email
+        fetch()
+          .then()
+          .then()
       }
       function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
         hideWriteForm();

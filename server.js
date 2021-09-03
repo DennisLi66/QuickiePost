@@ -900,6 +900,75 @@ app.post("/login", function(req, res) {
     })
   }
 })
+app.route("/reactivationCode")
+  .post(function(req,res){
+    if (req.body.userID){
+      return res.status(200).status(200).json({
+        status: -1,
+        message: "UserID Not Included."
+      })
+    }
+    else{
+      //generate random 6 digit code and submit to mysql database
+      var iorUQuery =
+      `
+      INSERT INTO reactivationCodes
+        (userID,reactivationCode,addDate)
+      values
+        (?,?,NOW())
+      ON DUPLICATE KEY UPDATE
+        userID = VALUES(userID),
+        reactivationCode = VALUES(reactivationCode),
+        addDate = VALUES(addDate)
+      `;
+      var code = randomatic('A0', 6);
+      connection.query(iorUQuery,[req.body.userID,code],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        }else{
+          return res.status(200).json({
+            status: 0,
+            message: "Successful Action.",
+            code: code
+          })
+        }
+      })
+
+    }
+  })
+  .delete(function(req,res){
+    if (req.body.userID){
+      return res.status(200).status(200).json({
+        status: -1,
+        message: "UserID Not Included."
+      })
+    }
+    else{
+      // delete 6 digit code from database associated to userID
+      var dQuery =
+      `
+      DELETE FROM reactivationCodes
+      WHERE userID = ?;
+      `;
+      connection.query(dQuery,[req.body.userID],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        }
+        else{
+          return res.status(200).json({
+            status: 0,
+            message: "Deletion Occurred."
+          })
+        }
+      })
+    }
+  })
 
 app.route("/user")
   //Get User and Associated Posts

@@ -73,4 +73,9 @@ create table viewershipRequests(
     posterID int NOT NULL,
     initiatedBy int NOT NULL,
     UNIQUE KEY IDS (viewerID,posterID)
+);
+create table reactivationCodes(
+	userID int NOT NULL primary key,
+    reactivationCode varchar(10),
+    addDate datetime NOT NULL
 )
