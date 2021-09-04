@@ -25,6 +25,7 @@ import Cookies from 'universal-cookie';
 //check that pagination is actually correct
 //Maybe use nodemailer to reactivate account.
 ////////////////
+//test acccount reactivation
 //add a highlight effect to the pagination bar
 //Make sure all appropirate functions check session
 //Add fine tuning to posts after submission
@@ -35,6 +36,7 @@ import Cookies from 'universal-cookie';
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
+//Check if i really need to set name for cookies
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
 //have a remaining characters tracker for writing post
 //REDO QUERIES - SOME NEED TO BE FIXED
@@ -598,14 +600,14 @@ function App() {
                       you will be able to see your private posts and comments.
                       <br></br>
                       If you would like to reactivate your account, you can receive an email to do so.
-                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.rememberMe,origin)}> Reactivate Account </Button>
+                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin,postID,commentID,startPos,endPos)}> Reactivate Account </Button>
                     </div>
                   </div>
                 )
               }
             });
       }
-      function sendActivationAccountMessage(userID,rememberMe,origin){
+      function sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances = 3){
         //Make a random code and send it in email
         const requestSetup = {
           method: 'POST',
@@ -623,9 +625,11 @@ function App() {
                   <br></br>
                   Please check your email and type the code in below to reactivate your account.
                   <br></br>
-                  Remaining Chances: 3
-                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,rememberMe,origin,3)}>
-                    <input required>  </input>
+                  <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances)}}> Resend Code </Button>
+                  <br></br>
+                  Remaining Chances: {chances}
+                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,username,data.sessionID,rememberMe,origin,3,postID,commentID,startPos,endPos)}>
+                    <input id="reactivationCode" name="reactivationCode" required>  </input>
                     <br></br>
                     <Button type='submit'> Reactivate Account </Button>
                   </form>
@@ -634,8 +638,56 @@ function App() {
             )
           })
       }
-      function handleReactivationCodeSubmission(event,userID,rememberMe,origin,chances){
-
+      function handleReactivationCodeSubmission(event,userID,username,sessionID,rememberMe,origin,chances,postID,commentID,startPos,endPos){
+        event.preventDefault();
+        const requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({userID:userID,reactivationCode:document.getElementById("reactivationCode")})
+        }
+        fetch(serverLocation + "/checkReactivationCode",requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              //throw error
+              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            }else if (data.status === -2){
+              //deduct chances
+              if (chances <= 1){
+                changeCode(
+                  <div>
+                    <h1> No More Remaining Chances </h1>
+                    <div>
+                      You have run out of chances to use your code.
+                      <br></br>
+                      <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances)}}> Resend Code </Button>
+                    </div>
+                  </div>
+                )
+              }else{
+                sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances - 1)
+              }
+            }else if (data.status === 0){
+              //reactivate account
+              cookies.set('name',username,{path:'/'});
+              cookies.set('id',userID,{path:'/'});
+              cookies.set('sessionID',sessionID,{path:'/'})
+              cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              if (origin === ""){
+                window.location.reload();
+              }else if (origin === "userProfileOptions"){
+                showUserProfile(userID,0,0,"options");
+              }else if (origin === "indepthPost"){
+                showInDepthPost(postID,startPos,endPos);
+              }else if (origin === "userProfilePosts"){
+                showUserProfile(userID,startPos,endPos,"posts");
+              }else if (origin === "userProfileComments"){
+                showUserProfile(userID,startPos,endPos,"comments");
+              }else if (origin === "indepthComment"){
+                showInDepthComment(commentID);
+              }
+            }
+          })
       }
       function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
         hideWriteForm();

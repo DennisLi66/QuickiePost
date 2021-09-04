@@ -829,12 +829,14 @@ app.post("/login", function(req, res) {
               })
             } else if (rresult) {
               if (results[0].visibility === "hidden"){
+                var sessionID = randomatic('Aa0', 20);
                 return res.status(200).json({
                   status: -3,
                   message: "Hidden Account",
                   rememberMe: rememberMe,
                   userID: results[0].userID,
-                  username: results[0].userName
+                  username: results[0].userName,
+                  sessionID: sessionID
                 })
               }
               else{
@@ -971,7 +973,7 @@ app.route("/reactivationCode")
       })
     }
   })
-app.route("checkReactivationCode")
+app.route("/checkReactivationCode")
   .post(function(req,res){
     if (!req.body.userID || !req.body.reactivationCode){
       return res.status(200).json({
