@@ -910,6 +910,7 @@ app.route("/reactivationCode")
     }
     else{
       //generate random 6 digit code and submit to mysql database
+      //FIX THIS: ALSO USE NODEMAILER TO SEND MESSAGE
       var iorUQuery =
       `
       INSERT INTO reactivationCodes
@@ -969,7 +970,10 @@ app.route("/reactivationCode")
       })
     }
   })
-
+app.route("checkReactivationCode")
+  .post(function(req,res){
+    
+  })
 app.route("/user")
   //Get User and Associated Posts
   .get(function(req, res) {

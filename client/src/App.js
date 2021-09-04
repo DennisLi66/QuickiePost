@@ -35,6 +35,7 @@ import Cookies from 'universal-cookie';
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
+//have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
 //have a remaining characters tracker for writing post
 //REDO QUERIES - SOME NEED TO BE FIXED
 //may need to add privacy to cookies
@@ -597,18 +598,42 @@ function App() {
                       you will be able to see your private posts and comments.
                       <br></br>
                       If you would like to reactivate your account, you can receive an email to do so.
-                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.rememberMe)}> Reactivate Account </Button>
+                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.rememberMe,origin)}> Reactivate Account </Button>
                     </div>
                   </div>
                 )
               }
             });
       }
-      function sendActivationAccountMessage(userID,rememberMe){
+      function sendActivationAccountMessage(userID,rememberMe,origin){
         //Make a random code and send it in email
-        fetch()
-          .then()
-          .then()
+        const requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({userID:userID})
+        };
+        fetch("reactivationCode",requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            changeCode(
+              <div>
+                <h1> Reactivating Your Account </h1>
+                <div>
+                  You have now been sent a six-character code to the email associated with your account.
+                  <br></br>
+                  Please check your email and type the code in below to reactivate your account.
+                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,rememberMe,origin)}>
+                    <input required>  </input>
+                    <br></br>
+                    <Button type='submit'> Reactivate Account </Button>
+                  </form>
+                </div>
+              </div>
+            )
+          })
+      }
+      function handleReactivationCodeSubmission(event,userID,rememberMe,origin){
+
       }
       function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
         hideWriteForm();
