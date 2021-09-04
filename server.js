@@ -11,6 +11,7 @@ const mysql = require('mysql');
 const bcrypt = require('bcrypt');
 const randomatic = require('randomatic');
 const cors = require("cors");
+const nodemailer = require("nodemailer");
 
 const app = express();
 app.use(express.static("public"));
@@ -910,7 +911,7 @@ app.route("/reactivationCode")
     }
     else{
       //generate random 6 digit code and submit to mysql database
-      //FIX THIS: ALSO USE NODEMAILER TO SEND MESSAGE
+      //FIX THIS: ALSO USE NODEMAILER TO SEND MESSAGE - check previous githubs
       var iorUQuery =
       `
       INSERT INTO reactivationCodes
@@ -972,7 +973,38 @@ app.route("/reactivationCode")
   })
 app.route("checkReactivationCode")
   .post(function(req,res){
-    
+    if (!req.body.userID || !req.body.reactivationCode){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }else{
+      var sQuery =
+      `
+      SELECT * FROM
+      reactivationCodes
+      WHERE userID = ? AND reactivationCode = ?
+      `;
+      connection.query(sQuery,[req.body.userID,req.body.reactivationCOde],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        }
+        else if (results.length === 0){
+          return res.status(200).status({
+            message: "Invalid Combination.",
+            status: -2
+          })
+        }else{
+          return res.status(200).json({
+            status: 0,
+            message: "Worked."
+          })
+        }
+      })
+    }
   })
 app.route("/user")
   //Get User and Associated Posts

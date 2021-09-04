@@ -622,7 +622,9 @@ function App() {
                   You have now been sent a six-character code to the email associated with your account.
                   <br></br>
                   Please check your email and type the code in below to reactivate your account.
-                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,rememberMe,origin)}>
+                  <br></br>
+                  Remaining Chances: 3
+                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,rememberMe,origin,3)}>
                     <input required>  </input>
                     <br></br>
                     <Button type='submit'> Reactivate Account </Button>
@@ -632,7 +634,7 @@ function App() {
             )
           })
       }
-      function handleReactivationCodeSubmission(event,userID,rememberMe,origin){
+      function handleReactivationCodeSubmission(event,userID,rememberMe,origin,chances){
 
       }
       function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
