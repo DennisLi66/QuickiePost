@@ -941,7 +941,6 @@ app.route("/reactivationCode")
             message: err
           })
         }else{
-        //FIX THIS: ALSO USE NODEMAILER TO SEND MESSAGE - check previous githubs
           var mailOptions = {
             from: process.env.EMAILUSER,
             to: results[1][0].email,
@@ -951,7 +950,7 @@ app.route("/reactivationCode")
           transporter.sendMail(mailOptions, function(error, info) {
             if (error){
               return res.status(200).json({
-                status: =1,
+                status: 1,
                 message: error
               })
             }else{

@@ -9,6 +9,7 @@ import Button from 'react-bootstrap/Button'
 import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
+require('dotenv').config();
 //things ill Need
 //!!!PRIORITY
 //Return posts and comments
@@ -49,8 +50,8 @@ import Cookies from 'universal-cookie';
 
 function App() {
   //Variables
-  //FIX THIS DOT ENV
   const serverLocation = "http://localhost:3001";
+  // const serverLocation = process.env.SERVERLOCATION;
   const cookies = React.useMemo(() => {return new Cookies()},[])
   //Important Variables
   const [code,changeCode] = React.useState(
