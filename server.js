@@ -13,6 +13,14 @@ const randomatic = require('randomatic');
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 
+var transporter = nodemailer.createTransport({
+  service: process.env.EMAILSYS,
+  auth: {
+    user: process.env.EMAILUSER,
+    pass: process.env.EMAILPASSWORD
+  }
+});
+
 const app = express();
 app.use(express.static("public"));
 app.use(cors({
@@ -913,7 +921,6 @@ app.route("/reactivationCode")
     }
     else{
       //generate random 6 digit code and submit to mysql database
-      //FIX THIS: ALSO USE NODEMAILER TO SEND MESSAGE - check previous githubs
       var iorUQuery =
       `
       INSERT INTO reactivationCodes
@@ -923,24 +930,40 @@ app.route("/reactivationCode")
       ON DUPLICATE KEY UPDATE
         userID = VALUES(userID),
         reactivationCode = VALUES(reactivationCode),
-        addDate = VALUES(addDate)
+        addDate = VALUES(addDate);
+      SELECT * FROM users WHERE userID = ?;
       `;
       var code = randomatic('A0', 6);
-      connection.query(iorUQuery,[req.body.userID,code],function(err,results,fields){
+      connection.query(iorUQuery,[req.body.userID,code,req.body.userID],function(err,results,fields){
         if (err){
           return res.status(200).json({
             status: -1,
             message: err
           })
         }else{
-          return res.status(200).json({
-            status: 0,
-            message: "Successful Action.",
-            code: code
+        //FIX THIS: ALSO USE NODEMAILER TO SEND MESSAGE - check previous githubs
+          var mailOptions = {
+            from: process.env.EMAILUSER,
+            to: results[1][0].email,
+            subject: 'Password Recovery Link',
+            html: 'Your code is ' + code  + '.'
+          };
+          transporter.sendMail(mailOptions, function(error, info) {
+            if (error){
+              return res.status(200).json({
+                status: =1,
+                message: error
+              })
+            }else{
+              return res.status(200).json({
+                status: 0,
+                message: "Successful Action.",
+                code: code
+              })
+            }
           })
         }
       })
-
     }
   })
   .delete(function(req,res){
