@@ -1751,7 +1751,6 @@ app.route("/likeComment")
       }
     })
   })
-//FIX THIS: WHEN BLOCKED OR BLOCKING DROP VIEWERSHIP
 app.route("/block")
   .get(function(req, res) {
     //get all users a person is blocking
@@ -1814,6 +1813,7 @@ app.route("/block")
       var iQuery =
         `
       INSERT INTO blocked (blockedID,blockerID) VALUES (?,?);
+      DELETE FROM viewers WHERE (posterID = ? AND viewerID = ?) OR (posterID = ? AND viewerID = ?)
       `;
       connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
@@ -1827,7 +1827,7 @@ app.route("/block")
             message: "No Valid Session."
           })
         } else {
-          connection.query(iQuery, [req.query.blockedID, req.query.userID], function(err2, results2, fields) {
+          connection.query(iQuery, [req.query.blockedID, req.query.userID,req.query.blockedID, req.query.userID, req.query.userID,req.query.blockedID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
                 message: err2,

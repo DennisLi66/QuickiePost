@@ -732,7 +732,7 @@ function App() {
       }
         //Set up Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
-          //FIX THIS: Could memoize?
+          //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
           //Block List functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
@@ -1050,7 +1050,7 @@ function App() {
                 }else if (variation === "viewer"){
                   showUserProfile(viewerID,0,10,"options")
                 }else{
-                  //FIX THIS
+                                    changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
                 }
               }
             })
@@ -1072,7 +1072,7 @@ function App() {
                   if (variation === "profile"){
                     showUserProfile(userID,0,10,"options");
                   }else{
-                    //FIX THIS
+                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
                   }
                 }
               })
@@ -2227,7 +2227,6 @@ function App() {
       }
       function handleSearch(event){
         event.preventDefault();
-        //FIX THIS: HANDLE SESSIONID AND ID
         var title = document.getElementById("title").value;
         var content = document.getElementById("content").value;
         var username = document.getElementById("username").value;
