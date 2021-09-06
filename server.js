@@ -642,6 +642,7 @@ app.route("/post")
             iQuery =
               `
             INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
+            SELECT LAST_INSERT_ID();
             `;
             variables = [userID, req.query.title, req.query.contents, visibility];
             connection.query(iQuery, variables, function(err, results, fields) {
@@ -653,7 +654,8 @@ app.route("/post")
               } else {
                 return res.status(200).json({
                   status: 0,
-                  message: "Post Added."
+                  message: "Post Added.",
+                  postID: results[0].insertId
                 })
               }
             })

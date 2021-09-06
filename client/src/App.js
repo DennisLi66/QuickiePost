@@ -79,7 +79,7 @@ function App() {
   )
   const [privacySwitchDescriptor,changePrivacySwitchDescriptor] = React.useState(
     <div> This post can be seen by anyone. </div>
-  )
+  ) //delete
   const [navBar,changeNavBar] = React.useState();
   //
   const getHome = React.useCallback(
@@ -2615,18 +2615,19 @@ function App() {
         + content + "&visibility=" + privacy + '&userID=' + cookies.get('id') + "&sessionID=" + cookies.get(sessionID),requestSetup)
           .then(response => response.json())
           .then(data => {
-            console.log(data)
+            console.log(data);
             if (data.status !== 0){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
-              showUserProfile(cookies.get("id"),0,10,"posts");
+              // showUserProfile(cookies.get("id"),0,10,"posts");
+              showInDepthPost(data.postID);
             }
           });
       }
       function handlePrivacyChecked(){
-        if (checkSessionID()){
-          return;
-        }
+        // if (checkSessionID()){
+        //   return;
+        // }
         var i = document.getElementById('privacySwitch').checked;
         // console.log(i);
         if (i){
