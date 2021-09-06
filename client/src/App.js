@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 //!!!PRIORITY
+//FIX THIS UPDATE DISPLAYING ALL POSTS
 //Return posts and comments
 //Redo write post page
 //Need to integrate the impact of being blocked; upgrade existing mysql queries
@@ -37,6 +38,7 @@ require('dotenv').config();
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
+//FIX THIS: IF session sent to server is invalid tell me message back to user that session was invalid
 //Check if i really need to set name for cookies
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
 //have a remaining characters tracker for writing post
@@ -1050,7 +1052,7 @@ function App() {
                 }else if (variation === "viewer"){
                   showUserProfile(viewerID,0,10,"options")
                 }else{
-                                    changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
                 }
               }
             })
@@ -1128,18 +1130,16 @@ function App() {
             fetch(serverLocation + "/mylikedposts?sessionID=" + sessionID + "&userID=" + userID)
               .then(response => response.json())
               .then(data => {
-                var listOfPosts;
-                var listOfPostsCode;
+                var listOfPosts = [];
                 if (data.contents.length === 0){
-                  listOfPostsCode = (<div> You have not liked any posts that are still visible. </div>)
+                  listOfPosts = (<div> You have not liked any posts that are still visible. </div>)
                 }
                 else{
                   for (let i = firstPoint; i < Math.min(secondPoint,data.contents.length); i++){
                     //push a simple post?
                     var dict = data.contents[i];
                     listOfPosts.push(
-                      <li key={i}>
-                      <Card>
+                      <Card key={i}>
                         <Card.Title> {dict.title} </Card.Title>
                         <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
                         <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
@@ -1151,14 +1151,8 @@ function App() {
                         <Button onClick={()=>{showInDepthPost(data.contents[i].postID)}}> Expand Post </Button>
                         </Card.Body>
                       </Card>
-                      </li>
                     )
                   }
-                  listOfPostsCode = (
-                    <ul>
-                      {listOfPosts}
-                    </ul>
-                  )
                 }
                 var paginationBar;
                 if (data.contents.length > 10){
@@ -1190,10 +1184,10 @@ function App() {
                       <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                     </li>
                     <li className="nav-item">
-                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts </div>
                     </li>
                     <li className="nav-item">
-                      <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                      <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
                     </li>
                     <li className="nav-item">
                       <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
@@ -1201,7 +1195,7 @@ function App() {
                   </ul>
                   <div>
                     {paginationBar}
-                    {listOfPostsCode}
+                    {listOfPosts}
                     {paginationBar}
                   </div>
                   </div>
@@ -1234,7 +1228,7 @@ function App() {
             fetch(serverLocation + "/mylikedcomments?sessionID=" + sessionID + "&userID=" + userID)
               .then(response => response.json())
               .then(data => {
-                var listOfComments;
+                var listOfComments = [];
                 var listOfCommentsCode;
                 if (data.contents.length === 0){
                   listOfCommentsCode = (<div> You have not liked any comments that are still visible. </div>);
@@ -1242,8 +1236,7 @@ function App() {
                   for (let i = firstPoint;  i < Math.min(secondPoint,data.contents.length); i++){
                     var dict = data.contents[i];
                     listOfComments.push(
-                      <li key={i}>
-                      <Card>
+                      <Card key={i}>
                         <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
                         <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
                         <Card.Body> {dict.comments} </Card.Body>
@@ -1253,7 +1246,6 @@ function App() {
                         <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Post </Button>
                         </Card.Body>
                       </Card>
-                      </li>
                     )
                   }
                   listOfCommentsCode = (
@@ -1292,10 +1284,10 @@ function App() {
                       <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                     </li>
                     <li className="nav-item">
-                      <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                      <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts</div>
                     </li>
                     <li className="nav-item">
-                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
                     </li>
                     <li className="nav-item">
                       <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
@@ -1363,10 +1355,10 @@ function App() {
                       <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                     </li>
                       <li className="nav-item">
-                        <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                        <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts </div>
                       </li>
                       <li className="nav-item">
-                        <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
+                        <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
                       </li>
                     <li className="nav-item">
                       <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
@@ -1573,17 +1565,40 @@ function App() {
             if (listOfShownComments.length === 0){
               listOfShownComments = (<div>There are no comments to view.</div>)
             }
-            var likedPosts;
+            var topBar;
             if (cookies.get("id") && cookies.get("id") === userID){
-              likedPosts = (
-                <div>
-                <li className="nav-item">
-                  <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
-                </li>
-                <li className="nav-item">
-                  <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
-                </li>
-                </div>
+              topBar = (
+                <ul className="nav nav-tabs justify-content-center">
+                  <li className="nav-item">
+                    <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link active" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts </div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                  </li>
+                </ul>
+              )
+            }else{
+              topBar = (
+                <ul className="nav nav-tabs justify-content-center">
+                  <li className="nav-item">
+                    <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link active" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                  </li>
+                </ul>
               )
             }
             var msg;
@@ -1594,18 +1609,7 @@ function App() {
               <div>
               {msg}
               <h1> {username}'s Profile </h1>
-              <ul className="nav nav-tabs justify-content-center">
-                <li className="nav-item">
-                  <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-                </li>
-                <li className="nav-item">
-                  <div className="nav-link active" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                </li>
-                {likedPosts}
-                <li className="nav-item">
-                  <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-                </li>
-              </ul>
+              {topBar}
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               <div className='listOfStuffs'>
                 {listOfShownComments}
@@ -1698,35 +1702,47 @@ function App() {
             if (variation === "Delete"){
               msg = (<div className='confMsg'> Your post was deleted. </div>)
             }
-            var likedPosts;
+            var topBar;
             if (cookies.get("id") && cookies.get("id") === userID){
-              likedPosts = (
-                <div>
-                <li className="nav-item">
-                  <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
-                </li>
-                <li className="nav-item">
-                  <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Options </div>
-                </li>
-                </div>
+              topBar = (
+                <ul className="nav nav-tabs justify-content-center">
+                  <li className="nav-item">
+                    <div className="nav-link active"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts </div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                  </li>
+                </ul>
+              )
+            }else{
+              topBar = (
+                <ul className="nav nav-tabs justify-content-center">
+                  <li className="nav-item">
+                    <div className="nav-link active"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link" aria-current="page" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                  </li>
+                  <li className="nav-item">
+                    <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                  </li>
+                </ul>
               )
             }
             changeCode(
               <div>
               {msg}
               <h1> {username}'s Profile </h1>
-              <ul className="nav nav-tabs justify-content-center">
-                <li className="nav-item">
-                  <div className="nav-link active" aria-current="page" onClick={() => {showPosts(username,posts,start,end,comments)}}>{username}'s Posts</div>
-                </li>
-                <li className="nav-item">
-                  <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                </li>
-                {likedPosts}
-                <li className="nav-item">
-                  <div className="nav-link"  onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-                </li>
-              </ul>
+              {topBar}
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               <div className='listOfStuffs'>
                 {listOfShownPosts}
@@ -2329,9 +2345,6 @@ function App() {
       //SHOWERS AND HIDERS
       function showWriteForm(){
         //have something navigate down from the top
-        if (checkSessionID()){
-          return;
-        }
         changeWriteFormCSS(
           {
             height: 'auto',
@@ -2488,9 +2501,6 @@ function App() {
       //Event Handlers
       function handleRegistration(event){
         event.preventDefault();
-        // if (checkSessionID()){
-        //   return;
-        // }
         var email = document.getElementById("userEmail").value;
         var username = document.getElementById("username").value;
         var pswrd = document.getElementById("pswrd").value;
@@ -2591,14 +2601,12 @@ function App() {
         }
       }
       function handleWritePost(event){
-        //FIX THIS: REWORK
+        //FIX THIS: TEST AGAIN AND BEGIN CHANGING THE SESSION ID STUFF
         event.preventDefault();
-        if (checkSessionID()){
-          return;
-        }
         var title = document.getElementById('postTitle').value;
         var content = document.getElementById('postContent').value;
         var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
+        console.log(title,content,privacy);
         var sessionID = cookies.get('sessionID');
         const requestSetup = {
             method: 'PUT',
@@ -2607,6 +2615,7 @@ function App() {
         + content + "&visibility=" + privacy + '&userID=' + cookies.get('id') + "&sessionID=" + cookies.get(sessionID),requestSetup)
           .then(response => response.json())
           .then(data => {
+            console.log(data)
             if (data.status !== 0){
               changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
             }else{
