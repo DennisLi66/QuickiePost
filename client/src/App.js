@@ -2609,7 +2609,7 @@ function App() {
         console.log(title,content,privacy);
         var sessionID = cookies.get('sessionID');
         const requestSetup = {
-            method: 'PUT',
+            method: 'PUT'
         }
         fetch(serverLocation + "/post?title=" + title + "&contents="
         + content + "&visibility=" + privacy + '&userID=' + cookies.get('id') + "&sessionID=" + cookies.get(sessionID),requestSetup)

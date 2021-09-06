@@ -62,3 +62,21 @@ WHERE commentVisibility != 'hidden' AND postVisibility != 'hidden' AND commenter
 AND ((commenterVisibility != 'private' AND commentVisibility != 'private') OR commentViewerID is not null OR commenterID = 3)
 AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVisibility is not null OR posterID = 3)
 ;
+
+  SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, ifnull(totalComments,0) as totalComments, subDate FROM
+  ( 
+	SELECT * from posts
+    LEFT JOIN
+    (select userid as UID,username,visibility as uvisibility from users) uzers
+    on uzers.UID = posts.userID
+    WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
+    AND uzers.uvisibility != 'hidden' AND uzers.uvisibility != 'private'
+    ORDER BY subDate DESC
+    ) posts
+    LEFT JOIN
+  (SELECT count(*) as total, postID FROM likes GROUP BY postID) totalLikes
+  on totalLikes.postID = posts.postID
+  LEFT JOIN
+  (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
+  ON comments.postID = posts.postID
+  ORDER BY posts.subDate desc

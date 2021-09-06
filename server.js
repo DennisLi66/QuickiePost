@@ -639,19 +639,11 @@ app.route("/post")
           } else {
             var iQuery;
             var variables = [];
-            if (visibility === "public") {
-              iQuery =
-                `
-              INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,NULL,NOW());
-              `;
-              variables = [userID, req.query.title, req.query.contents];
-            } else {
-              iQuery =
-                `
-              INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
-              `;
-              variables = [userID, req.query.title, req.query.contents, visibility];
-            }
+            iQuery =
+              `
+            INSERT INTO posts (userID,title,content,visibility,subDate) VALUES (?,?,?,?,NOW());
+            `;
+            variables = [userID, req.query.title, req.query.contents, visibility];
             connection.query(iQuery, variables, function(err, results, fields) {
               if (err) {
                 return res.status(200).json({
@@ -732,12 +724,8 @@ app.route("/post")
               variables.push(content);
             }
             if (visibility) {
-              if (visibility === "public") {
-                setPositions.push(" visibility = NULL ");
-              } else {
-                setPositions.push(" visibility = ? ");
-                variables.push(visibility);
-              }
+              setPositions.push(" visibility = ? ");
+              variables.push(visibility);
             }
             variables.push(postID)
             connection.query("UPDATE posts SET " + setPositions.join(",") + " WHERE postID = ?", variables, function(err, results, fields) {
@@ -778,7 +766,7 @@ app.post("/register", function(req, res) {
           message: e2rr
         })
       } else {
-        var iQuery = "INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES (?,?,?,NULL,?)";
+        var iQuery = "INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES (?,?,?,'public',?)";
         connection.query(iQuery, [username, email, hash, 'user'], function(err, results, fields) {
           if (err && err.sqlState === '23000') {
             console.log("Already Exists");
@@ -1475,12 +1463,8 @@ app.route("/comment")
           variables.push(comments);
         }
         if (visibility) {
-          if (visibility === "public") {
-            updateStrings.push(" VISIBILITY = NULL ");
-          } else {
-            updateStrings.push(" VISIBILITY = ? ");
-            variables.push(visibility)
-          }
+          updateStrings.push(" VISIBILITY = ? ");
+          variables.push(visibility);
         }
         variables.push(commentID);
         variables.push(userID);
@@ -1513,13 +1497,6 @@ app.route("/comment")
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
     `;
     var variables = [req.query.postID, req.query.userID, req.query.content, privacy]
-    if (privacy === 'public') {
-      iQuery =
-        `
-          INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),NULL);
-      `;
-      variables = [req.query.postID, req.query.userID, req.query.content]
-    }
     connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
