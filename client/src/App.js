@@ -11,6 +11,9 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
+///next
+//DELETE SessionID check and make it server side
+/////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
 //Return posts and comments
@@ -77,9 +80,6 @@ function App() {
     height: 'auto'
     }
   )
-  const [privacySwitchDescriptor,changePrivacySwitchDescriptor] = React.useState(
-    <div> This post can be seen by anyone. </div>
-  ) //delete
   const [navBar,changeNavBar] = React.useState();
   //
   const getHome = React.useCallback(
@@ -2382,7 +2382,7 @@ function App() {
             <span className="slider round"></span>
             </label>
             <br></br>
-            {privacySwitchDescriptor}
+            <div> This post can be seen by anyone. </div>
             <Button variant='dark' type="submit"> Submit Post </Button>
           </form>
           </div>
@@ -2631,12 +2631,66 @@ function App() {
         var i = document.getElementById('privacySwitch').checked;
         // console.log(i);
         if (i){
-          changePrivacySwitchDescriptor(
-            <div> This post can only be seen by you or those you've linked with. </div>
+          changeWriteFormCode(
+            <div>
+            <br></br>
+            <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
+            <h1> Write a Post </h1>
+            <form onSubmit={handleWritePost}>
+              <label htmlFor='postTitle'>Title:</label>
+              <br></br>
+              <input name='postTitle' id="postTitle" autoComplete="off" required></input>
+              <br></br>
+              <label htmlFor='postContent'>Content:</label>
+              <br></br>
+              <textarea className='noResize' rows='5' cols='50'
+               maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+              </textarea>
+              <br></br>
+              Private?
+              <br></br>
+              <label className="switch">
+              <input type="checkbox" id='privacySwitch'
+              onChange={handlePrivacyChecked}
+              ></input>
+              <span className="slider round"></span>
+              </label>
+              <br></br>
+              <div> This post can only be seen by you or those you've linked with. </div>
+              <Button variant='dark' type="submit"> Submit Post </Button>
+            </form>
+            </div>
           )
         }else{
-          changePrivacySwitchDescriptor(
-            <div> This post can be seen by anyone. </div>
+          changeWriteFormCode(
+            <div>
+            <br></br>
+            <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
+            <h1> Write a Post </h1>
+            <form onSubmit={handleWritePost}>
+              <label htmlFor='postTitle'>Title:</label>
+              <br></br>
+              <input name='postTitle' id="postTitle" autoComplete="off" required></input>
+              <br></br>
+              <label htmlFor='postContent'>Content:</label>
+              <br></br>
+              <textarea className='noResize' rows='5' cols='50'
+               maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+              </textarea>
+              <br></br>
+              Private?
+              <br></br>
+              <label className="switch">
+              <input type="checkbox" id='privacySwitch'
+              onChange={handlePrivacyChecked}
+              ></input>
+              <span className="slider round"></span>
+              </label>
+              <br></br>
+              <div> This post can be seen by anyone. </div>
+              <Button variant='dark' type="submit"> Submit Post </Button>
+            </form>
+            </div>
           )
         }
       }
@@ -2773,7 +2827,7 @@ function App() {
               </div>
             )
           })
-    },[serverLocation,cookies,changeCode,privacySwitchDescriptor])
+    },[serverLocation,cookies,changeCode])
 
   //FIX THIS If SessionID, change server to accomadate being logged in
   React.useEffect(() => {
