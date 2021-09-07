@@ -119,7 +119,7 @@ app.get("/posts", function(req, res) {
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
+          status: -11,
           message: "Not Valid Session."
         })
       } else {
@@ -218,8 +218,8 @@ app.get("/myfeed", function(req, res) {
       })
     } else if (results1.length === 0) {
       return res.status(200).json({
-        status: -1,
-        message: "No Valid Session."
+        status: -11,
+        message: "Not Valid Session."
       })
     } else {
       // console.log(req.query.userID);
@@ -294,8 +294,8 @@ app.get("/search", function(req, res) {
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session."
         })
       } else {
         var sQuery = //works
@@ -439,8 +439,8 @@ app.route("/post")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session."
           })
         } else {
           console.log(req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.postID);
@@ -695,8 +695,8 @@ app.route("/post")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session."
         })
       } else {
         var checkOwnerQuery =
@@ -1179,8 +1179,8 @@ app.route("/user")
           })
         } else if (cResults.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session"
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(uQuery, [profileID, userID], function(err1, results1, fields1) {
@@ -1373,8 +1373,8 @@ app.route("/comment")
             })
           } else if (results1.length == 0) {
             return res.status(200).json({
-              status: -1,
-              message: "Session did not exist."
+              status: -11,
+              message: "Not Valid Session"
             })
           } else {
             connection.query(sQuery, [userID, userID, userID, userID, userID, userID, userID, commentID], function(err2, results2, fields) {
@@ -1447,8 +1447,8 @@ app.route("/comment")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         //update
@@ -1507,8 +1507,8 @@ app.route("/comment")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(iQuery, variables, function(err2, results2, fields) {
@@ -1549,8 +1549,8 @@ app.route("/comment")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(eQuery, [req.query.commentID], function(err2, results2, fields) {
@@ -1590,8 +1590,8 @@ app.route("/like")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(iQuery, [req.query.postID, req.query.userID], function(err2, results2, fields) {
@@ -1630,8 +1630,8 @@ app.route("/like")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(dQuery, [req.query.userID, req.query.postID], function(err2, results2, fields) {
@@ -1670,8 +1670,8 @@ app.route("/likeComment")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(iQuery, [req.query.commentID, req.query.userID], function(err2, results2, fields) {
@@ -1710,8 +1710,8 @@ app.route("/likeComment")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(dQuery, [req.query.userID, req.query.commentID], function(err2, results2, fields) {
@@ -1753,8 +1753,8 @@ app.route("/block")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
@@ -1802,8 +1802,8 @@ app.route("/block")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(iQuery, [req.query.blockedID, req.query.userID,req.query.blockedID, req.query.userID, req.query.userID,req.query.blockedID], function(err2, results2, fields) {
@@ -1842,8 +1842,8 @@ app.route("/block")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(dQuery, [req.query.blockedID, req.query.userID], function(err2, results2, fields) {
@@ -1896,8 +1896,8 @@ app.route("/viewership")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(sQuery, variables, function(err2, results2, fields) {
@@ -1984,8 +1984,8 @@ app.route("/viewership")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(dQuery, variables, function(err2, results2, fields) {
@@ -2024,8 +2024,8 @@ app.route("/viewership")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "No Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(dQuery, [req.query.posterID, req.query.viewerID], function(err2, results2, fields) {
@@ -2091,8 +2091,8 @@ app.route("/relationship")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(sQuery, variables, function(err2, results2, fields) {
@@ -2139,8 +2139,8 @@ app.route("/whosviewingme")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
@@ -2187,8 +2187,8 @@ app.route("/whoimviewing")
         })
       } else if (results1.length === 0) {
         return res.status(200).json({
-          status: -1,
-          message: "No Valid Session."
+          status: -11,
+          message: "Not Valid Session"
         })
       } else {
         connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
@@ -2241,8 +2241,8 @@ app.route("/changeVisibility")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "Non-Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(cQuery2, [req.body.email], function(err2, results2, fields2) {
@@ -2328,8 +2328,8 @@ app.route("/mylikedposts")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "Non-Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
@@ -2402,8 +2402,8 @@ app.route("/mylikedcomments")
           })
         } else if (results1.length === 0) {
           return res.status(200).json({
-            status: -1,
-            message: "Non-Valid Session."
+            status: -11,
+            message: "Not Valid Session"
           })
         } else {
           connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
