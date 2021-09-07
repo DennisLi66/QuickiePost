@@ -13,6 +13,8 @@ require('dotenv').config();
 //things ill Need
 ///next
 //DELETE SessionID check and make it server side
+//Write quick css changing funcgtions
+//on checking session: extend if by an hour
 /////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
@@ -93,8 +95,12 @@ function App() {
           fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
             .then(response => response.json())
             .then(data => {
-              if (data.authorID !== cookies.get("id")){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos)
+              }else if (data.status === -1){
+                showErrorPage(data.message)
+              }else if (data.authorID !== cookies.get("id")){
+                showErrorPage("You're not allowed to delete that post.")
               }else{
                 changeCode(
                   <div>
@@ -127,7 +133,10 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                showExpiredPage(origin,startPos,endPos)
+              }
+              else if (data.status === -1){
+                showErrorPage(data.message)
               }else if (origin === "indepthPost"){
                 showInDepthPost(postID,startPos,endPos,"Delete");
               }else if (origin === "userProfile"){
@@ -145,8 +154,12 @@ function App() {
           fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
             .then(response => response.json())
             .then(data => {
-              if (data.authorID !== cookies.get("id")){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message);
+              }else if (data.authorID !== cookies.get("id")){
+                showErrorPage("You're not allowed to delete that comment.")
               }else{
                 changeCode(
                   <div>
@@ -178,8 +191,10 @@ function App() {
           fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"),requestSetup)
             .then(response => response.json())
             .then(data => {
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message);
               }else if (origin === "indepthPost" || origin === "indepthComment"){
                 showInDepthPost(postID,startPos,endPos,"commentDeleted")
               }else if (origin === "userProfile"){
@@ -237,8 +252,12 @@ function App() {
             .then(response => response.json())
             .then(data => {
               console.log(data);
-              if (data.authorID !== cookies.get("id")){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message);
+              }else if (data.authorID !== cookies.get("id")){
+                showErrorPage("You're not allowed to edit that post.")
               }else{
                 displayChangedCode(data.title,data.content,data.postVisibility);
               }
@@ -256,8 +275,10 @@ function App() {
         + "&content=" + document.getElementById("content").value,requestSetup)
           .then(response => response.json())
           .then(data => {
-            if (data.status === -1){
-              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            if (data.status === -11){
+              showExpiredPage(origin,startPos,endPos)
+            }else if (data.status === -1){
+              showErrorPage(data.message)
             }else if (origin === "indepthPost"){
               showInDepthPost(postID,startPos,endPos,"Edit");
             }else if (origin === "userProfile"){
@@ -313,8 +334,12 @@ function App() {
             .then(response => response.json())
             .then(data => {
               console.log(data);
-              if (cookies.get("id") !== data.commenterID){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message);
+              }else if (cookies.get("id") !== data.commenterID){
+                showErrorPage("You're not allowed to edit that comment.");
               }else{
                 displayChangedCode(data.comments,data.commentVisibility);
               }
@@ -332,8 +357,10 @@ function App() {
         + "&comments=" + document.getElementById("comments").value,requestSetup)
           .then(response => response.json())
           .then(data => {
-            if (data.status === -1){
-              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            if (data.status === -11){
+              showExpiredPage(origin,startPos,endPos);
+            }else if (data.status === -1){
+              showErrorPage(data.message);
             }else if (origin === "indepthComment"){
               showInDepthComment(commentID,"changed");
             }else if (origin === "indepthPost"){
@@ -384,8 +411,11 @@ function App() {
               + "&userID=" + cookies.get('id'),requestSetup)
             .then(response =>response.json())
             .then(data =>{
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }
+              else if (data.status === -1){
+                showErrorPage(data.message);
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"posts");
@@ -396,7 +426,7 @@ function App() {
                   showInDepthComment(commentID,"changed");
                     //commentID
                 }else{
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                  showErrorPage("No Origin Given")
                 }
               }
             })
@@ -414,8 +444,10 @@ function App() {
           fetch(serverLocation + "/like?postID=" + postID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
             .then(response => response.json())
             .then(data => {
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message);
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"posts");
@@ -424,7 +456,7 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                 }else{
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                  showErrorPage("No Origin Given.")
                 }
               }
             })
@@ -443,8 +475,10 @@ function App() {
             .then(response =>response.json())
             .then(data=>{
               console.log(data)
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message)
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"comments");
@@ -453,7 +487,7 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                 }else{
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                  showErrorPage("No Origin Given.")
                 }
               }
             })
@@ -472,8 +506,10 @@ function App() {
             .then(response =>response.json())
             .then(data=>{
               console.log(data)
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos);
+              }else if (data.status === -1){
+                showErrorPage(data.message);
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"comments");
@@ -482,7 +518,7 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                 }else{
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                  showErrorPage("No Origin Given.")
                 }
               }
             })
@@ -732,11 +768,12 @@ function App() {
           </div>
         )
       }
-        //Set up Functions
+      //Set up Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
           //Block List functions
+          //FIX THIS: Expired Page should redirect to userprofule
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
             changeMainBodyCSS(
@@ -764,63 +801,69 @@ function App() {
             fetch(serverLocation + "/block?userID=" + userID + "&sessionID=" + sessionID)
               .then(response=>response.json())
               .then(data=>{
-                var listOfBlockedUsers;
-                var listOfBlockedUsers1 = [];
-                for (let i = firstPoint; i < Math.min(secondPoint,data.blockedUsers.length); i++){
-                  listOfBlockedUsers1.push(
-                    <tr key={i}>
-                      <td>{data.blockedUsers[i].username}</td>
-                      <td> <Button onClick={()=>{showUserProfile(data.blockedUsers[i].userID)}}> View Profile </Button></td>
-                      <td> <Button onClick={()=>{unblockUser("blockMenu",firstPoint,secondPoint,data.blockedUsers[i].userID)}}> Unblock User </Button></td>
-                    </tr>
-                  )
-                }
-                if (data.blockedUsers.length === 0){
-                  listOfBlockedUsers = (<div> You have not blocked any users.</div>)
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos);
+                }else if (data.status === -1){
+                  showErrorPage(data.message);
                 }else{
-                  listOfBlockedUsers = (
-                    <table className='centeredTable'>
-                      <thead>
-                        <tr>
-                          <th>Username</th>
-                          <th>View Profile</th>
-                          <th>Remove From Blocked List</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                    {listOfBlockedUsers1}
-                      </tbody>
-                    </table>
-                  )
-                }
-                var paginationBar;
-                if (data.blockedUsers.length > 10){
-                  var paginationSlots = [];
-                  for (let i = 0; i < Math.ceil(data.blockedUsers.length / 10); i++){
-                    paginationSlots.push(
-                      <li><div className="dropdown-item" onClick={() => {showBlockedList(10 * i,Math.min(10*i+10,data.blockedUsers.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.blockedUsers.length)}</div></li>
+                  var listOfBlockedUsers;
+                  var listOfBlockedUsers1 = [];
+                  for (let i = firstPoint; i < Math.min(secondPoint,data.blockedUsers.length); i++){
+                    listOfBlockedUsers1.push(
+                      <tr key={i}>
+                        <td>{data.blockedUsers[i].username}</td>
+                        <td> <Button onClick={()=>{showUserProfile(data.blockedUsers[i].userID)}}> View Profile </Button></td>
+                        <td> <Button onClick={()=>{unblockUser("blockMenu",firstPoint,secondPoint,data.blockedUsers[i].userID)}}> Unblock User </Button></td>
+                      </tr>
                     )
                   }
-                  paginationBar = (
-                    <ul className="nav nav-tabs">
-                      <li className="nav-item dropdown">
-                        <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
-                        <ul className="dropdown-menu">
-                          {paginationSlots}
-                        </ul>
-                      </li>
-                    </ul>
+                  if (data.blockedUsers.length === 0){
+                    listOfBlockedUsers = (<div> You have not blocked any users.</div>)
+                  }else{
+                    listOfBlockedUsers = (
+                      <table className='centeredTable'>
+                        <thead>
+                          <tr>
+                            <th>Username</th>
+                            <th>View Profile</th>
+                            <th>Remove From Blocked List</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                      {listOfBlockedUsers1}
+                        </tbody>
+                      </table>
+                    )
+                  }
+                  var paginationBar;
+                  if (data.blockedUsers.length > 10){
+                    var paginationSlots = [];
+                    for (let i = 0; i < Math.ceil(data.blockedUsers.length / 10); i++){
+                      paginationSlots.push(
+                        <li><div className="dropdown-item" onClick={() => {showBlockedList(10 * i,Math.min(10*i+10,data.blockedUsers.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.blockedUsers.length)}</div></li>
+                      )
+                    }
+                    paginationBar = (
+                      <ul className="nav nav-tabs">
+                        <li className="nav-item dropdown">
+                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
+                          <ul className="dropdown-menu">
+                            {paginationSlots}
+                          </ul>
+                        </li>
+                      </ul>
+                    )
+                  }
+                  changeCode(
+                    <div>
+                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                    <h1> Users You've Blocked </h1>
+                    {paginationBar}
+                    {listOfBlockedUsers}
+                    {paginationBar}
+                    </div>
                   )
                 }
-                changeCode(
-                  <div>
-                  <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
-                  <h1> Users You've Blocked </h1>
-                  {paginationBar}
-                  {listOfBlockedUsers}
-                  {paginationBar}
-                  </div>
-                )
               })
           }
           function blockUser(){
@@ -833,8 +876,10 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 console.log(data);
-                if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos)
+                }else if (data.status === -1){
+                  showErrorPage(data.message)
                 }else{
                   showUserProfile(userID,startPos,endPos,"options");
                 }
@@ -850,8 +895,9 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 console.log(data);
-                if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                if (data.status === -11){showExpiredPage(origin,startPos,endPos);}
+                else if (data.status === -1){
+                  showErrorPage(data.message)
                 }else{
                   if (variationBlock === 'blockMenu'){
                     showBlockedList(startUser,endUser);
@@ -888,64 +934,70 @@ function App() {
             fetch(serverLocation + "/whoimviewing?userID="+userID+"&sessionID="+sessionID)
                 .then(response=>response.json())
                 .then(data=>{
-                  var tableOfUsers;
-                  var listOfUsers = [];
-                  for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
-                    listOfUsers.push(
-                      <tr key={i}>
-                        <td>{data.blockedUsers[i].username}</td>
-                        <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
-                        <td> <Button onClick={()=>{removeViewership(data.listOfToView[i].userID,cookies.get('id'),firstPoint,secondPoint,"imviewing")}}> Stop Viewing User</Button></td>
-                      </tr>
-                    )
-                  }
-                  if (data.listOfToView.length === 0){
-                    tableOfUsers = (<div> You are not viewing any users. </div>)
+                  if (data.status === -11){
+                    showExpiredPage(origin,startPos,endPos)
+                  }else if (data.status === -1){
+                    showErrorPage(data.message)
                   }else{
-                    tableOfUsers = (
-                      <table className='centeredTable'>
-                        <thead>
-                          <tr>
-                            <th>Username</th>
-                            <th>View Profile</th>
-                            <th>Remove From Viewing List</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                        {listOfUsers}
-                        </tbody>
-                      </table>
-                    )
-                  }
-                  var paginationBar;
-                  if (data.listOfToView.length > 10){
-                    var paginationSlots = [];
-                    for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
-                      paginationSlots.push(
-
-                        <li><div className="dropdown-item" onClick={() => {showPeopleImViewing(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                    var tableOfUsers;
+                    var listOfUsers = [];
+                    for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
+                      listOfUsers.push(
+                        <tr key={i}>
+                          <td>{data.blockedUsers[i].username}</td>
+                          <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
+                          <td> <Button onClick={()=>{removeViewership(data.listOfToView[i].userID,cookies.get('id'),firstPoint,secondPoint,"imviewing")}}> Stop Viewing User</Button></td>
+                        </tr>
                       )
                     }
-                    paginationBar = (
-                      <ul className="nav nav-tabs">
-                        <li className="nav-item dropdown">
-                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
-                          <ul className="dropdown-menu">
-                            {paginationSlots}
-                          </ul>
-                        </li>
-                      </ul>
+                    if (data.listOfToView.length === 0){
+                      tableOfUsers = (<div> You are not viewing any users. </div>)
+                    }else{
+                      tableOfUsers = (
+                        <table className='centeredTable'>
+                          <thead>
+                            <tr>
+                              <th>Username</th>
+                              <th>View Profile</th>
+                              <th>Remove From Viewing List</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                          {listOfUsers}
+                          </tbody>
+                        </table>
+                      )
+                    }
+                    var paginationBar;
+                    if (data.listOfToView.length > 10){
+                      var paginationSlots = [];
+                      for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
+                        paginationSlots.push(
+
+                          <li><div className="dropdown-item" onClick={() => {showPeopleImViewing(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                        )
+                      }
+                      paginationBar = (
+                        <ul className="nav nav-tabs">
+                          <li className="nav-item dropdown">
+                            <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
+                            <ul className="dropdown-menu">
+                              {paginationSlots}
+                            </ul>
+                          </li>
+                        </ul>
+                      )
+                    }
+                    changeCode(
+                      <div>
+                      <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                      <h1> Users You're Viewing </h1>
+                      {paginationBar}
+                      {tableOfUsers}
+                      {paginationBar}
+                      </div>
                     )
                   }
-                  changeCode(
-                    <div>
-                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
-                    <h1> Users You're Viewing </h1>
-                    {paginationBar}
-                    {tableOfUsers}
-                    {paginationBar}
-                    </div>
-                  )
                 })
           }
           function showPeopleViewingMe(firstPoint = 0, secondPoint = 10){
@@ -974,64 +1026,70 @@ function App() {
             fetch(serverLocation + "/whosviewingMe?userID="+userID+"&sessionID="+sessionID)
               .then(response=>response.json())
               .then(data=>{
-                var tableOfUsers;
-                var listOfUsers = [];
-                for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
-                  listOfUsers.push(
-                    <tr key={i}>
-                      <td>{data.blockedUsers[i].username}</td>
-                      <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
-                      <td> <Button onClick={()=>{removeViewership()(cookies.get('id'),data.listOfToView[i].userID,firstPoint,secondPoint,"viewingme")}}> Stop Viewing User</Button></td>
-                    </tr>
-                  )
-                }
-                if (data.listOfToView.length === 0){
-                  tableOfUsers = (<div> You are not viewing any users. </div>)
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos);
+                }else if (data.status === -1){
+                  showErrorPage(data.message);
                 }else{
-                  tableOfUsers = (
-                    <table className='centeredTable'>
-                      <thead>
-                        <tr>
-                          <th>Username</th>
-                          <th>View Profile</th>
-                          <th>Remove From Viewing List</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                      {listOfUsers}
-                      </tbody>
-                    </table>
-                  )
-                }
-                var paginationBar;
-                if (data.listOfToView.length > 10){
-                  var paginationSlots = [];
-                  for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
-                    paginationSlots.push(
-
-                      <li><div className="dropdown-item" onClick={() => {showPeopleViewingMe(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                  var tableOfUsers;
+                  var listOfUsers = [];
+                  for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
+                    listOfUsers.push(
+                      <tr key={i}>
+                        <td>{data.blockedUsers[i].username}</td>
+                        <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
+                        <td> <Button onClick={()=>{removeViewership()(cookies.get('id'),data.listOfToView[i].userID,firstPoint,secondPoint,"viewingme")}}> Stop Viewing User</Button></td>
+                      </tr>
                     )
                   }
-                  paginationBar = (
-                    <ul className="nav nav-tabs">
-                      <li className="nav-item dropdown">
-                        <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
-                        <ul className="dropdown-menu">
-                          {paginationSlots}
-                        </ul>
-                      </li>
-                    </ul>
+                  if (data.listOfToView.length === 0){
+                    tableOfUsers = (<div> You are not viewing any users. </div>)
+                  }else{
+                    tableOfUsers = (
+                      <table className='centeredTable'>
+                        <thead>
+                          <tr>
+                            <th>Username</th>
+                            <th>View Profile</th>
+                            <th>Remove From Viewing List</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                        {listOfUsers}
+                        </tbody>
+                      </table>
+                    )
+                  }
+                  var paginationBar;
+                  if (data.listOfToView.length > 10){
+                    var paginationSlots = [];
+                    for (let i = 0; i < Math.ceil(data.listOfToView.length / 10); i++){
+                      paginationSlots.push(
+
+                        <li><div className="dropdown-item" onClick={() => {showPeopleViewingMe(10 * i,Math.min(10*i+10,data.listOfToView.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.listOfToView.length)}</div></li>
+                      )
+                    }
+                    paginationBar = (
+                      <ul className="nav nav-tabs">
+                        <li className="nav-item dropdown">
+                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Users Range</div>
+                          <ul className="dropdown-menu">
+                            {paginationSlots}
+                          </ul>
+                        </li>
+                      </ul>
+                    )
+                  }
+                  changeCode(
+                    <div>
+                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                    <h1> Users Viewing You </h1>
+                    {paginationBar}
+                    {tableOfUsers}
+                    {paginationBar}
+                    </div>
                   )
                 }
-                changeCode(
-                  <div>
-                  <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
-                  <h1> Users Viewing You </h1>
-                  {paginationBar}
-                  {tableOfUsers}
-                  {paginationBar}
-                  </div>
-                )
               })
           }
           function viewershipRequest(posterID,viewerID,variation){
@@ -1044,8 +1102,11 @@ function App() {
               + "&posterID="+ posterID + "&viewerID=" + viewerID,requestSetup)
             .then(response => response.json())
             .then(data =>{
-              if (data.status === -1){
-                changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage(origin,startPos,endPos)
+              }
+              else if (data.status === -1){
+                showErrorPage(data.message)
               }else{
                 if (variation === "poster"){
                   showUserProfile(posterID,0,10,"options")
@@ -1068,8 +1129,11 @@ function App() {
               "&viewerID=" + viewerID + "&posterID=" + posterID,requestSetup)
               .then(response => response.json())
               .then(data=>{
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos);
+                }
                 if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                  showErrorPage(data.message)
                 }else{
                   if (variation === "profile"){
                     showUserProfile(userID,0,10,"options");
@@ -1088,8 +1152,10 @@ function App() {
             fetch(serverLocation + "/viewership?posterID=" + posterID + "&viewerID=" + viewerID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
               .then(response => response.json())
               .then(data => {
-                if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos);
+                }else if (data.status === -1){
+                  showErrorPage(data.message)
                 }else{
                   if (variation === "imviewing"){
                     showPeopleImViewing(first,second);
@@ -1130,76 +1196,82 @@ function App() {
             fetch(serverLocation + "/mylikedposts?sessionID=" + sessionID + "&userID=" + userID)
               .then(response => response.json())
               .then(data => {
-                var listOfPosts = [];
-                if (data.contents.length === 0){
-                  listOfPosts = (<div> You have not liked any posts that are still visible. </div>)
-                }
-                else{
-                  for (let i = firstPoint; i < Math.min(secondPoint,data.contents.length); i++){
-                    //push a simple post?
-                    var dict = data.contents[i];
-                    listOfPosts.push(
-                      <Card key={i}>
-                        <Card.Title> {dict.title} </Card.Title>
-                        <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                        <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
-                        <Card.Body> {dict.content} </Card.Body>
-                        <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-                        <Card.Body>
-                        Likes: {dict.totalLikes} Comments: {dict.totalComments}
-                        <br></br>
-                        <Button onClick={()=>{showInDepthPost(data.contents[i].postID)}}> Expand Post </Button>
-                        </Card.Body>
-                      </Card>
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos); //FIX THIS
+                }else if (data.status === -1){
+                  showErrorPage(data.message);
+                }else{
+                  var listOfPosts = [];
+                  if (data.contents.length === 0){
+                    listOfPosts = (<div> You have not liked any posts that are still visible. </div>)
+                  }
+                  else{
+                    for (let i = firstPoint; i < Math.min(secondPoint,data.contents.length); i++){
+                      //push a simple post?
+                      var dict = data.contents[i];
+                      listOfPosts.push(
+                        <Card key={i}>
+                          <Card.Title> {dict.title} </Card.Title>
+                          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+                          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+                          <Card.Body> {dict.content} </Card.Body>
+                          <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+                          <Card.Body>
+                          Likes: {dict.totalLikes} Comments: {dict.totalComments}
+                          <br></br>
+                          <Button onClick={()=>{showInDepthPost(data.contents[i].postID)}}> Expand Post </Button>
+                          </Card.Body>
+                        </Card>
+                      )
+                    }
+                  }
+                  var paginationBar;
+                  if (data.contents.length > 10){
+                    var paginationSlots = [];
+                    for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                      paginationSlots.push(
+                        <li><div className="dropdown-item" onClick={() => {showLikedPosts(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                      )
+                    }
+                    paginationBar = (
+                      <ul className="nav nav-tabs">
+                        <li className="nav-item dropdown">
+                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                          <ul className="dropdown-menu">
+                            {paginationSlots}
+                          </ul>
+                        </li>
+                      </ul>
                     )
                   }
-                }
-                var paginationBar;
-                if (data.contents.length > 10){
-                  var paginationSlots = [];
-                  for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
-                    paginationSlots.push(
-                      <li><div className="dropdown-item" onClick={() => {showLikedPosts(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
-                    )
-                  }
-                  paginationBar = (
-                    <ul className="nav nav-tabs">
-                      <li className="nav-item dropdown">
-                        <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-                        <ul className="dropdown-menu">
-                          {paginationSlots}
-                        </ul>
+                  changeCode(
+                    <div>
+                    <h1> {username}'s Profile </h1>
+                    <ul className="nav nav-tabs justify-content-center">
+                      <li className="nav-item">
+                        <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts </div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                       </li>
                     </ul>
+                    <div>
+                      {paginationBar}
+                      {listOfPosts}
+                      {paginationBar}
+                    </div>
+                    </div>
                   )
                 }
-                changeCode(
-                  <div>
-                  <h1> {username}'s Profile </h1>
-                  <ul className="nav nav-tabs justify-content-center">
-                    <li className="nav-item">
-                      <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts </div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-                    </li>
-                  </ul>
-                  <div>
-                    {paginationBar}
-                    {listOfPosts}
-                    {paginationBar}
-                  </div>
-                  </div>
-                )
               })
           }
           function showLikedComments(username,posts,comments,firstPoint = 0,secondPoint = 10){
@@ -1228,78 +1300,84 @@ function App() {
             fetch(serverLocation + "/mylikedcomments?sessionID=" + sessionID + "&userID=" + userID)
               .then(response => response.json())
               .then(data => {
-                var listOfComments = [];
-                var listOfCommentsCode;
-                if (data.contents.length === 0){
-                  listOfCommentsCode = (<div> You have not liked any comments that are still visible. </div>);
+                if (data.status === -11){
+                  showExpiredPage(origin,startPos,endPos) //FIX THIS
+                }else if (data.status === -1){
+                  showErrorPage(data.message);
                 }else{
-                  for (let i = firstPoint;  i < Math.min(secondPoint,data.contents.length); i++){
-                    var dict = data.contents[i];
-                    listOfComments.push(
-                      <Card key={i}>
-                        <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                        <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
-                        <Card.Body> {dict.comments} </Card.Body>
-                        <Card.Subtitle> {dict.commentDate} </Card.Subtitle>
-                        <Card.Body>
-                        <br></br>
-                        <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Post </Button>
-                        </Card.Body>
-                      </Card>
+                  var listOfComments = [];
+                  var listOfCommentsCode;
+                  if (data.contents.length === 0){
+                    listOfCommentsCode = (<div> You have not liked any comments that are still visible. </div>);
+                  }else{
+                    for (let i = firstPoint;  i < Math.min(secondPoint,data.contents.length); i++){
+                      var dict = data.contents[i];
+                      listOfComments.push(
+                        <Card key={i}>
+                          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+                          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+                          <Card.Body> {dict.comments} </Card.Body>
+                          <Card.Subtitle> {dict.commentDate} </Card.Subtitle>
+                          <Card.Body>
+                          <br></br>
+                          <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Post </Button>
+                          </Card.Body>
+                        </Card>
+                      )
+                    }
+                    listOfCommentsCode = (
+                      <ul>
+                        {listOfComments}
+                      </ul>
                     )
                   }
-                  listOfCommentsCode = (
-                    <ul>
-                      {listOfComments}
-                    </ul>
-                  )
-                }
-                var paginationBar;
-                if (data.contents.length > 10){
-                  var paginationSlots = [];
-                  for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
-                    paginationSlots.push(
-                      <li><div className="dropdown-item" onClick={() => {showLikedComments(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                  var paginationBar;
+                  if (data.contents.length > 10){
+                    var paginationSlots = [];
+                    for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                      paginationSlots.push(
+                        <li><div className="dropdown-item" onClick={() => {showLikedComments(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                      )
+                    }
+                    paginationBar = (
+                      <ul className="nav nav-tabs">
+                        <li className="nav-item dropdown">
+                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                          <ul className="dropdown-menu">
+                            {paginationSlots}
+                          </ul>
+                        </li>
+                      </ul>
                     )
                   }
-                  paginationBar = (
-                    <ul className="nav nav-tabs">
-                      <li className="nav-item dropdown">
-                        <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-                        <ul className="dropdown-menu">
-                          {paginationSlots}
-                        </ul>
+                  changeCode(
+                    <div>
+                    <h1> {username}'s Profile </h1>
+                    <ul className="nav nav-tabs justify-content-center">
+                      <li className="nav-item">
+                        <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link active" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                       </li>
                     </ul>
+                    <div>
+                      {paginationBar}
+                      {listOfCommentsCode}
+                      {paginationBar}
+                    </div>
+                    </div>
                   )
                 }
-                changeCode(
-                  <div>
-                  <h1> {username}'s Profile </h1>
-                  <ul className="nav nav-tabs justify-content-center">
-                    <li className="nav-item">
-                      <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Liked Posts</div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link active" aria-current="page" onClick={() => {showLikedComments(username,posts,comments)}}> Liked Comments </div>
-                    </li>
-                    <li className="nav-item">
-                      <div className="nav-link" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-                    </li>
-                  </ul>
-                  <div>
-                    {paginationBar}
-                    {listOfCommentsCode}
-                    {paginationBar}
-                  </div>
-                  </div>
-                )
               })
           }
           function showOptions(username,posts,comments,variation=null){
@@ -2316,9 +2394,6 @@ function App() {
       ////////////////
       function getRegistrationPage(){
         hideWriteForm();
-        // if (checkSessionID()){
-        //   return;
-        // }
         changeCode(
           <form onSubmit={handleRegistration}>
             <h1> Registration Page</h1>
@@ -2422,9 +2497,6 @@ function App() {
       //LOGGED IN GETEMS
       function getMyFeed(start = 0, end = 10){
         hideWriteForm();
-        if (checkSessionID()){
-          return;
-        }
         var listOfPosts = [];
         var userSession = cookies.get("sessionID");
         var userId = cookies.get("id");
@@ -2432,45 +2504,47 @@ function App() {
           .then(response=>response.json())
           .then(data =>{
             console.log(data);
-            for (let key = start; key < Math.min(data.contents.length,end); key++){
-              listOfPosts.push(simplePost(key,data.contents[key]))
-            }
-            if (listOfPosts.length === 0){
-              listOfPosts = (<div>You do not have any posts in your feed.</div>)
-            }
-            var paginationBar;
-            if (data.contents.length > 10){
-              var paginationSlots = [];
-              for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
-                paginationSlots.push(
-                  <li key={i}><div className="dropdown-item" onClick={() => {getMyFeed(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
-                )
+            if (data.status === -11){
+              showExpiredPage();
+            }else if (data.status === -1){
+              showErrorPage(data.message)
+            }else{
+              for (let key = start; key < Math.min(data.contents.length,end); key++){
+                listOfPosts.push(simplePost(key,data.contents[key]))
               }
-              paginationBar = (
-               <ul className="nav nav-tabs">
-                <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-                  <ul className="dropdown-menu">
-                    {paginationSlots}
-                  </ul>
-                </li>
-              </ul>)
+              if (listOfPosts.length === 0){
+                listOfPosts = (<div>You do not have any posts in your feed.</div>)
+              }
+              var paginationBar;
+              if (data.contents.length > 10){
+                var paginationSlots = [];
+                for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                  paginationSlots.push(
+                    <li key={i}><div className="dropdown-item" onClick={() => {getMyFeed(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                  )
+                }
+                paginationBar = (
+                 <ul className="nav nav-tabs">
+                  <li className="nav-item dropdown">
+                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                    <ul className="dropdown-menu">
+                      {paginationSlots}
+                    </ul>
+                  </li>
+                </ul>)
+              }
+              changeCode(
+                <div>
+               <h1> QuickiePost - Your Feed</h1>
+               {paginationBar}
+                {listOfPosts}
+                {paginationBar}
+                </div>
+              )
             }
-            changeCode(
-              <div>
-             <h1> QuickiePost - Your Feed</h1>
-             {paginationBar}
-              {listOfPosts}
-              {paginationBar}
-              </div>
-            )
           })
       }
       function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
-        if (checkSessionID()){
-          getExpiredHome()
-        }
-        else{
           changeMainBodyCSS(
             {
               height: 'auto',
@@ -2492,11 +2566,6 @@ function App() {
             }
           );
           showUserProfile(cookies.get("id"));
-        }
-        //get all posts
-        //be able to set Visibility
-        //show role
-        //be able to delete Account
       }
       //Event Handlers
       function handleRegistration(event){
@@ -2625,9 +2694,6 @@ function App() {
           });
       }
       function handlePrivacyChecked(){
-        // if (checkSessionID()){
-        //   return;
-        // }
         var i = document.getElementById('privacySwitch').checked;
         // console.log(i);
         if (i){
@@ -2694,27 +2760,8 @@ function App() {
           )
         }
       }
-      //Check Session Cookies
-      function checkSessionID(){
-        //really only necessary if sessionID exists and timelimit is over
-        //read sessionID and log out user if timeline is too old
-        // console.log(expireTime);
-        if (cookies.get('expireTime') !== "forever" && Date.now() >= cookies.get('expireTime')){
-          getExpiredHome();
-          return true;
-        }
-        if ( !cookies.get("sessionID") || !cookies.get("id")){
-          return false;
-        }
-        var expiry = cookies.get("expireTime");
-        if (!expiry || (expiry !== "forever" && Date.now() >= expiry)){
-          getExpiredHome();
-          // console.log("Error2");
-          return true;
-        }
-        return false;
-      }
-      function getExpiredHome(){
+      //Error Messages
+      function showExpiredPage(){
         cookies.remove("sessionID",{path: '/'});
         cookies.remove("expireTime",{path:"/"})
         cookies.remove("name",{path:'/'});
@@ -2757,6 +2804,9 @@ function App() {
                 </div>
               )
           })
+      }
+      function showErrorPage(){
+
       }
       //log out
       function logOut(){
