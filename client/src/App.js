@@ -97,11 +97,11 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
               }else if (data.status === -1){
-                showErrorPage(data.message)
+                showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID})
               }else if (data.authorID !== cookies.get("id")){
-                showErrorPage("You're not allowed to delete that post.")
+                showErrorPage({message:"You're not allowed to delete that post.",origin: origin, startPos: startPos,endPos:endPos, postID: postID})
               }else{
                 changeCode(
                   <div>
@@ -134,10 +134,10 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -1){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
               }
               else if (data.status === -1){
-                showErrorPage(data.message)
+                showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID})
               }else if (origin === "indepthPost"){
                 showInDepthPost(postID,startPos,endPos,"Delete");
               }else if (origin === "userProfile"){
@@ -156,11 +156,11 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID, commentID: commentID});
               }else if (data.status === -1){
-                showErrorPage(data.message);
+                                showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID, commentID: commentID})
               }else if (data.authorID !== cookies.get("id")){
-                showErrorPage("You're not allowed to delete that comment.")
+                showErrorPage({message: "You're not allowed to delete that comment.", postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else{
                 changeCode(
                   <div>
@@ -193,9 +193,9 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
               }else if (data.status === -1){
-                showErrorPage(data.message);
+                showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else if (origin === "indepthPost" || origin === "indepthComment"){
                 showInDepthPost(postID,startPos,endPos,"commentDeleted")
               }else if (origin === "userProfile"){
@@ -254,11 +254,11 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
-                showErrorPage(data.message);
+                showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
               }else if (data.authorID !== cookies.get("id")){
-                showErrorPage("You're not allowed to edit that post.")
+                showErrorPage({message: "You're not allowed to edit that post.", postID: postID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
                 displayChangedCode(data.title,data.content,data.postVisibility);
               }
@@ -277,9 +277,9 @@ function App() {
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
-              showErrorPage(data.message)
+                showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
             }else if (origin === "indepthPost"){
               showInDepthPost(postID,startPos,endPos,"Edit");
             }else if (origin === "userProfile"){
@@ -336,11 +336,11 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
               }else if (data.status === -1){
-                showErrorPage(data.message);
+                showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else if (cookies.get("id") !== data.commenterID){
-                showErrorPage("You're not allowed to edit that comment.");
+                showErrorPage({origin: origin, postID: postID, startPos: startPos, commentID: commentID, endPos: endPos,message: "You're not allowed to edit that comment."});
               }else{
                 displayChangedCode(data.comments,data.commentVisibility);
               }
@@ -359,9 +359,9 @@ function App() {
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, commentID: commentID, postID: postID,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
-              showErrorPage(data.message);
+                showErrorPage({message: data.message, commentID: commentID, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
             }else if (origin === "indepthComment"){
               showInDepthComment(commentID,"changed");
             }else if (origin === "indepthPost"){
@@ -413,10 +413,10 @@ function App() {
             .then(response =>response.json())
             .then(data =>{
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }
               else if (data.status === -1){
-                showErrorPage(data.message);
+                showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"posts");
@@ -427,7 +427,7 @@ function App() {
                   showInDepthComment(commentID,"changed");
                     //commentID
                 }else{
-                  showErrorPage("No Origin Given")
+                  showErrorPage({message: "No Origin Given", postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
                 }
               }
             })
@@ -446,9 +446,9 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
-                showErrorPage(data.message);
+                showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"posts");
@@ -457,7 +457,7 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                 }else{
-                  showErrorPage("No Origin Given.")
+                  showErrorPage({message: "No Origin Given.", postID: postID, origin: origin, startPos: startPos,endPos:endPos})
                 }
               }
             })
@@ -477,9 +477,9 @@ function App() {
             .then(data=>{
               console.log(data)
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
-                showErrorPage(data.message)
+                showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"comments");
@@ -488,7 +488,7 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                 }else{
-                  showErrorPage("No Origin Given.")
+                  showErrorPage({message: "No Origin Given.", postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
                 }
               }
             })
@@ -508,9 +508,9 @@ function App() {
             .then(data=>{
               console.log(data)
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
+                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
-                showErrorPage(data.message);
+                showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
                 if (origin === "userProfile"){
                   showUserProfile(userID,startPos,endPos,"comments");
@@ -519,7 +519,7 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                 }else{
-                  showErrorPage("No Origin Given.")
+                  showErrorPage({message: "No Origin Given", postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
                 }
               }
             })
@@ -803,9 +803,9 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                showExpiredPage({origin: 'userProfile'});
+                showExpiredPage({origin: 'userProfileOptions', startPos: firstPoint, endPos: secondPoint,userID:userID});
                 }else if (data.status === -1){
-                  showErrorPage(data.message);
+                  showErrorPage({message: data.message, origin: 'userProfileBlockList', startPos: firstPoint, endPos: secondPoint,userID:userID});
                 }else{
                   var listOfBlockedUsers;
                   var listOfBlockedUsers1 = [];
@@ -878,9 +878,9 @@ function App() {
               .then(data => {
                 console.log(data);
                 if (data.status === -11){
-                showExpiredPage({origin: 'userProfile'});
+                  showExpiredPage({origin: 'userProfileOptions', userID: userID});
                 }else if (data.status === -1){
-                  showErrorPage(data.message)
+                  showErrorPage({message: data.message, origin: 'userProfile', userID: userID});
                 }else{
                   showUserProfile(userID,startPos,endPos,"options");
                 }
@@ -897,10 +897,10 @@ function App() {
               .then(data => {
                 console.log(data);
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfile'});
+                  showExpiredPage({origin: 'userProfileOptions', userID: userID});
                 }
                 else if (data.status === -1){
-                  showErrorPage(data.message)
+                  showErrorPage({message: data.message, origin: 'userProfileUnblock', userID: userID,startUser:0,endUser:10,profileID:userID})
                 }else{
                   if (variationBlock === 'blockMenu'){
                     showBlockedList(startUser,endUser);
@@ -938,9 +938,9 @@ function App() {
                 .then(response=>response.json())
                 .then(data=>{
                   if (data.status === -11){
-                    showExpiredPage({origin: 'userProfile'});
+                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
                   }else if (data.status === -1){
-                    showErrorPage(data.message)
+                    showErrorPage({message: data.message, origin: "userProfileImViewingList", userID: userID,firstPoint:firstPoint, secondPoint: secondPoint})
                   }else{
                     var tableOfUsers;
                     var listOfUsers = [];
@@ -1030,9 +1030,9 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfile'});
+                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
                 }else if (data.status === -1){
-                  showErrorPage(data.message);
+                  showErrorPage({message: data.message, origin: "userProfileViewingMeList", userID: userID,firstPoint:firstPoint, secondPoint: secondPoint})
                 }else{
                   var tableOfUsers;
                   var listOfUsers = [];
@@ -1106,10 +1106,10 @@ function App() {
             .then(response => response.json())
             .then(data =>{
               if (data.status === -11){
-                showExpiredPage({origin: 'userProfile'});
+                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
               }
               else if (data.status === -1){
-                showErrorPage(data.message)
+                showErrorPage({message: data.message, origin: "userProfileOptions", userID: userID})
               }else{
                 if (variation === "poster"){
                   showUserProfile(posterID,0,10,"options")
@@ -1133,10 +1133,10 @@ function App() {
               .then(response => response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfile'});
+                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
                 }
                 if (data.status === -1){
-                  showErrorPage(data.message)
+                showErrorPage({message: data.message, origin: "userProfileOptions", userID: userID})
                 }else{
                   if (variation === "profile"){
                     showUserProfile(userID,0,10,"options");
@@ -1156,9 +1156,9 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfile'});
+                  showExpiredPage({origin: 'userProfileOptions', userID:userID});
                 }else if (data.status === -1){
-                  showErrorPage(data.message)
+                  showErrorPage({message: data.message, origin: "userProfileOptions", userID: userID})
                 }else{
                   if (variation === "imviewing"){
                     showPeopleImViewing(first,second);
@@ -1200,9 +1200,9 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfile'});
+                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
                 }else if (data.status === -1){
-                  showErrorPage(data.message);
+                    showErrorPage({message: data.message,origin: 'userProfileLikedPosts', userID:userID, firstPoint: firstPoint,secondPoint: secondPoint});
                 }else{
                   var listOfPosts = [];
                   if (data.contents.length === 0){
@@ -1304,9 +1304,9 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos) //FIX THIS
+                  showExpiredPage({origin: 'userProfile', userID:userID});
                 }else if (data.status === -1){
-                  showErrorPage(data.message);
+                  showErrorPage({message: data.message,origin: 'userProfileLikedPosts', userID:userID, firstPoint: firstPoint,secondPoint: secondPoint});
                 }else{
                   var listOfComments = [];
                   var listOfCommentsCode;
@@ -1383,6 +1383,7 @@ function App() {
                 }
               })
           }
+          //START HERE
           function showOptions(username,posts,comments,variation=null){
             changeMainBodyCSS(
               {
