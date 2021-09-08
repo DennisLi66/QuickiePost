@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
+//page should also include origin
 //DELETE SessionID check and make it server side
 //Write quick css changing funcgtions
 //on checking session: extend if by an hour
@@ -96,7 +97,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos)
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message)
               }else if (data.authorID !== cookies.get("id")){
@@ -133,7 +134,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -1){
-                showExpiredPage(origin,startPos,endPos)
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }
               else if (data.status === -1){
                 showErrorPage(data.message)
@@ -155,7 +156,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message);
               }else if (data.authorID !== cookies.get("id")){
@@ -192,7 +193,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message);
               }else if (origin === "indepthPost" || origin === "indepthComment"){
@@ -253,7 +254,7 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message);
               }else if (data.authorID !== cookies.get("id")){
@@ -276,7 +277,7 @@ function App() {
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
-              showExpiredPage(origin,startPos,endPos)
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
               showErrorPage(data.message)
             }else if (origin === "indepthPost"){
@@ -335,7 +336,7 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message);
               }else if (cookies.get("id") !== data.commenterID){
@@ -358,7 +359,7 @@ function App() {
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
-              showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
               showErrorPage(data.message);
             }else if (origin === "indepthComment"){
@@ -412,7 +413,7 @@ function App() {
             .then(response =>response.json())
             .then(data =>{
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }
               else if (data.status === -1){
                 showErrorPage(data.message);
@@ -445,7 +446,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message);
               }else{
@@ -476,7 +477,7 @@ function App() {
             .then(data=>{
               console.log(data)
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message)
               }else{
@@ -507,7 +508,7 @@ function App() {
             .then(data=>{
               console.log(data)
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage(data.message);
               }else{
@@ -802,7 +803,7 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos);
+                showExpiredPage({origin: 'userProfile'});
                 }else if (data.status === -1){
                   showErrorPage(data.message);
                 }else{
@@ -877,7 +878,7 @@ function App() {
               .then(data => {
                 console.log(data);
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos)
+                showExpiredPage({origin: 'userProfile'});
                 }else if (data.status === -1){
                   showErrorPage(data.message)
                 }else{
@@ -895,7 +896,9 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 console.log(data);
-                if (data.status === -11){showExpiredPage(origin,startPos,endPos);}
+                if (data.status === -11){
+                  showExpiredPage({origin: 'userProfile'});
+                }
                 else if (data.status === -1){
                   showErrorPage(data.message)
                 }else{
@@ -935,7 +938,7 @@ function App() {
                 .then(response=>response.json())
                 .then(data=>{
                   if (data.status === -11){
-                    showExpiredPage(origin,startPos,endPos)
+                    showExpiredPage({origin: 'userProfile'});
                   }else if (data.status === -1){
                     showErrorPage(data.message)
                   }else{
@@ -1027,7 +1030,7 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos);
+                  showExpiredPage({origin: 'userProfile'});
                 }else if (data.status === -1){
                   showErrorPage(data.message);
                 }else{
@@ -1103,7 +1106,7 @@ function App() {
             .then(response => response.json())
             .then(data =>{
               if (data.status === -11){
-                showExpiredPage(origin,startPos,endPos)
+                showExpiredPage({origin: 'userProfile'});
               }
               else if (data.status === -1){
                 showErrorPage(data.message)
@@ -1130,7 +1133,7 @@ function App() {
               .then(response => response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos);
+                  showExpiredPage({origin: 'userProfile'});
                 }
                 if (data.status === -1){
                   showErrorPage(data.message)
@@ -1153,7 +1156,7 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos);
+                  showExpiredPage({origin: 'userProfile'});
                 }else if (data.status === -1){
                   showErrorPage(data.message)
                 }else{
@@ -1197,7 +1200,7 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage(origin,startPos,endPos); //FIX THIS
+                  showExpiredPage({origin: 'userProfile'});
                 }else if (data.status === -1){
                   showErrorPage(data.message);
                 }else{
