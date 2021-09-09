@@ -16,11 +16,12 @@ require('dotenv').config();
 //DELETE SessionID check and make it server side
 //Write quick css changing funcgtions
 //on checking session: extend if by an hour
+//Queries need to be rechecked
 /////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
 //Return posts and comments
-//Redo write post page
+//Redo write post page RECHECK
 //Need to integrate the impact of being blocked; upgrade existing mysql queries
 //check all buttons are in () => {} format
 //Notifcation List
@@ -690,7 +691,7 @@ function App() {
           .then(data => {
             if (data.status === -1){
               //throw error
-              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              showErrorPage({message: data.message,origin: "login"})
             }else if (data.status === -2){
               //deduct chances
               if (chances <= 1){
@@ -1383,7 +1384,6 @@ function App() {
                 }
               })
           }
-          //START HERE
           function showOptions(username,posts,comments,variation=null){
             changeMainBodyCSS(
               {
@@ -1454,91 +1454,98 @@ function App() {
                   .then(response=>response.json())
                   .then(data =>{
                     console.log(data);
-                    var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
-                    if (data.blockingThem && data.blockingThem === 'true'){
-                      blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
+                    if (data.status === -11){
+                      showExpiredPage({origin: 'userProfileOptions', userID:userID});
                     }
-                    var requestViewershipButton = (<Button variant='info' onClick={() => viewershipRequest(userID,cookies.get('id'),"poster")}> Request Viewership </Button>);
-                    if (data.viewingThem && data.viewingThem === 'true'){
-                      requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id"),0,10,"stopViewership")}}> Stop Viewing This User</Button>)
-                    }
-                    else if (data.blockingThem && data.blockingThem === 'true'){
-                      requestViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>)
-                    }
-                    else if (data.blockingMe && data.blockingMe === "true"){
-                      requestViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>)
-                    }
-                    else if (data.theyHaveRequestedToViewThem && data.theyHaveRequestedToViewThem === "true"){
-                      requestViewershipButton =
-                      (
-                        <div>
-                          This user has sent you a viewership request to become their viewer.
-                          <br></br>
-                          <Button onClick={() => {viewershipRequest(userID,cookies.get('id'),'poster')}}>Accept Request</Button>
-                          <br></br>
-                          <Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Deny Request</Button>
-                          <br></br>
-                        </div>
-                      )
-                    }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
-                      requestViewershipButton = (<div>This user has not yet responded to your request for you to view them.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
-                    }
-                    var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
-                    if (data.viewingMe && data.viewingMe === "true"){
-                      conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
-                    }
-                    else if (data.blockingThem && data.blockingThem === 'true'){
-                      conferViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>);
-                    }
-                    else if (data.blockingMe && data.blockingMe === "true"){
-                      conferViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>);
-                    }
-                    else if (data.theyHaveRequestedToViewMe && data.theyHaveRequestedToViewMe === 'true'){
-                      conferViewershipButton =
+                    else if (data.status === -1){
+                      showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
+                    }else{
+                      var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
+                      if (data.blockingThem && data.blockingThem === 'true'){
+                        blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
+                      }
+                      var requestViewershipButton = (<Button variant='info' onClick={() => viewershipRequest(userID,cookies.get('id'),"poster")}> Request Viewership </Button>);
+                      if (data.viewingThem && data.viewingThem === 'true'){
+                        requestViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(userID,cookies.get("id"),0,10,"stopViewership")}}> Stop Viewing This User</Button>)
+                      }
+                      else if (data.blockingThem && data.blockingThem === 'true'){
+                        requestViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>)
+                      }
+                      else if (data.blockingMe && data.blockingMe === "true"){
+                        requestViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>)
+                      }
+                      else if (data.theyHaveRequestedToViewThem && data.theyHaveRequestedToViewThem === "true"){
+                        requestViewershipButton =
                         (
                           <div>
-                            This user has sent you a viewership request for them to view you.
+                            This user has sent you a viewership request to become their viewer.
                             <br></br>
-                            <Button onClick={() => {viewershipRequest(cookies.get('id'),userID,'viewer')}}>Accept Request</Button>
+                            <Button onClick={() => {viewershipRequest(userID,cookies.get('id'),'poster')}}>Accept Request</Button>
                             <br></br>
-                            <Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Deny Request</Button>
+                            <Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Deny Request</Button>
                             <br></br>
                           </div>
                         )
-                    } else if (data.iHaveRequestedToViewMe && data.iHaveRequestedToViewMe === 'true'){
-                      conferViewershipButton = (<div>This user has not yet responded to your request for them to view you.<br></br><Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Cancel Request</Button></div>)
+                      }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
+                        requestViewershipButton = (<div>This user has not yet responded to your request for you to view them.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
+                      }
+                      var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
+                      if (data.viewingMe && data.viewingMe === "true"){
+                        conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
+                      }
+                      else if (data.blockingThem && data.blockingThem === 'true'){
+                        conferViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>);
+                      }
+                      else if (data.blockingMe && data.blockingMe === "true"){
+                        conferViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>);
+                      }
+                      else if (data.theyHaveRequestedToViewMe && data.theyHaveRequestedToViewMe === 'true'){
+                        conferViewershipButton =
+                          (
+                            <div>
+                              This user has sent you a viewership request for them to view you.
+                              <br></br>
+                              <Button onClick={() => {viewershipRequest(cookies.get('id'),userID,'viewer')}}>Accept Request</Button>
+                              <br></br>
+                              <Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Deny Request</Button>
+                              <br></br>
+                            </div>
+                          )
+                      } else if (data.iHaveRequestedToViewMe && data.iHaveRequestedToViewMe === 'true'){
+                        conferViewershipButton = (<div>This user has not yet responded to your request for them to view you.<br></br><Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Cancel Request</Button></div>)
+                      }
+                      optionsMenu = (
+                        <div>
+                          <br></br>
+                          {conferViewershipButton}
+                          <br></br>
+                          {requestViewershipButton}
+                          <br></br>
+                          {blockButton}
+                          <br></br>
+                        </div>
+                      );
+                      changeCode(
+                        <div>
+                        <h1> {username}'s Profile </h1>
+                        <ul className="nav nav-tabs justify-content-center">
+                          <li className="nav-item">
+                            <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                          </li>
+                          <li className="nav-item">
+                            <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                          </li>
+                          <li className="nav-item">
+                            <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                          </li>
+                          <li className="nav-item">
+                            <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                          </li>
+                        </ul>
+                        {optionsMenu}
+                        </div>
+                      )
                     }
-                    optionsMenu = (
-                      <div>
-                        <br></br>
-                        {conferViewershipButton}
-                        <br></br>
-                        {requestViewershipButton}
-                        <br></br>
-                        {blockButton}
-                        <br></br>
-                      </div>
-                    );
-                    changeCode(
-                      <div>
-                      <h1> {username}'s Profile </h1>
-                      <ul className="nav nav-tabs justify-content-center">
-                        <li className="nav-item">
-                          <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-                        </li>
-                        <li className="nav-item">
-                          <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                        </li>
-                        <li className="nav-item">
-                          <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
-                        </li>
-                        <li className="nav-item">
-                          <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-                        </li>
-                      </ul>
-                      {optionsMenu}
-                      </div>
-                    )
                   })
               }
             }else{
@@ -1699,7 +1706,7 @@ function App() {
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               </div>
             )
-          }
+          } ///Doesnt test session
           function showPosts(username,posts,start,end,comments, variation = ""){
             changeMainBodyCSS(
               {
@@ -1832,7 +1839,7 @@ function App() {
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               </div>
             );
-          }
+          } //Doesnt Test Session
           //Privacy Handlers
           function showDeactivationPage(){
             changeCode(
@@ -1870,8 +1877,11 @@ function App() {
             fetch(serverLocation + "/changeVisibility",requestSetup)
               .then(response=>response.json())
               .then(data=>{
-                if (data.status === -1){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                if (data.status === -11){
+                  showExpiredPage({origin: "userProfileOptions", userID: userID})
+                }
+                else if (data.status === -1){
+                  showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
                 }else{
                   if (visibility === "hidden"){
                     //remove all cookies and set them at home
@@ -1896,39 +1906,45 @@ function App() {
             fetch(serverLocation + "/user!?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID"))
               .then(response => response.json())
               .then(data=>{
-                var privacyText;
-                var hiddenInput;
-                if (!data.userVisibility || data.userVisibility === "public"){
-                  privacyText = (<div> Your visibility is currently set to PUBLIC, and you will be changing it to PRIVATE. </div>);
-                  hiddenInput = "private";
-                }else if (data.userVisibility === "hidden"){
-                  ///oops error
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
-                  return;
-                }else if (data.userVisibility === "private"){
-                  privacyText = (<div> Your visibility is currently set to PRIVATE, and you will be changing it to PUBLIC. </div>);
-                  hiddenInput = "public";
+                if (data.status === -11){
+                  showExpiredPage({origin: "userProfileOptions", userID: userID})
+                }else if (data.status === -1){
+                  showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
+                }else{
+                  var privacyText;
+                  var hiddenInput;
+                  if (!data.userVisibility || data.userVisibility === "public"){
+                    privacyText = (<div> Your visibility is currently set to PUBLIC, and you will be changing it to PRIVATE. </div>);
+                    hiddenInput = "private";
+                  }else if (data.userVisibility === "hidden"){
+                    ///oops error
+                    changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+                    return;
+                  }else if (data.userVisibility === "private"){
+                    privacyText = (<div> Your visibility is currently set to PRIVATE, and you will be changing it to PUBLIC. </div>);
+                    hiddenInput = "public";
+                  }
+                  changeCode(
+                    <div>
+                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                    {privacyText}
+                    <form onSubmit={handleAccountPrivacyChange}>
+                      In order to change your visibility settings, you will need to enter your login details.
+                      <input type='hidden' id="privacy" name='privacy' value={hiddenInput}></input>
+                      <br></br>
+                      <label htmlFor='userEmail'>Email</label>
+                      <br></br>
+                      <input type="email" name="userEmail" id="userEmail" required></input>
+                      <br></br>
+                      <label htmlFor="pswrd" >Password</label>
+                      <br></br>
+                      <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                      <br></br><br></br>
+                      <Button type="submit">Change Privacy</Button>
+                    </form>
+                    </div>
+                  )
                 }
-                changeCode(
-                  <div>
-                  <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
-                  {privacyText}
-                  <form onSubmit={handleAccountPrivacyChange}>
-                    In order to change your visibility settings, you will need to enter your login details.
-                    <input type='hidden' id="privacy" name='privacy' value={hiddenInput}></input>
-                    <br></br>
-                    <label htmlFor='userEmail'>Email</label>
-                    <br></br>
-                    <input type="email" name="userEmail" id="userEmail" required></input>
-                    <br></br>
-                    <label htmlFor="pswrd" >Password</label>
-                    <br></br>
-                    <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                    <br></br><br></br>
-                    <Button type="submit">Change Privacy</Button>
-                  </form>
-                  </div>
-                )
                 }
               )
           }
@@ -1940,21 +1956,27 @@ function App() {
               .then(response => response.json())
               .then(data=>{
                 // console.log(data)
-                if (variation === "posts"){
-                  showPosts(data.username,data.posts,startPos,endPos,data.comments);
-                }else if (variation === "comments"){
-                  showComments(data.username,data.comments,startPos,endPos,data.posts)
-                }else if (variation === "options"){
-                  showOptions(data.username,data.posts,data.comments);
-                }else if (variation === "privacyChanged"){
-                  showOptions(data.username,data.posts,data.comments,"privacyChanged");
-                }else if (variation === "postDelete"){
-                  showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
-                }else if (variation === "commentDeleted"){
-                  showPosts(data.username,data.posts,startPos,endPos,data.comments,"commentDeleted");
-                }
-                else{
-                  showPosts(data.username,data.posts,startPos,endPos,data.comments);
+                if (data.status === -11){
+                  showExpiredPage({origin: "showUserProfile" + variation, startPos: startPos, endPos: endPos})
+                }else if (data.status === -1){
+                  showErrorPage({message: data.message,origin: "showUserProfile" + variation, startPos: startPos, endPos: endPos})
+                }else{
+                  if (variation === "posts"){
+                    showPosts(data.username,data.posts,startPos,endPos,data.comments);
+                  }else if (variation === "comments"){
+                    showComments(data.username,data.comments,startPos,endPos,data.posts)
+                  }else if (variation === "options"){
+                    showOptions(data.username,data.posts,data.comments);
+                  }else if (variation === "privacyChanged"){
+                    showOptions(data.username,data.posts,data.comments,"privacyChanged");
+                  }else if (variation === "postDelete"){
+                    showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
+                  }else if (variation === "commentDeleted"){
+                    showPosts(data.username,data.posts,startPos,endPos,data.comments,"commentDeleted");
+                  }
+                  else{
+                    showPosts(data.username,data.posts,startPos,endPos,data.comments);
+                  }
                 }
               })
           }else{
@@ -1981,68 +2003,74 @@ function App() {
         fetch(serverString)
           .then(response => response.json())
           .then(data => {
-            console.log(data);
-            var editButton;
-            var likePostButton = (
-              <Button onClick={() => {getLoginPage("indepthComment",0,commentID,0,0,0)}}> Like </Button>
-            );
-            if (data.postLiked && data.postLiked === "Liked"){
-              likePostButton = (
-                <Button onClick={() => {handlePostUnlike(data.postID,"indepthComment",commentID)}}> Unlike </Button>
-              )
-            }else if (data.postLiked && data.postLiked === "Unliked"){
-              likePostButton = (
-                <Button onClick={() => {handlePostLike(data.postID,"indepthComment",commentID)}}> Like </Button>
-              )
-            }
-            var likeCommentButton = (
-              <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
-            );
-            if (data.commentLiked && data.commentLiked === "Liked"){
-              likeCommentButton = (
-                <Button onClick={() => {handleCommentUnlike(data.commentID,"indepthComment")}}> Unlike </Button>
-              )
-            }else if (data.commentLiked && data.commentLiked === "Unliked"){
-              likeCommentButton = (
+            if (data.status === -11){
+              showExpiredPage({origin: "indepthComment", commentID: commentID});
+            }else if (data.status === -1){
+              showErrorPage({message: data.message, origin: "indepthComment", commentID: commentID});
+            }else{
+              console.log(data);
+              var editButton;
+              var likePostButton = (
+                <Button onClick={() => {getLoginPage("indepthComment",0,commentID,0,0,0)}}> Like </Button>
+              );
+              if (data.postLiked && data.postLiked === "Liked"){
+                likePostButton = (
+                  <Button onClick={() => {handlePostUnlike(data.postID,"indepthComment",commentID)}}> Unlike </Button>
+                )
+              }else if (data.postLiked && data.postLiked === "Unliked"){
+                likePostButton = (
+                  <Button onClick={() => {handlePostLike(data.postID,"indepthComment",commentID)}}> Like </Button>
+                )
+              }
+              var likeCommentButton = (
                 <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
+              );
+              if (data.commentLiked && data.commentLiked === "Liked"){
+                likeCommentButton = (
+                  <Button onClick={() => {handleCommentUnlike(data.commentID,"indepthComment")}}> Unlike </Button>
+                )
+              }else if (data.commentLiked && data.commentLiked === "Unliked"){
+                likeCommentButton = (
+                  <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
+                )
+              }
+              var ownerAbilities;
+              if (designation === "changed"){
+                <div className='confMsg'> Your comment has changed successfully. </div>
+              }
+              if (data.commenterID === cookies.get("id")){
+                ownerAbilities = (
+                  <Card.Body>
+                    <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
+                    <br></br>
+                    <Button onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
+                  </Card.Body>
+                )
+              }
+              changeCode(
+                <div>
+                  <Card>
+                  <Card.Title>Comment Information</Card.Title>
+                  <Card.Subtitle> <div className="linkText" onClick={() => {showUserProfile(data.commenterID)}}>{"Username: " + data.commenterUsername}</div> </Card.Subtitle>
+                  <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
+                  <Card.Body> {data.comment} </Card.Body>
+                  {editButton}
+                  <Card.Body> {likeCommentButton} </Card.Body>
+                  <Card.Subtitle> {data.commentDate} </Card.Subtitle>
+                  </Card>
+                  <Card>
+                  <Card.Title>Post Information</Card.Title>
+                  <Card.Title>{data.title}</Card.Title>
+                  <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
+                  <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
+                  <Card.Body> {data.content} </Card.Body>
+                  <Card.Body> {likePostButton} </Card.Body>
+                  <Card.Subtitle> {data.postDate} </Card.Subtitle>
+                  </Card>
+                  {ownerAbilities}
+                </div>
               )
             }
-            var ownerAbilities;
-            if (designation === "changed"){
-              <div className='confMsg'> Your comment has changed successfully. </div>
-            }
-            if (data.commenterID === cookies.get("id")){
-              ownerAbilities = (
-                <Card.Body>
-                  <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
-                  <br></br>
-                  <Button onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
-                </Card.Body>
-              )
-            }
-            changeCode(
-              <div>
-                <Card>
-                <Card.Title>Comment Information</Card.Title>
-                <Card.Subtitle> <div className="linkText" onClick={() => {showUserProfile(data.commenterID)}}>{"Username: " + data.commenterUsername}</div> </Card.Subtitle>
-                <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
-                <Card.Body> {data.comment} </Card.Body>
-                {editButton}
-                <Card.Body> {likeCommentButton} </Card.Body>
-                <Card.Subtitle> {data.commentDate} </Card.Subtitle>
-                </Card>
-                <Card>
-                <Card.Title>Post Information</Card.Title>
-                <Card.Title>{data.title}</Card.Title>
-                <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
-                <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
-                <Card.Body> {data.content} </Card.Body>
-                <Card.Body> {likePostButton} </Card.Body>
-                <Card.Subtitle> {data.postDate} </Card.Subtitle>
-                </Card>
-                {ownerAbilities}
-              </div>
-            )
             ///FIX THIS: May need more details or beautification
             //FIX THIS: Maybe Include the like button above?
           })}
@@ -2089,9 +2117,10 @@ function App() {
               + cookies.get('sessionID') + "&postID=" + postID + "&content=" + content + "&privacy=" + privacy,requestSetup)
               .then(response => response.json())
               .then(data=>{
-                if (data.status === -1){
-                  console.log(data);
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>);
+                if (data.status === -11){
+                  showExpiredPage({origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
+                }else if (data.status === -1){
+                  showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
                 }else{
                   showInDepthPost(postID,0,10,"Add");
                 }
@@ -2099,7 +2128,7 @@ function App() {
           }
           function handlePrivacyToggled(){
             var checked = document.getElementById('privacySwitch').checked;
-            console.log(checked);
+            // console.log(checked);
             if (checked){
               hideWriteForm();
               changeCode(
@@ -2161,8 +2190,13 @@ function App() {
             .then(response=>response.json())
             .then(data => {
               console.log(data);
-              if (data.status === -1 || data.status === -2){
-                  changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+              if (data.status === -11){
+                showExpiredPage({origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd})
+              }else if (data.status === -2){
+                showErrorPage({message: "That post doesn't exist."})
+              }
+              else if (data.status === -1){
+                showErrorPage({message: data.message})
               }
               else{
                 var listOfComments = [];
@@ -2361,41 +2395,47 @@ function App() {
         .then(response=>response.json())
         .then(data => {
           console.log(data);
-          var listOfPosts = [];
-          for (let key = 0; key < data.contents.length; key++){
-            listOfPosts.push(simplePost(key,data.contents[key]))
+          if (data.status === -11){
+            showExpiredPage({origin: "searchPage"})
+          }else if (data.status === -1){
+            showErrorPage({message: data.message, origin: "searchPage"})
+          }else{
+            var listOfPosts = [];
+            for (let key = 0; key < data.contents.length; key++){
+              listOfPosts.push(simplePost(key,data.contents[key]))
+            }
+            if (listOfPosts.length === 0){
+              listOfPosts = (<div>There were no posts matching your criteria.</div>)
+            }
+            changeCode(
+              <div>
+              <h1> Search for a Post </h1>
+              <form onSubmit={handleSearch}>
+              <label htmlFor='title'>Search for Title:</label>
+              <br></br>
+              <input name='title' id='title' placeholder={title}></input>
+              <br></br>
+              <label htmlFor='content'>Search by Contents:</label>
+              <br></br>
+              <input name='content'  id='content' placeholder={content}></input>
+              <br></br>
+              <label htmlFor='username'>Search by Username:</label>
+              <br></br>
+              <input name='username' placeholder={username} id='username'></input>
+              <br></br>
+              <label htmlFor='date'>Search By Date:</label>
+              <br></br>
+              <input name='date' placeholder={sDate} type='date' id='sDate'></input>
+              <br></br><br></br>
+              <Button variant='dark' type="submit"> Submit </Button>
+              </form>
+              {listOfPosts}
+              </div>
+            )
           }
-          if (listOfPosts.length === 0){
-            listOfPosts = (<div>There were no posts matching your criteria.</div>)
-          }
-          changeCode(
-            <div>
-            <h1> Search for a Post </h1>
-            <form onSubmit={handleSearch}>
-            <label htmlFor='title'>Search for Title:</label>
-            <br></br>
-            <input name='title' id='title' placeholder={title}></input>
-            <br></br>
-            <label htmlFor='content'>Search by Contents:</label>
-            <br></br>
-            <input name='content'  id='content' placeholder={content}></input>
-            <br></br>
-            <label htmlFor='username'>Search by Username:</label>
-            <br></br>
-            <input name='username' placeholder={username} id='username'></input>
-            <br></br>
-            <label htmlFor='date'>Search By Date:</label>
-            <br></br>
-            <input name='date' placeholder={sDate} type='date' id='sDate'></input>
-            <br></br><br></br>
-            <Button variant='dark' type="submit"> Submit </Button>
-            </form>
-            {listOfPosts}
-            </div>
-          )
         })
       }
-      ////////////////
+      //Registration Page
       function getRegistrationPage(){
         hideWriteForm();
         changeCode(
@@ -2509,9 +2549,9 @@ function App() {
           .then(data =>{
             console.log(data);
             if (data.status === -11){
-              showExpiredPage();
+              showExpiredPage([{}]);
             }else if (data.status === -1){
-              showErrorPage(data.message)
+              showErrorPage({message: data.message})
             }else{
               for (let key = start; key < Math.min(data.contents.length,end); key++){
                 listOfPosts.push(simplePost(key,data.contents[key]))
@@ -2689,8 +2729,10 @@ function App() {
           .then(response => response.json())
           .then(data => {
             console.log(data);
-            if (data.status !== 0){
-              changeCode(<div><h1> Oops! </h1>An Error Has Occured.</div>)
+            if (data.status === -11){
+              showExpiredPage({})
+            }else if (data.status === -1){
+              showErrorPage({message: data.message, origin: "writePost"})
             }else{
               // showUserProfile(cookies.get("id"),0,10,"posts");
               showInDepthPost(data.postID);
