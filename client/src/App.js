@@ -17,6 +17,7 @@ require('dotenv').config();
 //Write quick css changing funcgtions
 //on checking session: extend if by an hour
 //Queries need to be rechecked
+//Have error message if post or comment is restricted to private
 /////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
@@ -398,6 +399,9 @@ function App() {
         }
         else if (origin === "userProfile"){
           showUserProfile(userID);
+        }
+        else{
+          getHome();
         }
       }
       //like handlers
@@ -1957,9 +1961,25 @@ function App() {
               .then(data=>{
                 // console.log(data)
                 if (data.status === -11){
-                  showExpiredPage({origin: "showUserProfile" + variation, startPos: startPos, endPos: endPos})
+                  if (variation === "posts"){
+                    showExpiredPage({origin: "showUserProfilePosts", startPos: startPos, endPos:endPos})
+                  }else if (variation === "comments"){
+                    showExpiredPage({origin: "showUserProfileComments", startPos: startPos, endPos:endPos})
+                  }else if (variation === "options"){
+                    showExpiredPage({origin: "showUserProfileOptions"})
+                  }else{
+                    showExpiredPage({origin: "showUserProfile", startPos: startPos, endPos: endPos})
+                  }
                 }else if (data.status === -1){
-                  showErrorPage({message: data.message,origin: "showUserProfile" + variation, startPos: startPos, endPos: endPos})
+                  if (variation === "posts"){
+                    showErrorPage({message: data.message,origin: "showUserProfilePosts", startPos: startPos, endPos:endPos})
+                  }else if (variation === "comments"){
+                    showErrorPage({message: data.message,origin: "showUserProfileComments", startPos: startPos, endPos:endPos})
+                  }else if (variation === "options"){
+                    showErrorPage({message: data.message,origin: "showUserProfileOptions"})
+                  }else{
+                    showErrorPage({message: data.message,origin: "showUserProfile", startPos: startPos, endPos: endPos})
+                  }
                 }else{
                   if (variation === "posts"){
                     showPosts(data.username,data.posts,startPos,endPos,data.comments);
@@ -1973,8 +1993,7 @@ function App() {
                     showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
                   }else if (variation === "commentDeleted"){
                     showPosts(data.username,data.posts,startPos,endPos,data.comments,"commentDeleted");
-                  }
-                  else{
+                  }else{
                     showPosts(data.username,data.posts,startPos,endPos,data.comments);
                   }
                 }
@@ -2807,7 +2826,7 @@ function App() {
         }
       }
       //Error Messages
-      function showExpiredPage(){
+      function showExpiredPage(data){
         cookies.remove("sessionID",{path: '/'});
         cookies.remove("expireTime",{path:"/"})
         cookies.remove("name",{path:'/'});
@@ -2833,26 +2852,60 @@ function App() {
             transition: 'height 2s ease-in'
           }
         );
-        var listOfPosts = [];
-        fetch(serverLocation + "/posts")
-          .then(response=>response.json())
-          .then(data => {
-              // console.log(data.contents);
-              for (let key = 0; key < data.contents.length; key++){
-                listOfPosts.push(simplePost(key,data.contents[key]))
-              }
-              // console.log(listOfPosts);
-              changeCode(
-                <div>
-                <div className='errMsg'> You have been logged out. </div>
-               <h1> QuickiePost </h1>
-                {listOfPosts}
-                </div>
-              )
-          })
+        //produce a page and redirect link, or redirect automatically
+        var returnButton;
+        if (data.origin){
+          //the specific unique ones
+          var startPos = data.startPos ? data.startPos : 0;
+          var endPos = data.endPos ? data.endPos : 10;
+          var postID = data.postID;
+          var userID = data.userID;
+          var commentID = data.commentID;
+          if (origin === "login"){
+            returnButton = (<Button onClick={()=>{getLoginPage(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+          }else if (origin === "userprofileOptions"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileBlockList"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileUnblock"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileImViewingList"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileViewingMeList"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileLikedPosts"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileComments"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"comments")}}> Return </Button>)
+          }else if (origin === "userProfilePosts"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"posts")}}> Return </Button>)
+          }else{//origin is a common thing, use cancel
+            returnButton = (<Button onClick={()=>{cancel(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+          }
+        }else{ // data.origin did not exist, redirect to home
+          returnButton = (<Button onClick={()=>{getHome()}}> Return </Button>)
+        }
+        changeCode(
+          <div>
+            <h1> Session Timed Out </h1>
+            <div> You have been logged out due to inactivity. <br></br>
+            You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.
+            </div>
+            <div> {returnButton} </div>
+          </div>
+        )
       }
-      function showErrorPage(){
-
+      function showErrorPage(data){
+        //show error information and redirect link
+        var returnButton;
+        changeCode(
+          <div>
+            <h1> Oops! We've encountered an error! </h1>
+            <div> Here's the error message we got:  </div>
+            <div> {data.message} </div>
+            <div> {returnButton} </div>
+          </div>
+        )
       }
       //log out
       function logOut(){
