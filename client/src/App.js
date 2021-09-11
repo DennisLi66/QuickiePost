@@ -736,7 +736,7 @@ function App() {
           })
       }
       function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
-        hideWriteForm();
+        showOnlyMain();
         var cancelButton;
         if (origin !== ""){
           cancelButton = (<Button variant='dark' onClick={() => {cancel(origin,postID,commentID,userID,startPos,endPos)}} className='exitButton'>Cancel</Button>);
@@ -783,26 +783,7 @@ function App() {
           //FIX THIS: Expired Page should redirect to userprofule
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var userID = cookies.get("id");
             var sessionID = cookies.get("sessionID");
             fetch(serverLocation + "/block?userID=" + userID + "&sessionID=" + sessionID)
@@ -918,26 +899,7 @@ function App() {
           }
           //Viewership Functions
           function showPeopleImViewing(firstPoint = 0, secondPoint = 10){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var userID = cookies.get("id");
             var sessionID = cookies.get("sessionID");
             fetch(serverLocation + "/whoimviewing?userID="+userID+"&sessionID="+sessionID)
@@ -1010,26 +972,7 @@ function App() {
                 })
           }
           function showPeopleViewingMe(firstPoint = 0, secondPoint = 10){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var userID = cookies.get("id");
             var sessionID = cookies.get("sessionID");
             fetch(serverLocation + "/whosviewingMe?userID="+userID+"&sessionID="+sessionID)
@@ -1180,26 +1123,7 @@ function App() {
           }
           //Main Showers
           function showLikedPosts(username,posts,comments,firstPoint = 0, secondPoint = 10){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var userID = cookies.get("id");
             var sessionID = cookies.get("sessionID");
             fetch(serverLocation + "/mylikedposts?sessionID=" + sessionID + "&userID=" + userID)
@@ -1284,26 +1208,7 @@ function App() {
               })
           }
           function showLikedComments(username,posts,comments,firstPoint = 0,secondPoint = 10){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var userID = cookies.get("id");
             var sessionID = cookies.get("sessionID");
             fetch(serverLocation + "/mylikedcomments?sessionID=" + sessionID + "&userID=" + userID)
@@ -1390,26 +1295,7 @@ function App() {
               })
           }
           function showOptions(username,posts,comments,variation=null){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var optionsMenu;
             if (cookies.get("sessionID") && cookies.get("id")){
               if (cookies.get('id') === userID){//isowner
@@ -1581,26 +1467,7 @@ function App() {
             }
           }
           function showComments(username,comments,start,end,posts){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var listOfShownComments = [];
             var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfileComments",0,userID,startPos,endPos)}}>Like</Button>);
             for (let i = start; i < (Math.min(end,comments.length)); i++){
@@ -1713,26 +1580,7 @@ function App() {
             )
           } ///Doesnt test session
           function showPosts(username,posts,start,end,comments, variation = ""){
-            changeMainBodyCSS(
-              {
-                height: 'auto',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeInDepthCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
-            changeWriteFormCSS(
-              {
-                height: '0%',
-                display: 'none',
-                transition: 'height 2s ease-in'
-              }
-            );
+            showOnlyMain();
             var listOfShownPosts = [];
             var detect = cookies.get('id') && cookies.get('sessionID');
             for (let i = start; i < (Math.min(end,posts.length)); i++){
@@ -1847,6 +1695,7 @@ function App() {
           } //Doesnt Test Session
           //Privacy Handlers
           function showDeactivationPage(){
+            showOnlyMain();
             changeCode(
               <div>
                 <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
@@ -1954,6 +1803,7 @@ function App() {
               )
           }
           //Main
+          showOnlyMain();
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
           if (sessionID && id){
@@ -2017,6 +1867,7 @@ function App() {
               })
           }}
       function showInDepthComment(commentID,designation = ""){
+        showOnlyMain();
         var serverString = serverLocation + "/comment?commentID=" + commentID +
           (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
           (cookies.get("id") ? "&userID=" + cookies.get("id") : "");
@@ -2095,7 +1946,6 @@ function App() {
             //FIX THIS: Maybe Include the like button above?
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
-          //Other
           function displayCommentWriter(){
             hideWriteForm();
             changeCode(
@@ -2182,25 +2032,7 @@ function App() {
               displayCommentWriter();
             }
           }
-          changeMainBodyCSS(
-            {
-              display: 'none',
-              transition: 'height 2s ease-in'
-            }
-          );
-          changeInDepthCSS(
-            {
-              height: 'auto',
-              transition: 'height 2s ease-in'
-            }
-          );
-          changeWriteFormCSS(
-            {
-              height: '0%',
-              display: 'none',
-              transition: 'height 2s ease-in'
-            }
-          );
+          showOnlyMain();
           var detect = cookies.get("sessionID") && cookies.get("id");
           var serverString = serverLocation + "/post?postID=" + postID;
           if (detect){
@@ -2351,7 +2183,7 @@ function App() {
         }
       //Search Page
       function getSearchPage(){
-        hideWriteForm();
+        showOnlyMain();
         changeCode(
           <div>
           <h1> Search for a Post </h1>
@@ -2457,7 +2289,7 @@ function App() {
       }
       //Registration Page
       function getRegistrationPage(){
-        hideWriteForm();
+        showOnlyMain();
         changeCode(
           <form onSubmit={handleRegistration}>
             <h1> Registration Page</h1>
@@ -2558,9 +2390,31 @@ function App() {
           }
         );
       }
+      function showOnlyMain(){
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+      }
       //LOGGED IN GETEMS
       function getMyFeed(start = 0, end = 10){
-        hideWriteForm();
+        showOnlyMain();
         var listOfPosts = [];
         var userSession = cookies.get("sessionID");
         var userId = cookies.get("id");
@@ -2609,27 +2463,8 @@ function App() {
           })
       }
       function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
-          changeMainBodyCSS(
-            {
-              height: 'auto',
-              transition: 'height 2s ease-in'
-            }
-          );
-          changeInDepthCSS(
-            {
-              height: '0%',
-              display: 'none',
-              transition: 'height 2s ease-in'
-            }
-          );
-          changeWriteFormCSS(
-            {
-              height: '0%',
-              display: 'none',
-              transition: 'height 2s ease-in'
-            }
-          );
-          showUserProfile(cookies.get("id"));
+        showOnlyMain();
+        showUserProfile(cookies.get("id"));
       }
       //Event Handlers
       function handleRegistration(event){
@@ -2833,26 +2668,7 @@ function App() {
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
         changeNavToLoggedOut();
-        changeMainBodyCSS(
-          {
-            height: 'auto',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeInDepthCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeWriteFormCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
+        showOnlyMain();
         //produce a page and redirect link, or redirect automatically
         var returnButton;
         if (data.origin){
@@ -2898,26 +2714,7 @@ function App() {
       }
       function showErrorPage(data){
         //show error information and redirect link
-        changeMainBodyCSS(
-          {
-            height: 'auto',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeInDepthCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-        changeWriteFormCSS(
-          {
-            height: '0%',
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
+        showOnlyMain();
         var returnButton;
         if (data.origin){
           //the specific unique ones
@@ -2974,7 +2771,7 @@ function App() {
           })
       }
       //MAIN
-      hideWriteForm();
+      showOnlyMain();
       if (cookies.get('id') && (cookies.get('expireTime') === "forever" || Date.now() < cookies.get('expireTime'))){
         console.log("Logged In");
         changeNavToLoggedIn();
