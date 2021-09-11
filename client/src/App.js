@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
+//make css function instead of copypasting that thing
 //page should also include origin
 //DELETE SessionID check and make it server side
 //Write quick css changing funcgtions
@@ -2889,7 +2890,7 @@ function App() {
           <div>
             <h1> Session Timed Out </h1>
             <div> You have been logged out due to inactivity. <br></br>
-            You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.
+            You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.<br></br>
             </div>
             <div> {returnButton} </div>
           </div>
@@ -2897,12 +2898,64 @@ function App() {
       }
       function showErrorPage(data){
         //show error information and redirect link
+        changeMainBodyCSS(
+          {
+            height: 'auto',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeInDepthCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
         var returnButton;
+        if (data.origin){
+          //the specific unique ones
+          var startPos = data.startPos ? data.startPos : 0;
+          var endPos = data.endPos ? data.endPos : 10;
+          var postID = data.postID;
+          var userID = data.userID;
+          var commentID = data.commentID;
+          if (origin === "login"){
+            returnButton = (<Button onClick={()=>{getLoginPage(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+          }else if (origin === "userprofileOptions"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileBlockList"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileUnblock"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileImViewingList"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileViewingMeList"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileLikedPosts"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+          }else if (origin === "userProfileComments"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"comments")}}> Return </Button>)
+          }else if (origin === "userProfilePosts"){
+            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"posts")}}> Return </Button>)
+          }else{//origin is a common thing, use cancel
+            returnButton = (<Button onClick={()=>{cancel(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+          }
+        }else{ // data.origin did not exist, redirect to home
+          returnButton = (<Button onClick={()=>{getHome()}}> Return </Button>)
+        }
         changeCode(
           <div>
-            <h1> Oops! We've encountered an error! </h1>
-            <div> Here's the error message we got:  </div>
-            <div> {data.message} </div>
+            <h1> Oops! We've encountered an error! </h1><br></br>
+            <div> Here's the error message we got:  </div><br></br>
+            <div> {data.message} </div><br></br>
+            You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.<br></br>
             <div> {returnButton} </div>
           </div>
         )
