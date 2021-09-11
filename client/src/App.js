@@ -12,13 +12,12 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
-//make css function instead of copypasting that thing
 //page should also include origin
 //DELETE SessionID check and make it server side
-//Write quick css changing funcgtions
 //on checking session: extend if by an hour
 //Queries need to be rechecked
-//Have error message if post or comment is restricted to private
+//light and dark modes
+//Have error message if post or comment is restricted to private when you redirect to it
 /////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
@@ -29,9 +28,7 @@ require('dotenv').config();
 //Notifcation List
 //Cancelling a conferred viewership request does not appear to work
 //test showOptions features on other profiles
-//Make home page paginatied
 //INCLUDE Private posts for self users
-//LOGIN page should check if user is currently hidden
 //SHould memoize pagination so its faster
 //check that pagination is actually correct
 //Maybe use nodemailer to reactivate account.
@@ -774,6 +771,94 @@ function App() {
             </form>
           </div>
         )
+      }
+      //Writing Comments
+      function displayCommentWriter(){
+        hideWriteForm();
+        changeCode(
+          <div>
+          <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+          <form onSubmit={handleWritingComment}>
+          <h1>Add a Comment</h1>
+          <label htmlFor='commentContent'>Content:</label>
+          <br></br>
+          <textarea className='noResize' rows='5' cols='50'
+           maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+          </textarea>
+          <br></br>
+          Private?
+          <br></br>
+          <label className="switch">
+          <input type="checkbox" id='privacySwitch' value={'placeholder'}
+          onChange={handlePrivacyToggled}
+          ></input>
+          <span className="slider round"></span>
+          </label>
+          <br></br>
+          Anyone can view this comment.
+          <br></br>
+          <Button variant='dark' type="submit"> Submit Comment </Button>
+          </form>
+          </div>
+        )
+      }
+      function handleWritingComment(event){
+        event.preventDefault();
+        var content = document.getElementById('postContent').value;
+        var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
+        const requestSetup = {
+            method: 'PUT',
+        }
+        // console.log(content,privacy);
+        fetch(serverLocation+"/comment?userID=" + cookies.get('id') + "&sessionID="
+          + cookies.get('sessionID') + "&postID=" + postID + "&content=" + content + "&privacy=" + privacy,requestSetup)
+          .then(response => response.json())
+          .then(data=>{
+            if (data.status === -11){
+              showExpiredPage({origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
+            }else if (data.status === -1){
+              showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
+            }else{
+              //CHECK ORIGIN
+              showInDepthPost(postID,0,10,"Add");
+            }
+          })
+      }
+      function handlePrivacyToggled(){
+        var checked = document.getElementById('privacySwitch').checked;
+        // console.log(checked);
+        if (checked){
+          hideWriteForm();
+          changeCode(
+            <div>
+            <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+            <form onSubmit={handleWritingComment}>
+            <h1>Add a Comment</h1>
+
+            <label htmlFor='commentContent'>Content:</label>
+            <br></br>
+            <textarea className='noResize' rows='5' cols='50'
+             maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+            </textarea>
+            <br></br>
+            Private?
+            <br></br>
+            <label className="switch">
+            <input type="checkbox" id='privacySwitch' value={'placeholder'}
+            onChange={handlePrivacyToggled} checked
+            ></input>
+            <span className="slider round"></span>
+            </label>
+            <br></br>
+            Only those you've allowed can view this comment.
+            <br></br>
+            <Button variant='dark' type="submit"> Submit Comment </Button>
+            </form>
+            </div>
+          )
+        }else{
+          displayCommentWriter();
+        }
       }
       //Set up Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
@@ -1946,92 +2031,6 @@ function App() {
             //FIX THIS: Maybe Include the like button above?
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
-          function displayCommentWriter(){
-            hideWriteForm();
-            changeCode(
-              <div>
-              <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
-              <form onSubmit={handleWritingComment}>
-              <h1>Add a Comment</h1>
-              <label htmlFor='commentContent'>Content:</label>
-              <br></br>
-              <textarea className='noResize' rows='5' cols='50'
-               maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
-              </textarea>
-              <br></br>
-              Private?
-              <br></br>
-              <label className="switch">
-              <input type="checkbox" id='privacySwitch' value={'placeholder'}
-              onChange={handlePrivacyToggled}
-              ></input>
-              <span className="slider round"></span>
-              </label>
-              <br></br>
-              Anyone can view this comment.
-              <br></br>
-              <Button variant='dark' type="submit"> Submit Comment </Button>
-              </form>
-              </div>
-            )
-          }
-          function handleWritingComment(event){
-            event.preventDefault();
-            var content = document.getElementById('postContent').value;
-            var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
-            const requestSetup = {
-                method: 'PUT',
-            }
-            // console.log(content,privacy);
-            fetch(serverLocation+"/comment?userID=" + cookies.get('id') + "&sessionID="
-              + cookies.get('sessionID') + "&postID=" + postID + "&content=" + content + "&privacy=" + privacy,requestSetup)
-              .then(response => response.json())
-              .then(data=>{
-                if (data.status === -11){
-                  showExpiredPage({origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
-                }else if (data.status === -1){
-                  showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
-                }else{
-                  showInDepthPost(postID,0,10,"Add");
-                }
-              })
-          }
-          function handlePrivacyToggled(){
-            var checked = document.getElementById('privacySwitch').checked;
-            // console.log(checked);
-            if (checked){
-              hideWriteForm();
-              changeCode(
-                <div>
-                <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
-                <form onSubmit={handleWritingComment}>
-                <h1>Add a Comment</h1>
-
-                <label htmlFor='commentContent'>Content:</label>
-                <br></br>
-                <textarea className='noResize' rows='5' cols='50'
-                 maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
-                </textarea>
-                <br></br>
-                Private?
-                <br></br>
-                <label className="switch">
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={handlePrivacyToggled} checked
-                ></input>
-                <span className="slider round"></span>
-                </label>
-                <br></br>
-                Only those you've allowed can view this comment.
-                <br></br>
-                <Button variant='dark' type="submit"> Submit Comment </Button>
-                </form>
-                </div>
-              )
-            }else{
-              displayCommentWriter();
-            }
-          }
           showOnlyMain();
           var detect = cookies.get("sessionID") && cookies.get("id");
           var serverString = serverLocation + "/post?postID=" + postID;
@@ -2164,8 +2163,19 @@ function App() {
                 );
               }
             })}
-      function simplePost(key,dict){
-        //FIX THIS: Maybe be able to like from the simple post?
+      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10){
+        var likePostButton; //requires adding new origins to handleLikePost
+        var commentButton; //requires adding new origins to handleCommentOnPost, displayCommentWriter
+        if (cookies.get('sessionID') && cookies.get('id')){
+          likePostButton = (<Button> Like </Button>);
+          if (hasLiked){
+            likePostButton = (<Button> Unlike </Button>);
+          }
+          commentButton = (<Button> Comment </Button>);
+        }else{
+          likePostButton = (<Button> Like </Button>);
+          commentButton = (<Button> Comment </Button>);
+        }
         return (
         <Card key={key}>
           <Card.Title> {dict.title} </Card.Title>
@@ -2174,13 +2184,19 @@ function App() {
           <Card.Body> {dict.content} </Card.Body>
           <Card.Subtitle> {dict.subDate} </Card.Subtitle>
           <Card.Body>
-          Likes: {dict.totalLikes} Comments: {dict.totalComments}
+          Likes: {dict.totalLikes}
+          <br></br>
+          {likePostButton}
+          <br></br>
+          Comments: {dict.totalComments}
+          <br></br>
+          {commentButton}
           <br></br>
           <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
           </Card.Body>
         </Card>
         )
-        }
+      }
       //Search Page
       function getSearchPage(){
         showOnlyMain();

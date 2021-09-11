@@ -63,7 +63,13 @@ var cQuery =
   sessions
   ON sessions.userID = a.userID AND sessions.sessionDate = a.high;
 `;
-
+var updateSessionQuery =
+`
+UPDATE sessions
+SET sessionDate = NOW()
+WHERE sessionID = ?
+;
+`;
 // Get All Posts
 app.get("/posts", function(req, res) {
   //works as intended currently
