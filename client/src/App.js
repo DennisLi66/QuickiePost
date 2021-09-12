@@ -55,6 +55,7 @@ require('dotenv').config();
 //add better session check
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //MAke sure to test everything
+//give handleSearch some pagination
 
 function App() {
   //Variables
@@ -397,6 +398,14 @@ function App() {
         }
         else if (origin === "userProfile"){
           showUserProfile(userID);
+        }
+        else if (origin === "myFeed"){
+          getMyFeed(startPos,endPos);
+        }
+        else if (origin === "home"){
+          getHome(startPos,endPos);
+        }else if (origin === "search"){
+          var needsEdit;
         }
         else{
           getHome();
@@ -777,8 +786,8 @@ function App() {
         showOnlyMain();
         changeCode(
           <div>
-          <Button variant='dark' onClick={() => cancel()} className='exitButton'>Cancel</Button>
-          <form onSubmit={() => handleWritingComment()}>
+          <Button variant='dark' onClick={() => cancel(origin,postID,0,0,startPos,endPos)} className='exitButton'>Cancel</Button>
+          <form onSubmit={(event) => handleWritingComment(event,postID,origin,startPos,endPos)}>
           <h1>Add a Comment</h1>
           <label htmlFor='commentContent'>Content:</label>
           <br></br>
@@ -818,14 +827,7 @@ function App() {
             }else if (data.status === -1){
               showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
             }else{
-              //CHECK ORIGIN
-              var checkorigin;
               showInDepthPost(postID,0,10,"Add");
-              if (origin){
-
-              }else{
-
-              }
             }
           })
       }
@@ -2168,19 +2170,18 @@ function App() {
                 );
               }
             })}
-      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10){
-        var editTheButtons;
-        var likePostButton; //requires adding new origins to handleLikePost
-        var commentButton; //requires adding new origins to handleCommentOnPost
+      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10){ //FIX THIS REQUIRES TESTING NOW
+        var likePostButton;
+        var commentButton;
         if (cookies.get('sessionID') && cookies.get('id')){
-          likePostButton = (<Button> Like </Button>);
+          likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos)}}> Like </Button>);
           if (hasLiked){
-            likePostButton = (<Button> Unlike </Button>);
+            likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos)}}> Unlike </Button>);
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
-          likePostButton = (<Button> Like </Button>);
-          commentButton = (<Button> Comment </Button>);
+          likePostButton = (<Button onClick={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos)}}> Like </Button>);
+          commentButton = (<Button onClick ={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos)}}> Comment </Button>);
         }
         return (
         <Card key={key}>
@@ -2450,7 +2451,7 @@ function App() {
               showErrorPage({message: data.message})
             }else{
               for (let key = start; key < Math.min(data.contents.length,end); key++){
-                listOfPosts.push(simplePost(key,data.contents[key]))
+                listOfPosts.push(simplePost(key,data.contents[key],"myFeed",start,end))
               }
               if (listOfPosts.length === 0){
                 listOfPosts = (<div>You do not have any posts in your feed.</div>)
@@ -2815,7 +2816,7 @@ function App() {
           .then(response=>response.json())
           .then(data => {
             for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
-              listOfPosts.push(simplePost(key,data.contents[key]))
+              listOfPosts.push(simplePost(key,data.contents[key],"home",beginPosition,endPosition))
             }
             if (listOfPosts.length === 0){
               listOfPosts = (<div> There are no posts to show.</div>)
