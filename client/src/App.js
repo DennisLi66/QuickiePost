@@ -773,17 +773,17 @@ function App() {
         )
       }
       //Writing Comments
-      function displayCommentWriter(){
-        hideWriteForm();
+      function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
+        showOnlyMain();
         changeCode(
           <div>
-          <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
-          <form onSubmit={handleWritingComment}>
+          <Button variant='dark' onClick={() => cancel()} className='exitButton'>Cancel</Button>
+          <form onSubmit={() => handleWritingComment()}>
           <h1>Add a Comment</h1>
           <label htmlFor='commentContent'>Content:</label>
           <br></br>
           <textarea className='noResize' rows='5' cols='50'
-           maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+           maxLength="200" id="postContent" name="postContent" autoComplete="off" value={postContent} required>
           </textarea>
           <br></br>
           Private?
@@ -802,31 +802,36 @@ function App() {
           </div>
         )
       }
-      function handleWritingComment(event){
+      function handleWritingComment(event, postID, origin = "", startPos = 0, endPos = 10){
         event.preventDefault();
         var content = document.getElementById('postContent').value;
         var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
         const requestSetup = {
             method: 'PUT',
         }
-        // console.log(content,privacy);
         fetch(serverLocation+"/comment?userID=" + cookies.get('id') + "&sessionID="
           + cookies.get('sessionID') + "&postID=" + postID + "&content=" + content + "&privacy=" + privacy,requestSetup)
           .then(response => response.json())
           .then(data=>{
             if (data.status === -11){
-              showExpiredPage({origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
+              showExpiredPage({origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
             }else if (data.status === -1){
-              showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd});
+              showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
             }else{
               //CHECK ORIGIN
+              var checkorigin;
               showInDepthPost(postID,0,10,"Add");
+              if (origin){
+
+              }else{
+
+              }
             }
           })
       }
-      function handlePrivacyToggled(){
+      function handlePrivacyToggled(postID, origin = "", startPos = 0, endPos = 10){
         var checked = document.getElementById('privacySwitch').checked;
-        // console.log(checked);
+        var content = document.getElementById('postContent');
         if (checked){
           hideWriteForm();
           changeCode(
@@ -857,7 +862,7 @@ function App() {
             </div>
           )
         }else{
-          displayCommentWriter();
+          displayCommentWriter(postID,origin,startPos,endPos,content);
         }
       }
       //Set up Functions
@@ -2116,7 +2121,7 @@ function App() {
                 }
                 var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);
                 if (detect){
-                  writeCommentButton = (<Button onClick={() => {displayCommentWriter()}}>Add Comment</Button>)
+                  writeCommentButton = (<Button onClick={() => {displayCommentWriter(postID,'indepthPost',commentStart,commentEnd)}}>Add Comment</Button>)
                 }
                 var confrimation = (<div></div>);
                 if (pact && pact==='Add'){
@@ -2164,14 +2169,15 @@ function App() {
               }
             })}
       function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10){
+        var editTheButtons;
         var likePostButton; //requires adding new origins to handleLikePost
-        var commentButton; //requires adding new origins to handleCommentOnPost, displayCommentWriter
+        var commentButton; //requires adding new origins to handleCommentOnPost
         if (cookies.get('sessionID') && cookies.get('id')){
           likePostButton = (<Button> Like </Button>);
           if (hasLiked){
             likePostButton = (<Button> Unlike </Button>);
           }
-          commentButton = (<Button> Comment </Button>);
+          commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
           likePostButton = (<Button> Like </Button>);
           commentButton = (<Button> Comment </Button>);
