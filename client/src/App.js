@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
+//TEST search more
 //rewrite search so it considers if user has liked the post
 //page should also include origin
 //DELETE SessionID check and make it server side
@@ -56,7 +57,7 @@ require('dotenv').config();
 //add better session check
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //MAke sure to test everything
-//give handleSearch some pagination
+//give handleSearch some pagination CHECK THIS
 
 function App() {
   //Variables

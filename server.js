@@ -306,19 +306,24 @@ app.get("/search", function(req, res) {
       } else {
         var sQuery = //works
           `
-        SELECT * from posts
-        LEFT JOIN
-        (select userid,username,visibility,viewerID from users left join (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = users.userID) uzers
-        on uzers.userID = posts.userID
-        WHERE
-        posts.visibility != 'hidden'
-        AND uzers.visibility != 'hidden'
-        AND (posts.visibility != 'private' OR viewerID is not null)
-        AND (uzers.visibility != 'private' OR viewerID is not null)
-        ORDER BY posts.subDate desc
+          SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content,
+          posts.visibility as postVisibility, subDate, username, uzers.visibility as userVisibility,
+          if(viewerID is null,'false','true') as amViewing, if(likes.userID is null,'false','true') as isLiked
+          from posts
+          LEFT JOIN
+          (select userid,username,visibility,viewerID from users left join
+          (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = users.userID) uzers
+          on uzers.userID = posts.userID
+          LEFT JOIN (select * from likes WHERE userID = ?) as likes ON likes.postID = posts.postID
+          WHERE
+          posts.visibility != 'hidden'
+          AND uzers.visibility != 'hidden'
+          AND (posts.visibility != 'private' OR viewerID is not null)
+          AND (uzers.visibility != 'private' OR viewerID is not null)
+          ;
         `;
-        sQuery += toJoinQuery.join("");
-        var stuff = [userID].concat(variables);
+        sQuery += toJoinQuery.join("") + "ORDER BY posts.subDate desc";
+        var stuff = [userID,userID].concat(variables);
         connection.query(sQuery, stuff, function(err, results, fields) {
           if (err) {
             return res.status(200).json({

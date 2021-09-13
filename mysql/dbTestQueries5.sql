@@ -80,3 +80,24 @@ AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVi
   (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
   ON comments.postID = posts.postID
   ORDER BY posts.subDate desc
+  ;
+  -- Add if liked to search posts
+  
+SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content,
+posts.visibility as postVisibility, subDate, username, uzers.visibility as userVisibility,
+if(viewerID is null,'false','true') as amViewing, if(likes.userID is null,'false','true') as isLiked
+from posts
+LEFT JOIN
+(select userid,username,visibility,viewerID from users left join 
+(select * from viewers WHERE viewerID = 1) viewers on viewers.posterID = users.userID) uzers
+on uzers.userID = posts.userID
+LEFT JOIN (select * from likes WHERE userID = 1) as likes ON likes.postID = posts.postID
+WHERE
+posts.visibility != 'hidden'
+AND uzers.visibility != 'hidden'
+AND (posts.visibility != 'private' OR viewerID is not null)
+AND (uzers.visibility != 'private' OR viewerID is not null)
+ORDER BY posts.subDate desc
+;
+
+select * from likes;
