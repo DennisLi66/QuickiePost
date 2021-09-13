@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
+//rewrite search so it considers if user has liked the post
 //page should also include origin
 //DELETE SessionID check and make it server side
 //on checking session: extend if by an hour
@@ -405,7 +406,7 @@ function App() {
         else if (origin === "home"){
           getHome(startPos,endPos);
         }else if (origin === "search"){
-          var needsEdit;
+          getSearchPage();
         }
         else{
           getHome();
@@ -2275,40 +2276,63 @@ function App() {
           }else if (data.status === -1){
             showErrorPage({message: data.message, origin: "searchPage"})
           }else{
-            var listOfPosts = [];
-            for (let key = 0; key < data.contents.length; key++){
-              listOfPosts.push(simplePost(key,data.contents[key]))
-            }
-            if (listOfPosts.length === 0){
-              listOfPosts = (<div>There were no posts matching your criteria.</div>)
-            }
-            changeCode(
-              <div>
-              <h1> Search for a Post </h1>
-              <form onSubmit={handleSearch}>
-              <label htmlFor='title'>Search for Title:</label>
-              <br></br>
-              <input name='title' id='title' placeholder={title}></input>
-              <br></br>
-              <label htmlFor='content'>Search by Contents:</label>
-              <br></br>
-              <input name='content'  id='content' placeholder={content}></input>
-              <br></br>
-              <label htmlFor='username'>Search by Username:</label>
-              <br></br>
-              <input name='username' placeholder={username} id='username'></input>
-              <br></br>
-              <label htmlFor='date'>Search By Date:</label>
-              <br></br>
-              <input name='date' placeholder={sDate} type='date' id='sDate'></input>
-              <br></br><br></br>
-              <Button variant='dark' type="submit"> Submit </Button>
-              </form>
-              {listOfPosts}
-              </div>
-            )
+            paginateSearchPage(data.contents,0,10,title,content,username,sDate)
           }
         })
+      }
+      function paginateSearchPage(contents,start = 0,end = 10,title,content,username,sDate){
+        var listOfPosts = [];
+        var paginationBar;
+        for (let key = 0; key < contents.length; key++){
+          listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search"))
+        }
+        if (listOfPosts.length === 0){
+          listOfPosts = (<div>There were no posts matching your criteria.</div>)
+        }
+        if (contents.length > 10){
+          var paginationSlots = [];
+          for (let i = 0; i < Math.ceil(contents.length / 10); i++){
+            paginationSlots.push(
+              <li key={i}><div className="dropdown-item" onClick={() => {paginateSearchPage(contents,10 * i,Math.min(10*i+10,contents.length,title,content,username,sDate))}}>{10 * i + 1} through {Math.min(10*i+10,contents.length)}</div></li>
+            )
+          }
+          paginationBar = (
+           <ul className="nav nav-tabs">
+            <li className="nav-item dropdown">
+              <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+              <ul className="dropdown-menu">
+                {paginationSlots}
+              </ul>
+            </li>
+          </ul>)
+        }
+        changeCode(
+          <div>
+          <h1> Search for a Post </h1>
+          <form onSubmit={handleSearch}>
+          <label htmlFor='title'>Search for Title:</label>
+          <br></br>
+          <input name='title' id='title' placeholder={title}></input>
+          <br></br>
+          <label htmlFor='content'>Search by Contents:</label>
+          <br></br>
+          <input name='content'  id='content' placeholder={content}></input>
+          <br></br>
+          <label htmlFor='username'>Search by Username:</label>
+          <br></br>
+          <input name='username' placeholder={username} id='username'></input>
+          <br></br>
+          <label htmlFor='date'>Search By Date:</label>
+          <br></br>
+          <input name='date' placeholder={sDate} type='date' id='sDate'></input>
+          <br></br><br></br>
+          <Button variant='dark' type="submit"> Submit </Button>
+          </form>
+          {paginationBar}
+          {listOfPosts}
+          {paginationBar}
+          </div>
+        )
       }
       //Registration Page
       function getRegistrationPage(){
