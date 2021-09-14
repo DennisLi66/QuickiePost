@@ -1,7 +1,7 @@
 //Things to Do
 //Maybe Search By Hashtags?
-//FIX THIS make sure sessionID is considered
-//Comments and users and get users might be the same thing
+//Add updating sessions
+//add an error for if user is blocked
 
 require('dotenv').config();
 const express = require("express");
@@ -160,8 +160,6 @@ app.get("/posts", function(req, res) {
         })
       }
     })
-
-
   } else {
     connection.query(sQuery, variables, function(err, results, fields) {
       if (err) {
@@ -201,8 +199,6 @@ app.get("/myfeed", function(req, res) {
       message: "Not Enough Information."
     })
   }
-  // console.log(req.query.userID);
-  // console.log(req.query.sessionID);
   //check for valid sessions
   var sQuery = //works
     `

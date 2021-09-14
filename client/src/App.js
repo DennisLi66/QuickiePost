@@ -12,6 +12,11 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
+//update handleLikes to include search and home
+//Cancel Button may not work properly
+//fix search
+//fix simpleposts
+//if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
 //rewrite search so it considers if user has liked the post
 //page should also include origin
@@ -274,7 +279,7 @@ function App() {
             method: 'PATCH',
         }
         fetch(serverLocation + "/post?postID="+ postID + "&sessionID=" + cookies.get("sessionID") +
-        "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
+        "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("visibility").value
         + "&title=" + document.getElementById("title").value
         + "&content=" + document.getElementById("content").value,requestSetup)
           .then(response => response.json())
@@ -357,7 +362,7 @@ function App() {
             method: 'PATCH',
         }
         fetch(serverLocation + "/comment?commentID="+ commentID + "&sessionID=" + cookies.get("sessionID") +
-        "&userID=" + cookies.get("userID") + "&visibility=" + document.getElementById("visibility").value
+        "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("visibility").value
         + "&comments=" + document.getElementById("comments").value,requestSetup)
           .then(response => response.json())
           .then(data => {
@@ -416,7 +421,7 @@ function App() {
       //like handlers
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0){
         //broad use function - rewrite others
-        if (!cookies.get("sessionID") || !cookies.get("userID")){
+        if (!cookies.get("sessionID") || !cookies.get("id")){
           getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           const requestSetup = {
@@ -448,7 +453,7 @@ function App() {
         }
       }
       function handlePostUnlike(postID,origin,commentID = 0, userID = 0, startPos = 0, endPos = 0){
-        if (!cookies.get("sessionID") || !cookies.get("userID")){
+        if (!cookies.get("sessionID") || !cookies.get("id")){
           getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           var sessionID = cookies.get('sessionID');
@@ -478,7 +483,7 @@ function App() {
         }
       }
       function handleCommentLike(commentID,origin,postID = 0, userID = 0, startPos = 0, endPos = 0){
-        if (!cookies.get("sessionID") || !cookies.get("userID")){
+        if (!cookies.get("sessionID") || !cookies.get("id")){
           getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           var sessionID = cookies.get('sessionID');
@@ -509,7 +514,7 @@ function App() {
         }
       }
       function handleCommentUnlike(commentID,origin,postID = 0, userID = 0, startPos = 0, endPos = 0){
-        if (!cookies.get("sessionID") || !cookies.get("userID")){
+        if (!cookies.get("sessionID") || !cookies.get("id")){
           getLoginPage(origin,postID,commentID,userID,startPos,endPos);
         }else{
           var sessionID = cookies.get('sessionID');
@@ -622,7 +627,7 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -2){ //Invalid Combination
-                getLoginPage(origin,postID,commentID,userID,startPos,endPos);
+                getLoginPage(origin,postID,commentID,userID,startPos,endPos,"badCombo");
               }else if (data.status === -1){///Other Error
                 getLoginPage(origin,postID,commentID,userID,startPos,endPos);
               }else if (data.status === 0){//No Error
@@ -2799,7 +2804,7 @@ function App() {
           <div>
             <h1> Oops! We've encountered an error! </h1><br></br>
             <div> Here's the error message we got:  </div><br></br>
-            <div> {data.message} </div><br></br>
+            <div> {String(data.message)} </div><br></br>
             You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.<br></br>
             <div> {returnButton} </div>
           </div>
@@ -2841,7 +2846,7 @@ function App() {
           .then(response=>response.json())
           .then(data => {
             for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
-              listOfPosts.push(simplePost(key,data.contents[key],"home",beginPosition,endPosition))
+              listOfPosts.push(simplePost(key,data.contents[key],data.isLiked,"home",beginPosition,endPosition))
             }
             if (listOfPosts.length === 0){
               listOfPosts = (<div> There are no posts to show.</div>)
