@@ -316,9 +316,8 @@ app.get("/search", function(req, res) {
           AND uzers.visibility != 'hidden'
           AND (posts.visibility != 'private' OR viewerID is not null)
           AND (uzers.visibility != 'private' OR viewerID is not null)
-          ;
         `;
-        sQuery += toJoinQuery.join("") + "ORDER BY posts.subDate desc";
+        sQuery += toJoinQuery.join("") + " ORDER BY posts.subDate desc";
         var stuff = [userID,userID].concat(variables);
         connection.query(sQuery, stuff, function(err, results, fields) {
           if (err) {
@@ -363,9 +362,8 @@ app.get("/search", function(req, res) {
     on uzers.userID = posts.userID
     WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
     AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
-    ORDER BY posts.subDate desc
     `;
-    sQuery += toJoinQuery.join("");
+    sQuery += toJoinQuery.join("") + " ORDER BY posts.subDate desc";
     console.log(sQuery);
     connection.query(sQuery, variables, function(err, results, fields) {
       if (err) {

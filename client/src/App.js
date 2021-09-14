@@ -12,10 +12,8 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
-//update handleLikes to include search and home
+//update handleLikes to include search and home (No origin given)
 //Cancel Button may not work properly
-//fix search
-//fix simpleposts
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
 //rewrite search so it considers if user has liked the post
@@ -413,6 +411,9 @@ function App() {
           getHome(startPos,endPos);
         }else if (origin === "search"){
           getSearchPage();
+        }
+        else if (origin === "login"){
+          getLoginPage();
         }
         else{
           getHome();
@@ -1966,7 +1967,6 @@ function App() {
               })
           }}
       function showInDepthComment(commentID,designation = ""){
-        showOnlyMain();
         var serverString = serverLocation + "/comment?commentID=" + commentID +
           (cookies.get("sessionID") ? "&sessionID=" + cookies.get("sessionID") : "") +
           (cookies.get("id") ? "&userID=" + cookies.get("id") : "");
@@ -1979,6 +1979,7 @@ function App() {
               showErrorPage({message: data.message, origin: "indepthComment", commentID: commentID});
             }else{
               console.log(data);
+              openInDepthPost();
               var editButton;
               var likePostButton = (
                 <Button onClick={() => {getLoginPage("indepthComment",0,commentID,0,0,0)}}> Like </Button>
@@ -2017,7 +2018,7 @@ function App() {
                   </Card.Body>
                 )
               }
-              changeCode(
+              changeInDepthCode(
                 <div>
                   <Card>
                   <Card.Title>Comment Information</Card.Title>
@@ -2045,7 +2046,6 @@ function App() {
             //FIX THIS: Maybe Include the like button above?
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
-          showOnlyMain();
           var detect = cookies.get("sessionID") && cookies.get("id");
           var serverString = serverLocation + "/post?postID=" + postID;
           if (detect){
@@ -2064,6 +2064,7 @@ function App() {
                 showErrorPage({message: data.message})
               }
               else{
+                openInDepthPost();
                 var listOfComments = [];
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
                   var comment = data.comments[key];
@@ -2289,28 +2290,32 @@ function App() {
       function paginateSearchPage(contents,start = 0,end = 10,title,content,username,sDate){
         var listOfPosts = [];
         var paginationBar;
-        for (let key = 0; key < contents.length; key++){
-          listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search"))
-        }
-        if (listOfPosts.length === 0){
-          listOfPosts = (<div>There were no posts matching your criteria.</div>)
-        }
-        if (contents.length > 10){
-          var paginationSlots = [];
-          for (let i = 0; i < Math.ceil(contents.length / 10); i++){
-            paginationSlots.push(
-              <li key={i}><div className="dropdown-item" onClick={() => {paginateSearchPage(contents,10 * i,Math.min(10*i+10,contents.length,title,content,username,sDate))}}>{10 * i + 1} through {Math.min(10*i+10,contents.length)}</div></li>
-            )
+        if (!contents|| contents.length === 0){
+          listOfPosts = (<div> No posts were found. </div>)
+        }else{
+          for (let key = 0; key < contents.length; key++){
+            listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search"))
           }
-          paginationBar = (
-           <ul className="nav nav-tabs">
-            <li className="nav-item dropdown">
-              <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-              <ul className="dropdown-menu">
-                {paginationSlots}
-              </ul>
-            </li>
-          </ul>)
+          if (listOfPosts.length === 0){
+            listOfPosts = (<div>There were no posts matching your criteria.</div>)
+          }
+          if (contents.length > 10){
+            var paginationSlots = [];
+            for (let i = 0; i < Math.ceil(contents.length / 10); i++){
+              paginationSlots.push(
+                <li key={i}><div className="dropdown-item" onClick={() => {paginateSearchPage(contents,10 * i,Math.min(10*i+10,contents.length,title,content,username,sDate))}}>{10 * i + 1} through {Math.min(10*i+10,contents.length)}</div></li>
+              )
+            }
+            paginationBar = (
+             <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
+              </li>
+            </ul>)
+          }
         }
         changeCode(
           <div>
@@ -2437,6 +2442,18 @@ function App() {
           transition: 'height 2s ease-in'
         });
         changeInDepthCSS(
+          {
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+      }
+      function openInDepthPost(){
+        changeInDepthCSS({
+          height: 'auto',
+          transition: 'height 2s ease-in'
+        });
+        changeMainBodyCSS(
           {
             display: 'none',
             transition: 'height 2s ease-in'
