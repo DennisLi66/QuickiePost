@@ -12,7 +12,8 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ///next
-//update handleLikes to include search and home (No origin given)
+//update handleLikes to include search and home (No origin given) UPDATE where searchPosts have been added
+//maybe give login page its own css and remove searchPosts and origin
 //Cancel Button may not work properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
@@ -420,10 +421,9 @@ function App() {
         }
       }
       //like handlers
-      function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0){
-        //broad use function - rewrite others
+      function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0, searchPosts = []){
         if (!cookies.get("sessionID") || !cookies.get("id")){
-          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
+          getLoginPage(origin,postID,commentID,userID,startPos,endPos,"",searchPosts);
         }else{
           const requestSetup = {
               method: 'PUT',
@@ -446,6 +446,10 @@ function App() {
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
                     //commentID
+                }else if (origin === "home"){
+                  getHome(startPos,endPos)
+                }else if (origin === "search"){
+                  paginateSearchPage(searchPosts,startPos,endPos);
                 }else{
                   showErrorPage({message: "No Origin Given", postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
                 }
@@ -453,9 +457,9 @@ function App() {
             })
         }
       }
-      function handlePostUnlike(postID,origin,commentID = 0, userID = 0, startPos = 0, endPos = 0){
+      function handlePostUnlike(postID,origin,commentID = 0, userID = 0, startPos = 0, endPos = 0, searchPosts = []){
         if (!cookies.get("sessionID") || !cookies.get("id")){
-          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
+          getLoginPage(origin,postID,commentID,userID,startPos,endPos,"",searchPosts);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -476,6 +480,8 @@ function App() {
                   showInDepthPost(postID,"changed");
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
+                }else if (origin === "home"){
+                  getHome(startPos,endPos)
                 }else{
                   showErrorPage({message: "No Origin Given.", postID: postID, origin: origin, startPos: startPos,endPos:endPos})
                 }
@@ -613,7 +619,7 @@ function App() {
         )
       }
       //Login Functions --Rework FIX THIS
-      function handleLogin(event,origin,postID,commentID,userID,startPos,endPos){
+      function handleLogin(event,origin,postID,commentID,userID,startPos,endPos, searchPosts = []){
           event.preventDefault();
           var email = document.getElementById("userEmail").value;
           var pswrd = document.getElementById("pswrd").value;
@@ -648,6 +654,11 @@ function App() {
                   showUserProfile(userID,startPos,endPos,"comments");
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID);
+                }
+                else if (origin === "search"){
+                  paginateSearchPage(searchPosts,startPos,endPos)
+                }else{
+                  getHome();
                 }
               }
               else if (data.status === -3){//Account Was Hidden
@@ -749,7 +760,7 @@ function App() {
             }
           })
       }
-      function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg=""){
+      function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg="",searchPosts = []){
         showOnlyMain();
         var cancelButton;
         if (origin !== ""){
@@ -791,10 +802,10 @@ function App() {
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
-        showOnlyMain();
-        changeCode(
+        openInDepthPost();
+        changeInDepthCode(
           <div>
-          <Button variant='dark' onClick={() => cancel(origin,postID,0,0,startPos,endPos)} className='exitButton'>Cancel</Button>
+          <Button variant='dark' className='exitButton' onClick={closeInDepthPost}>Close</Button>
           <form onSubmit={(event) => handleWritingComment(event,postID,origin,startPos,endPos)}>
           <h1>Add a Comment</h1>
           <label htmlFor='commentContent'>Content:</label>
@@ -2178,18 +2189,18 @@ function App() {
                 );
               }
             })}
-      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10){ //FIX THIS REQUIRES TESTING NOW
+      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
         var likePostButton;
         var commentButton;
         if (cookies.get('sessionID') && cookies.get('id')){
-          likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos)}}> Like </Button>);
+          likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
           if (hasLiked){
-            likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos)}}> Unlike </Button>);
+            likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
-          likePostButton = (<Button onClick={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos)}}> Like </Button>);
-          commentButton = (<Button onClick ={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos)}}> Comment </Button>);
+          likePostButton = (<Button onClick={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
+          commentButton = (<Button onClick ={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos,"",searchPosts)}}> Comment </Button>);
         }
         return (
         <Card key={key}>
@@ -2294,7 +2305,7 @@ function App() {
           listOfPosts = (<div> No posts were found. </div>)
         }else{
           for (let key = 0; key < contents.length; key++){
-            listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search"))
+            listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search",contents))
           }
           if (listOfPosts.length === 0){
             listOfPosts = (<div>There were no posts matching your criteria.</div>)
