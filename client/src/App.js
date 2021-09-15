@@ -11,9 +11,11 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
-///css as it is doesnt currently refresh the page for new likes
-//update handleLikes to include search and home (No origin given) UPDATE where searchPosts have been added
-//maybe give login page its own css and remove searchPosts and origin
+////////////////////////UTMOST
+///////////////////////////////Server: Update session on checking it
+//////////////////////////////Client: Make use of client variables
+//add registration to login screen
+///css as it is doesnt currently refresh the page for new likes, incorporate new variables
 //Cancel Button may not work properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
@@ -98,6 +100,19 @@ function App() {
         display: 'none'
     }
   );
+  const [pageVariables,changePageVariables] = React.useState({
+    origin: "", //if origin is not the same as the page set start and end to defaults
+    startPos: 0,
+    endPos: 10,
+    title: "",
+    content: "",
+    visibility: "",
+    comments: "",
+    searchPosts: [],
+    postID: 0,
+    commentID: 0,
+    userID: 0
+  })
   //
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
@@ -803,6 +818,7 @@ function App() {
               </label>
               <br></br><br></br>
               <Button variant='dark' type="submit"> Login </Button>
+              <Button variant='dark' onClick={getRegistrationPage}> Don't Have An Account? </Button>
             </form>
           </div>
         )
@@ -2365,8 +2381,8 @@ function App() {
       }
       //Registration Page
       function getRegistrationPage(){
-        showOnlyMain();
-        changeCode(
+        openLoginForm();
+        changeLoginCode(
           <form onSubmit={handleRegistration}>
             <h1> Registration Page</h1>
             <label htmlFor='userEmail'>Email</label>
@@ -2386,6 +2402,7 @@ function App() {
             <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
             <br></br>        <br></br>
             <Button variant='dark' type="submit"> Register </Button>
+            <Button variant='dark' onClick={getLoginPage}> Already Have An Account? </Button>
           </form>
         )
       }
@@ -2940,7 +2957,6 @@ function App() {
           })
     },[serverLocation,cookies,changeCode])
 
-  //FIX THIS If SessionID, change server to accomadate being logged in
   React.useEffect(() => {
     getHome()
   },[getHome])
