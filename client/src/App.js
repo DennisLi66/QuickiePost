@@ -11,7 +11,7 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
-///next
+///css as it is doesnt currently refresh the page for new likes
 //update handleLikes to include search and home (No origin given) UPDATE where searchPosts have been added
 //maybe give login page its own css and remove searchPosts and origin
 //Cancel Button may not work properly
@@ -91,6 +91,13 @@ function App() {
     }
   )
   const [navBar,changeNavBar] = React.useState();
+  const [loginCode,changeLoginCode] = React.useState();
+  const [loginCSS,changeLoginCSS] = React.useState(
+    {
+      height: 0,
+        display: 'none'
+    }
+  );
   //
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
@@ -132,7 +139,7 @@ function App() {
       }
       function handleDeletePost(postID,origin,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
-          getLoginPage(origin,postID,0,cookies.get("id"),startPos,endPos)
+          getLoginPage(origin)
         }else{
           const requestSetup = {
               method: 'DELETE',
@@ -190,7 +197,7 @@ function App() {
       }
       function handleDeleteComment(commentID,origin,postID,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
-          getLoginPage(origin,postID,0,cookies.get("id"),startPos,endPos)
+          getLoginPage(origin)
         }
         else{
           const requestSetup = {
@@ -423,7 +430,7 @@ function App() {
       //like handlers
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0, searchPosts = []){
         if (!cookies.get("sessionID") || !cookies.get("id")){
-          getLoginPage(origin,postID,commentID,userID,startPos,endPos,"",searchPosts);
+          getLoginPage(origin);
         }else{
           const requestSetup = {
               method: 'PUT',
@@ -459,7 +466,7 @@ function App() {
       }
       function handlePostUnlike(postID,origin,commentID = 0, userID = 0, startPos = 0, endPos = 0, searchPosts = []){
         if (!cookies.get("sessionID") || !cookies.get("id")){
-          getLoginPage(origin,postID,commentID,userID,startPos,endPos,"",searchPosts);
+          getLoginPage(origin);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -491,7 +498,7 @@ function App() {
       }
       function handleCommentLike(commentID,origin,postID = 0, userID = 0, startPos = 0, endPos = 0){
         if (!cookies.get("sessionID") || !cookies.get("id")){
-          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
+          getLoginPage(origin);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -522,7 +529,7 @@ function App() {
       }
       function handleCommentUnlike(commentID,origin,postID = 0, userID = 0, startPos = 0, endPos = 0){
         if (!cookies.get("sessionID") || !cookies.get("id")){
-          getLoginPage(origin,postID,commentID,userID,startPos,endPos);
+          getLoginPage(origin);
         }else{
           var sessionID = cookies.get('sessionID');
           var id = cookies.get('id');
@@ -618,8 +625,8 @@ function App() {
           </Navbar>
         )
       }
-      //Login Functions --Rework FIX THIS
-      function handleLogin(event,origin,postID,commentID,userID,startPos,endPos, searchPosts = []){
+      //Login Functions --Rework INTO CSS AND UPDATE FUNCTIONS THAT REFERENCE THIS, CHANGE CHANGECODE TO changelogin form and add css changer
+      function handleLogin(event,origin){
           event.preventDefault();
           var email = document.getElementById("userEmail").value;
           var pswrd = document.getElementById("pswrd").value;
@@ -634,9 +641,9 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -2){ //Invalid Combination
-                getLoginPage(origin,postID,commentID,userID,startPos,endPos,"badCombo");
+                getLoginPage(origin,"badCombo");
               }else if (data.status === -1){///Other Error
-                getLoginPage(origin,postID,commentID,userID,startPos,endPos);
+                showErrorPage({origin: "login", message:data.message})
               }else if (data.status === 0){//No Error
                 cookies.set('name',data.username,{path:'/'});
                 cookies.set('id',data.userID,{path:'/'});
@@ -644,21 +651,10 @@ function App() {
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
                 if (origin === ""){
                   window.location.reload();
-                }else if (origin === "userProfileOptions"){
-                  showUserProfile(userID,0,0,"options");
-                }else if (origin === "indepthPost"){
-                  showInDepthPost(postID,startPos,endPos);
-                }else if (origin === "userProfilePosts"){
-                  showUserProfile(userID,startPos,endPos,"posts");
-                }else if (origin === "userProfileComments"){
-                  showUserProfile(userID,startPos,endPos,"comments");
-                }else if (origin === "indepthComment"){
-                  showInDepthComment(commentID);
-                }
-                else if (origin === "search"){
-                  paginateSearchPage(searchPosts,startPos,endPos)
+                }else if (origin === "indepthPost" || origin === "indepthComment"){
+                  openInDepthPost();
                 }else{
-                  getHome();
+                  showOnlyMain();
                 }
               }
               else if (data.status === -3){//Account Was Hidden
@@ -671,14 +667,14 @@ function App() {
                       you will be able to see your private posts and comments.
                       <br></br>
                       If you would like to reactivate your account, you can receive an email to do so.
-                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin,postID,commentID,startPos,endPos)}> Reactivate Account </Button>
+                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin)}> Reactivate Account </Button>
                     </div>
                   </div>
                 )
               }
             });
       }
-      function sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances = 3){
+      function sendActivationAccountMessage(userID,username,rememberMe,origin,chances = 3){
         //Make a random code and send it in email
         const requestSetup = {
           method: 'POST',
@@ -688,7 +684,7 @@ function App() {
         fetch("reactivationCode",requestSetup)
           .then(response => response.json())
           .then(data => {
-            changeCode(
+            changeLoginCode(
               <div>
                 <h1> Reactivating Your Account </h1>
                 <div>
@@ -696,10 +692,10 @@ function App() {
                   <br></br>
                   Please check your email and type the code in below to reactivate your account.
                   <br></br>
-                  <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances)}}> Resend Code </Button>
+                  <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,chances)}}> Resend Code </Button>
                   <br></br>
                   Remaining Chances: {chances}
-                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,username,data.sessionID,rememberMe,origin,3,postID,commentID,startPos,endPos)}>
+                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,username,data.sessionID,rememberMe,origin,3)}>
                     <input id="reactivationCode" name="reactivationCode" required>  </input>
                     <br></br>
                     <Button type='submit'> Reactivate Account </Button>
@@ -709,7 +705,7 @@ function App() {
             )
           })
       }
-      function handleReactivationCodeSubmission(event,userID,username,sessionID,rememberMe,origin,chances,postID,commentID,startPos,endPos){
+      function handleReactivationCodeSubmission(event,userID,username,sessionID,rememberMe,origin,chances){
         event.preventDefault();
         const requestSetup = {
           method: 'POST',
@@ -725,18 +721,18 @@ function App() {
             }else if (data.status === -2){
               //deduct chances
               if (chances <= 1){
-                changeCode(
+                changeLoginCode(
                   <div>
                     <h1> No More Remaining Chances </h1>
                     <div>
                       You have run out of chances to use your code.
                       <br></br>
-                      <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances)}}> Resend Code </Button>
+                      <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin)}}> Resend Code </Button>
                     </div>
                   </div>
                 )
               }else{
-                sendActivationAccountMessage(userID,username,rememberMe,origin,postID,commentID,startPos,endPos,chances - 1)
+                sendActivationAccountMessage(userID,username,rememberMe,origin,chances - 1)
               }
             }else if (data.status === 0){
               //reactivate account
@@ -747,24 +743,34 @@ function App() {
               if (origin === ""){
                 window.location.reload();
               }else if (origin === "userProfileOptions"){
-                showUserProfile(userID,0,0,"options");
+                showOnlyMain();
               }else if (origin === "indepthPost"){
-                showInDepthPost(postID,startPos,endPos);
+                showInDepthPost();
               }else if (origin === "userProfilePosts"){
-                showUserProfile(userID,startPos,endPos,"posts");
+                showOnlyMain();
               }else if (origin === "userProfileComments"){
-                showUserProfile(userID,startPos,endPos,"comments");
+                showOnlyMain();
               }else if (origin === "indepthComment"){
-                showInDepthComment(commentID);
+                showInDepthPost();
+              }else{
+                showOnlyMain();
               }
             }
           })
       }
-      function getLoginPage(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0,msg="",searchPosts = []){
+      function getLoginPage(origin = "",msg=""){
         showOnlyMain();
         var cancelButton;
         if (origin !== ""){
-          cancelButton = (<Button variant='dark' onClick={() => {cancel(origin,postID,commentID,userID,startPos,endPos)}} className='exitButton'>Cancel</Button>);
+          if (origin === "indepthPost" || origin === "indepthComment"){
+            cancelButton = (<Button variant='dark' onClick={() => {
+              showInDepthPost();
+            }} className='exitButton'>Cancel</Button>);
+          }else{
+            cancelButton = (<Button variant='dark' onClick={() => {
+              showOnlyMain();
+            }} className='exitButton'>Cancel</Button>);
+          }
         }
         var overheadMsg;
         if (msg === "conf"){
@@ -774,11 +780,12 @@ function App() {
         }else if (msg === "badCombo"){
           overheadMsg = (<div className="errMsg">That was not a valid username/password combination.</div>);
         }
-        changeCode(
+        openLoginForm();
+        changeLoginCode(
           <div>
             {overheadMsg}
             {cancelButton}
-            <form onSubmit={(event) => {handleLogin(event,origin = "",postID,commentID,userID,startPos,endPos)}}>
+            <form onSubmit={(event) => {handleLogin(event,origin = "")}}>
               <h1> Login Page </h1>
               <label htmlFor='userEmail'>Email</label>
               <br></br>
@@ -1555,7 +1562,7 @@ function App() {
                 <div>
                 You will need to be logged in to view these options.
                 <br></br>
-                <Button onClick={() => {getLoginPage("userProfileOptions",0,userID,startPos,endPos)}}> Login </Button>
+                <Button onClick={() => {getLoginPage("userProfileOptions")}}> Login </Button>
                 </div>
               );
               changeCode(
@@ -1580,7 +1587,7 @@ function App() {
           function showComments(username,comments,start,end,posts){
             showOnlyMain();
             var listOfShownComments = [];
-            var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfileComments",0,userID,startPos,endPos)}}>Like</Button>);
+            var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfileComments")}}>Like</Button>);
             for (let i = start; i < (Math.min(end,comments.length)); i++){
               var dict = comments[i];
               if (cookies.get('sessionID') && cookies.get('id')){
@@ -1696,7 +1703,7 @@ function App() {
             var detect = cookies.get('id') && cookies.get('sessionID');
             for (let i = start; i < (Math.min(end,posts.length)); i++){
               var dict = posts[i];
-              var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfilePosts",0,userID,startPos,endPos)}}>Like</Button>);
+              var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfilePosts")}}>Like</Button>);
               if (detect){
                 likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Like</Button>);
                 if (dict.isLiked === "Liked"){
@@ -1993,7 +2000,7 @@ function App() {
               openInDepthPost();
               var editButton;
               var likePostButton = (
-                <Button onClick={() => {getLoginPage("indepthComment",0,commentID,0,0,0)}}> Like </Button>
+                <Button onClick={() => {getLoginPage("indepthComment")}}> Like </Button>
               );
               if (data.postLiked && data.postLiked === "Liked"){
                 likePostButton = (
@@ -2079,7 +2086,7 @@ function App() {
                 var listOfComments = [];
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
                   var comment = data.comments[key];
-                  var likeButton = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);
+                  var likeButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
                   if (detect){
                     likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Like</Button>);
                     if (comment.commentLiked && comment.commentLiked === "Liked"){
@@ -2133,14 +2140,14 @@ function App() {
                     </li>
                   </ul>)
                 }
-                var postLikedText = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);;
+                var postLikedText = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);;
                 if (detect){
                   postLikedText = (<Button onClick={() => {handlePostLike(data.postID,"indepthPost")}}>Like</Button>);
                   if (data.likedPost && data.likedPost === "Liked"){
                     postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID,"indepthPost")}}>Unlike</Button>)
                   }
                 }
-                var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost",postID,0,0,commentStart,commentEnd)}}>Like</Button>);
+                var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
                 if (detect){
                   writeCommentButton = (<Button onClick={() => {displayCommentWriter(postID,'indepthPost',commentStart,commentEnd)}}>Add Comment</Button>)
                 }
@@ -2199,8 +2206,8 @@ function App() {
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
-          likePostButton = (<Button onClick={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
-          commentButton = (<Button onClick ={() => {getLoginPage(origin,dict.postID,0,0,startPos,endPos,"",searchPosts)}}> Comment </Button>);
+          likePostButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
+          commentButton = (<Button onClick ={() => {getLoginPage(origin)}}> Comment </Button>);
         }
         return (
         <Card key={key}>
@@ -2382,7 +2389,7 @@ function App() {
           </form>
         )
       }
-      //SHOWERS AND HIDERS
+      //SHOWERS AND HIDERS //UPDATE WITH LOGIN CSS
       function showWriteForm(){
         //have something navigate down from the top
         changeWriteFormCSS(
@@ -2470,6 +2477,10 @@ function App() {
             transition: 'height 2s ease-in'
           }
         );
+        changeLoginCSS({
+          height: 'none',
+          transition: 'height 2s ease-in'
+        })
       }
       function showOnlyMain(){
         changeMainBodyCSS(
@@ -2488,6 +2499,26 @@ function App() {
         changeWriteFormCSS(
           {
             height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
+        changeLoginCSS({
+          height: 'none',
+          transition: 'height 2s ease-in'
+        })
+      }
+      function openLoginForm(){
+        changeLoginCSS({
+          height: 'auto',
+          transition: 'height 2s ease-in'
+        })
+        changeMainBodyCSS({
+          height: 'none',
+          transition: 'height 2s ease-in'
+        });
+        changeInDepthCSS(
+          {
             display: 'none',
             transition: 'height 2s ease-in'
           }
@@ -2591,7 +2622,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === 0){
-                getLoginPage("",0,0,0,0,0,"conf");
+                getLoginPage("");
               }
               else if (data.status === -1){//Various Error
                 changeCode(
@@ -2760,7 +2791,7 @@ function App() {
           var userID = data.userID;
           var commentID = data.commentID;
           if (origin === "login"){
-            returnButton = (<Button onClick={()=>{getLoginPage(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+            returnButton = (<Button onClick={()=>{getLoginPage(data.origin)}}> Return </Button>)
           }else if (origin === "userprofileOptions"){
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
           }else if (origin === "userProfileBlockList"){
@@ -2805,7 +2836,7 @@ function App() {
           var userID = data.userID;
           var commentID = data.commentID;
           if (origin === "login"){
-            returnButton = (<Button onClick={()=>{getLoginPage(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+            returnButton = (<Button onClick={()=>{getLoginPage(data.origin)}}> Return </Button>)
           }else if (origin === "userprofileOptions"){
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
           }else if (origin === "userProfileBlockList"){
@@ -2925,6 +2956,9 @@ function App() {
     </div>
     <div className='mainBody' style={mainBodyCSS}>
     {code}
+    </div>
+    <div className='loginForm' style={loginCSS}>
+    {loginCode}
     </div>
     </div>
   );
