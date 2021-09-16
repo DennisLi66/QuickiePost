@@ -78,4 +78,8 @@ create table reactivationCodes(
 	userID int NOT NULL primary key,
     reactivationCode varchar(10),
     addDate datetime NOT NULL
-)
+);
+create table darkModePrefs(
+	userID int NOT NULL primary key,
+	preference varchar(255)
+);

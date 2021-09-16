@@ -14,7 +14,6 @@ require('dotenv').config();
 ////////////////////////UTMOST
 ///////////////////////////////Server: Update session on checking it
 //////////////////////////////Client: Make use of client variables
-//add registration to login screen
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
 //Cancel Button may not work properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
@@ -29,7 +28,6 @@ require('dotenv').config();
 /////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
-//Return posts and comments
 //Redo write post page RECHECK
 //Need to integrate the impact of being blocked; upgrade existing mysql queries
 //check all buttons are in () => {} format
@@ -107,11 +105,46 @@ function App() {
     commentID: 0,
     userID: 0
   })
+  const [lightDarkMode,changeLighting] = React.useState({
+    lightingMode: "light"
+  })
   //
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
-      //Move things around
-      //Deleting Posts
+      //Cancel Button
+      function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
+        if (origin === ""){
+          getHome();
+        }else if (origin === "userProfileOptions"){
+          showUserProfile(userID,0,0,"options");
+        }else if (origin === "indepthPost"){
+          showInDepthPost(postID,startPos,endPos);
+        }else if (origin === "userProfilePosts"){
+          showUserProfile(userID,startPos,endPos,"posts");
+        }else if (origin === "userProfileComments"){
+          showUserProfile(userID,startPos,endPos,"comments");
+        }else if (origin === "indepthComment"){
+          showInDepthComment(commentID);
+        }
+        else if (origin === "userProfile"){
+          showUserProfile(userID);
+        }
+        else if (origin === "myFeed"){
+          getMyFeed(startPos,endPos);
+        }
+        else if (origin === "home"){
+          getHome(startPos,endPos);
+        }else if (origin === "search"){
+          getSearchPage();
+        }
+        else if (origin === "login"){
+          getLoginPage();
+        }
+        else{
+          getHome();
+        }
+      }
+      //Deleting Handlers
       function showDeletePostConfirmation(postID,origin,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -169,7 +202,6 @@ function App() {
             })
         }
       }
-      //Deleting Comments
       function showDeleteCommentConfirmation(commentID,origin,postID,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -227,7 +259,7 @@ function App() {
             })
         }
       }
-      //Edit Posts
+      //Edit Handlers
       function showEditPost(postID,origin,startPos,endPos,title = "",content = "", visibility = ""){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
@@ -310,7 +342,6 @@ function App() {
             }
           })
       }
-      //Edit Comments
       function showEditComment(commentID,origin,postID,startPos,endPos,comments = "",visibility = ""){
         function displayChangedCode(comments,visibility){
           var visibilityToggle;
@@ -402,39 +433,6 @@ function App() {
           visibility = "public";
         }
         showEditComment(commentID,origin,postID,startPos,endPos,document.getElementById('comments').value,visibility);
-      }
-      //Edit Both
-      function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
-        if (origin === ""){
-          getHome();
-        }else if (origin === "userProfileOptions"){
-          showUserProfile(userID,0,0,"options");
-        }else if (origin === "indepthPost"){
-          showInDepthPost(postID,startPos,endPos);
-        }else if (origin === "userProfilePosts"){
-          showUserProfile(userID,startPos,endPos,"posts");
-        }else if (origin === "userProfileComments"){
-          showUserProfile(userID,startPos,endPos,"comments");
-        }else if (origin === "indepthComment"){
-          showInDepthComment(commentID);
-        }
-        else if (origin === "userProfile"){
-          showUserProfile(userID);
-        }
-        else if (origin === "myFeed"){
-          getMyFeed(startPos,endPos);
-        }
-        else if (origin === "home"){
-          getHome(startPos,endPos);
-        }else if (origin === "search"){
-          getSearchPage();
-        }
-        else if (origin === "login"){
-          getLoginPage();
-        }
-        else{
-          getHome();
-        }
       }
       //like handlers
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0, searchPosts = []){
@@ -599,6 +597,8 @@ function App() {
             <Nav.Link
             onClick={logOut}
             >Log Out</Nav.Link>
+            <Nav.Link>
+            Toggle Light/Dark Mode</Nav.Link>
           </Nav>
         </Navbar.Collapse>
           </Navbar>
@@ -629,12 +629,157 @@ function App() {
             <Nav.Link
             onClick={getSearchPage}
             >Search</Nav.Link>
+            <Nav.Link>
+            Toggle Light/Dark Mode</Nav.Link>
           </Nav>
         </Navbar.Collapse>
           </Navbar>
         )
       }
-      //Login Functions --Rework INTO CSS AND UPDATE FUNCTIONS THAT REFERENCE THIS, CHANGE CHANGECODE TO changelogin form and add css changer
+      //Registration Page
+      function getRegistrationPage(origin){
+        openLoginForm();
+        var cancelButton;
+        if (origin !== ""){
+          if (origin === "indepthPost" || origin === "indepthComment"){
+            cancelButton = (<Button variant='dark' onClick={() => {
+              showInDepthPost();
+            }} className='exitButton'>Cancel</Button>);
+          }else{
+            cancelButton = (<Button variant='dark' onClick={() => {
+              showOnlyMain();
+            }} className='exitButton'>Cancel</Button>);
+          }
+        }
+        changeLoginCode(
+          <div>
+          {cancelButton}
+          <form onSubmit={handleRegistration}>
+            <h1> Registration Page</h1>
+            <label htmlFor='userEmail'>Email</label>
+            <br></br>
+            <input type="email" name="userEmail" id="userEmail" required></input>
+            <br></br>
+            <label htmlFor="username">Username</label>
+            <br></br>
+            <input name="username" id="username" required></input>
+            <br></br>
+            <label htmlFor="pswrd">Password</label>
+            <br></br>
+            <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+            <br></br>
+            <label htmlFor="confPswrd">Confirm Password</label>
+            <br></br>
+            <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+            <br></br>        <br></br>
+            <Button variant='dark' type="submit"> Register </Button>
+            <Button variant='dark' onClick={getLoginPage}> Already Have An Account? </Button>
+          </form>
+          </div>
+        )
+      }
+      function handleRegistration(event){
+        event.preventDefault();
+        var email = document.getElementById("userEmail").value;
+        var username = document.getElementById("username").value;
+        var pswrd = document.getElementById("pswrd").value;
+        var confPswrd = document.getElementById("confPswrd").value;
+        if (!(pswrd === confPswrd)){
+          changeCode(
+            <div>
+            <div className="errorMsg">Your passwords did not match.</div>
+            <form onSubmit={handleRegistration}>
+              <h1> Registration Page</h1>
+              <label htmlFor='userEmail'>Email</label>
+              <br></br>
+              <input type="email" name="userEmail" id="userEmail" required></input>
+              <br></br>
+              <label htmlFor="username">Username</label>
+              <br></br>
+              <input name="username" id="username" required></input>
+              <br></br>
+              <label htmlFor="pswrd">Password</label>
+              <br></br>
+              <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+              <br></br>
+              <label htmlFor="confPswrd">Confirm Password</label>
+              <br></br>
+              <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+              <br></br>        <br></br>
+              <Button variant='dark' type="submit"> Register </Button>
+            </form>
+            </div>
+          )
+        }
+        else{
+          const requestSetup = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({email: email, username: username,pswrd:pswrd})
+          };
+          fetch(serverLocation+"/register",requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === 0){
+                getLoginPage("");
+              }
+              else if (data.status === -1){//Various Error
+                changeCode(
+                  <div>
+                  <div className="errMsg">There was an error. Please try again.</div>
+                  <form onSubmit={handleRegistration}>
+                    <h1> Registration Page</h1>
+                    <label htmlFor='userEmail'>Email</label>
+                    <br></br>
+                    <input type="email" name="userEmail" id="userEmail" required></input>
+                    <br></br>
+                    <label htmlFor="username">Username</label>
+                    <br></br>
+                    <input name="username" id="username" required></input>
+                    <br></br>
+                    <label htmlFor="pswrd">Password</label>
+                    <br></br>
+                    <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                    <br></br>
+                    <label htmlFor="confPswrd">Confirm Password</label>
+                    <br></br>
+                    <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+                    <br></br>        <br></br>
+                    <Button variant='dark' type="submit"> Register </Button>
+                  </form>
+                  </div>
+                )
+              }else if (data.status === -2){//Email Already Eists
+                changeCode(
+                  <div>
+                  <div className="errMsg">An account with that email already exists.</div>
+                  <form onSubmit={handleRegistration}>
+                    <h1> Registration Page</h1>
+                    <label htmlFor='userEmail'>Email</label>
+                    <br></br>
+                    <input type="email" name="userEmail" id="userEmail" required></input>
+                    <br></br>
+                    <label htmlFor="username">Username</label>
+                    <br></br>
+                    <input name="username" id="username" required></input>
+                    <br></br>
+                    <label htmlFor="pswrd">Password</label>
+                    <br></br>
+                    <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
+                    <br></br>
+                    <label htmlFor="confPswrd">Confirm Password</label>
+                    <br></br>
+                    <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
+                    <br></br>        <br></br>
+                    <Button variant='dark' type="submit"> Register </Button>
+                  </form>
+                  </div>
+                )
+              }
+            })
+        }
+      }
+      //Login Functions
       function handleLogin(event,origin){
           event.preventDefault();
           var email = document.getElementById("userEmail").value;
@@ -2372,48 +2517,6 @@ function App() {
           </div>
         )
       }
-      //Registration Page
-      function getRegistrationPage(origin){
-        openLoginForm();
-        var cancelButton;
-        if (origin !== ""){
-          if (origin === "indepthPost" || origin === "indepthComment"){
-            cancelButton = (<Button variant='dark' onClick={() => {
-              showInDepthPost();
-            }} className='exitButton'>Cancel</Button>);
-          }else{
-            cancelButton = (<Button variant='dark' onClick={() => {
-              showOnlyMain();
-            }} className='exitButton'>Cancel</Button>);
-          }
-        }
-        changeLoginCode(
-          <div>
-          {cancelButton}
-          <form onSubmit={handleRegistration}>
-            <h1> Registration Page</h1>
-            <label htmlFor='userEmail'>Email</label>
-            <br></br>
-            <input type="email" name="userEmail" id="userEmail" required></input>
-            <br></br>
-            <label htmlFor="username">Username</label>
-            <br></br>
-            <input name="username" id="username" required></input>
-            <br></br>
-            <label htmlFor="pswrd">Password</label>
-            <br></br>
-            <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-            <br></br>
-            <label htmlFor="confPswrd">Confirm Password</label>
-            <br></br>
-            <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
-            <br></br>        <br></br>
-            <Button variant='dark' type="submit"> Register </Button>
-            <Button variant='dark' onClick={getLoginPage}> Already Have An Account? </Button>
-          </form>
-          </div>
-        )
-      }
       //SHOWERS AND HIDERS
       function showWriteForm(){
         //have something navigate down from the top
@@ -2607,107 +2710,6 @@ function App() {
         showUserProfile(cookies.get("id"));
       }
       //Event Handlers
-      function handleRegistration(event){
-        event.preventDefault();
-        var email = document.getElementById("userEmail").value;
-        var username = document.getElementById("username").value;
-        var pswrd = document.getElementById("pswrd").value;
-        var confPswrd = document.getElementById("confPswrd").value;
-        if (!(pswrd === confPswrd)){
-          changeCode(
-            <div>
-            <div className="errorMsg">Your passwords did not match.</div>
-            <form onSubmit={handleRegistration}>
-              <h1> Registration Page</h1>
-              <label htmlFor='userEmail'>Email</label>
-              <br></br>
-              <input type="email" name="userEmail" id="userEmail" required></input>
-              <br></br>
-              <label htmlFor="username">Username</label>
-              <br></br>
-              <input name="username" id="username" required></input>
-              <br></br>
-              <label htmlFor="pswrd">Password</label>
-              <br></br>
-              <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-              <br></br>
-              <label htmlFor="confPswrd">Confirm Password</label>
-              <br></br>
-              <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
-              <br></br>        <br></br>
-              <Button variant='dark' type="submit"> Register </Button>
-            </form>
-            </div>
-          )
-        }
-        else{
-          const requestSetup = {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({email: email, username: username,pswrd:pswrd})
-          };
-          fetch(serverLocation+"/register",requestSetup)
-            .then(response => response.json())
-            .then(data => {
-              if (data.status === 0){
-                getLoginPage("");
-              }
-              else if (data.status === -1){//Various Error
-                changeCode(
-                  <div>
-                  <div className="errMsg">There was an error. Please try again.</div>
-                  <form onSubmit={handleRegistration}>
-                    <h1> Registration Page</h1>
-                    <label htmlFor='userEmail'>Email</label>
-                    <br></br>
-                    <input type="email" name="userEmail" id="userEmail" required></input>
-                    <br></br>
-                    <label htmlFor="username">Username</label>
-                    <br></br>
-                    <input name="username" id="username" required></input>
-                    <br></br>
-                    <label htmlFor="pswrd">Password</label>
-                    <br></br>
-                    <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                    <br></br>
-                    <label htmlFor="confPswrd">Confirm Password</label>
-                    <br></br>
-                    <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
-                    <br></br>        <br></br>
-                    <Button variant='dark' type="submit"> Register </Button>
-                  </form>
-                  </div>
-                )
-              }else if (data.status === -2){//Email Already Eists
-                changeCode(
-                  <div>
-                  <div className="errMsg">An account with that email already exists.</div>
-                  <form onSubmit={handleRegistration}>
-                    <h1> Registration Page</h1>
-                    <label htmlFor='userEmail'>Email</label>
-                    <br></br>
-                    <input type="email" name="userEmail" id="userEmail" required></input>
-                    <br></br>
-                    <label htmlFor="username">Username</label>
-                    <br></br>
-                    <input name="username" id="username" required></input>
-                    <br></br>
-                    <label htmlFor="pswrd">Password</label>
-                    <br></br>
-                    <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                    <br></br>
-                    <label htmlFor="confPswrd">Confirm Password</label>
-                    <br></br>
-                    <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
-                    <br></br>        <br></br>
-                    <Button variant='dark' type="submit"> Register </Button>
-                  </form>
-                  </div>
-                )
-              }
-            })
-        }
-      }
       function handleWritePost(event){
         //FIX THIS: TEST AGAIN AND BEGIN CHANGING THE SESSION ID STUFF
         event.preventDefault();
@@ -2896,6 +2898,10 @@ function App() {
             <div> {returnButton} </div>
           </div>
         )
+      }
+      //Visibility modes
+      function toggleLightAndDarkMode(){
+
       }
       //log out
       function logOut(){
