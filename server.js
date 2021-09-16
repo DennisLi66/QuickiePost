@@ -94,6 +94,7 @@ app.get("/posts", function(req, res) {
   `
   var variables = [];
   if (req.query.userID && req.query.sessionID) {
+    console.log("Logged In Posts")
     sQuery = //works
       `
     SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, if(desig.userID is null,'Unliked','Liked') as Liked,  ifnull(totalComments,0) as totalComments, subDate FROM
@@ -117,7 +118,8 @@ app.get("/posts", function(req, res) {
     ORDER BY posts.subDate desc;
     `;
     variables.push(req.query.userID);
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      console.log(results1);
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -137,9 +139,9 @@ app.get("/posts", function(req, res) {
             })
           } else if (results) {
             // console.log(results);
-            var toPrep = {};
+            var toPrep = [];
             for (let i = 0; i < results.length; i++) {
-              toPrep[i] = {
+              toPrep.push({
                 title: results[i].title,
                 userID: results[i].userID,
                 content: results[i].content,
@@ -149,7 +151,7 @@ app.get("/posts", function(req, res) {
                 totalComments: results[i].totalComments,
                 Liked: results[i].Liked,
                 postID: results[i].postID
-              }
+              });
             }
             return res.status(200).json({
               status: 0,

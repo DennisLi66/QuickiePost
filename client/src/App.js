@@ -2355,7 +2355,7 @@ function App() {
         var commentButton;
         if (cookies.get('sessionID') && cookies.get('id')){
           likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
-          if (hasLiked){
+          if (hasLiked || dict.Liked === "Liked"){
             likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
@@ -2933,11 +2933,12 @@ function App() {
       var listOfPosts = [];
       var extensionString = "";
       if (cookies.get("id") && cookies.get("sessionID")){
-        extensionString = "?sessionID=" + cookies.get("sessionID") + "&id=" + cookies.get("id");
+        extensionString = "?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id");
       }
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
+            console.log(data);
             for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
               listOfPosts.push(simplePost(key,data.contents[key],data.isLiked,"home",beginPosition,endPosition))
             }
