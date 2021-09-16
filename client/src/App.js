@@ -37,33 +37,27 @@ require('dotenv').config();
 //Cancelling a conferred viewership request does not appear to work
 //test showOptions features on other profiles
 //INCLUDE Private posts for self users
-//SHould memoize pagination so its faster
-//check that pagination is actually correct
-//Maybe use nodemailer to reactivate account.
+//SHould memoize pagination so its faster, and check that pagination is actually correct
+//Maybe use nodemailer for forgotten passwords.
 ////////////////
 //test acccount reactivation
 //add a highlight effect to the pagination bar
 //Make sure all appropirate functions check session
 //Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
-//FIX THIS: upgrade simple posts when logged in to post comments
 //FIX THIS: Add a display if there are no posts
 //change color of posts and comments to better differentiate them
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
-//FIX THIS: IF session sent to server is invalid tell me message back to user that session was invalid
 //Check if i really need to set name for cookies
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
 //have a remaining characters tracker for writing post
 //REDO QUERIES - SOME NEED TO BE FIXED
-//may need to add privacy to cookies
 //rewrite post pages to include pagination
 //VIEWERSHIP ENABLEMENT Check if it works
-//add better session check
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //MAke sure to test everything
-//give handleSearch some pagination CHECK THIS
 
 function App() {
   //Variables
@@ -774,7 +768,6 @@ function App() {
           })
       }
       function getLoginPage(origin = "",msg=""){
-        showOnlyMain();
         var cancelButton;
         if (origin !== ""){
           if (origin === "indepthPost" || origin === "indepthComment"){
@@ -818,7 +811,7 @@ function App() {
               </label>
               <br></br><br></br>
               <Button variant='dark' type="submit"> Login </Button>
-              <Button variant='dark' onClick={getRegistrationPage}> Don't Have An Account? </Button>
+              <Button variant='dark' onClick={() => getRegistrationPage(origin)}> Don't Have An Account? </Button>
             </form>
           </div>
         )
@@ -2327,7 +2320,7 @@ function App() {
         if (!contents|| contents.length === 0){
           listOfPosts = (<div> No posts were found. </div>)
         }else{
-          for (let key = 0; key < contents.length; key++){
+          for (let key = start; key < Math.min(end,contents.length); key++){
             listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search",contents))
           }
           if (listOfPosts.length === 0){
@@ -2337,7 +2330,7 @@ function App() {
             var paginationSlots = [];
             for (let i = 0; i < Math.ceil(contents.length / 10); i++){
               paginationSlots.push(
-                <li key={i}><div className="dropdown-item" onClick={() => {paginateSearchPage(contents,10 * i,Math.min(10*i+10,contents.length,title,content,username,sDate))}}>{10 * i + 1} through {Math.min(10*i+10,contents.length)}</div></li>
+                <li key={i}><div className="dropdown-item" onClick={() => {paginateSearchPage(contents,10 * i,Math.min(10*i+10,contents.length),title,content,username,sDate)}}>{10 * i + 1} through {Math.min(10*i+10,contents.length)}</div></li>
               )
             }
             paginationBar = (
@@ -2380,9 +2373,23 @@ function App() {
         )
       }
       //Registration Page
-      function getRegistrationPage(){
+      function getRegistrationPage(origin){
         openLoginForm();
+        var cancelButton;
+        if (origin !== ""){
+          if (origin === "indepthPost" || origin === "indepthComment"){
+            cancelButton = (<Button variant='dark' onClick={() => {
+              showInDepthPost();
+            }} className='exitButton'>Cancel</Button>);
+          }else{
+            cancelButton = (<Button variant='dark' onClick={() => {
+              showOnlyMain();
+            }} className='exitButton'>Cancel</Button>);
+          }
+        }
         changeLoginCode(
+          <div>
+          {cancelButton}
           <form onSubmit={handleRegistration}>
             <h1> Registration Page</h1>
             <label htmlFor='userEmail'>Email</label>
@@ -2404,9 +2411,10 @@ function App() {
             <Button variant='dark' type="submit"> Register </Button>
             <Button variant='dark' onClick={getLoginPage}> Already Have An Account? </Button>
           </form>
+          </div>
         )
       }
-      //SHOWERS AND HIDERS //UPDATE WITH LOGIN CSS
+      //SHOWERS AND HIDERS
       function showWriteForm(){
         //have something navigate down from the top
         changeWriteFormCSS(
@@ -2496,6 +2504,7 @@ function App() {
         );
         changeLoginCSS({
           height: 'none',
+                      display: 'none',
           transition: 'height 2s ease-in'
         })
       }
@@ -2521,7 +2530,8 @@ function App() {
           }
         );
         changeLoginCSS({
-          height: 'none',
+          height: '0%',
+          display: 'none',
           transition: 'height 2s ease-in'
         })
       }
@@ -2532,6 +2542,7 @@ function App() {
         })
         changeMainBodyCSS({
           height: 'none',
+                      display: 'none',
           transition: 'height 2s ease-in'
         });
         changeInDepthCSS(
