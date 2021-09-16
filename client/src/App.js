@@ -12,13 +12,11 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
-///////////////////////////////Server: Update session on checking it
 //////////////////////////////Client: Make use of client variables
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
 //Cancel Button may not work properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
-//rewrite search so it considers if user has liked the post
 //page should also include origin
 //DELETE SessionID check and make it server side
 //on checking session: extend if by an hour
@@ -28,7 +26,6 @@ require('dotenv').config();
 /////
 //!!!PRIORITY
 //FIX THIS UPDATE DISPLAYING ALL POSTS
-//Redo write post page RECHECK
 //Need to integrate the impact of being blocked; upgrade existing mysql queries
 //check all buttons are in () => {} format
 //Notifcation List

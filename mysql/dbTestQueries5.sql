@@ -100,4 +100,4 @@ AND (uzers.visibility != 'private' OR viewerID is not null)
 ORDER BY posts.subDate desc
 ;
 
-select * from likes;
+select * from sessions;

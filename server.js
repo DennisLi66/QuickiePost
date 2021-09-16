@@ -214,7 +214,7 @@ app.get("/myfeed", function(req, res) {
   ORDER by subDate DESC
   ;
   `;
-  connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+  connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
     if (err1) {
       return res.status(200).json({
         status: -1,
@@ -290,7 +290,7 @@ app.get("/search", function(req, res) {
   if (sessionID && userID) {
     //logged in version -- perform cQuery -- do other one first
     //update query to consider user being hidden or private
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -438,7 +438,7 @@ app.route("/post")
         AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
         ORDER BY commentDate DESC;
       `;
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -694,7 +694,7 @@ app.route("/post")
         message: "Nothing to Change."
       })
     }
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1446,7 +1446,7 @@ app.route("/comment")
         message: "No search terms."
       })
     }
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1506,7 +1506,7 @@ app.route("/comment")
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
     `;
     var variables = [req.query.postID, req.query.userID, req.query.content, privacy]
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1548,7 +1548,7 @@ app.route("/comment")
     SET visibility = 'hidden'
     WHERE commentID = ?;
     `;
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -1589,7 +1589,7 @@ app.route("/like")
       `
     INSERT INTO likes (postID,userID) VALUES (?,?);
     `;
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1629,7 +1629,7 @@ app.route("/like")
       `
     DELETE FROM likes WHERE userID = ? AND postID = ?;
     `;
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -1669,7 +1669,7 @@ app.route("/likeComment")
       `
     INSERT INTO commentLikes (commentID,userID) VALUES (?,?);
     `;
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1709,7 +1709,7 @@ app.route("/likeComment")
       `
     DELETE FROM commentLikes WHERE userID = ? AND commentID = ?;
     `;
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -1752,7 +1752,7 @@ app.route("/block")
         message: 'Not Enough Information'
       })
     } else {
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             message: err1,
@@ -1801,7 +1801,7 @@ app.route("/block")
       INSERT INTO blocked (blockedID,blockerID) VALUES (?,?);
       DELETE FROM viewers WHERE (posterID = ? AND viewerID = ?) OR (posterID = ? AND viewerID = ?)
       `;
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             message: err1,
@@ -1841,7 +1841,7 @@ app.route("/block")
         `
       DELETE FROM blocked WHERE blockedID = ? AND blockerID = ?;
       `;
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -1895,7 +1895,7 @@ app.route("/viewership")
       } else {
         variables = [req.query.posterID, req.query.viewerID, req.query.viewerID];
       }
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -1983,7 +1983,7 @@ app.route("/viewership")
       } else {
         variables = [];
       }
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2023,7 +2023,7 @@ app.route("/viewership")
         status: -1
       })
     } else {
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2090,7 +2090,7 @@ app.route("/relationship")
     var u = req.query.userID;
     var p = req.query.profileID;
     var variables = [u, u, p, p, u, u, p, u, p, u, p, p, u, p, u, p, u, u, p, u, p];
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2138,7 +2138,7 @@ app.route("/whosviewingme")
         message: "Not Enough Information."
       })
     }
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2186,7 +2186,7 @@ app.route("/whoimviewing")
         message: "Not Enough Information."
       })
     }
-    connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2327,7 +2327,7 @@ app.route("/mylikedposts")
        AND ((postVisibility != 'private'AND userVisibility != 'private') OR userID = ? OR viewerID is not null)
       order by subDate desc
       `;
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields1) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2401,7 +2401,7 @@ app.route("/mylikedcomments")
       AND ((commenterVisibility != 'private' AND commentVisibility != 'private') OR commentViewerID is not null OR commenterID = ?)
       AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVisibility is not null OR posterID = ?)
       `;
-      connection.query(cQuery, [req.query.userID, req.query.sessionID], function(err1, results1, fields1) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
