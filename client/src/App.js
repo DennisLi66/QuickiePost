@@ -954,9 +954,27 @@ function App() {
               <br></br><br></br>
               <Button variant='dark' type="submit"> Login </Button>
               <Button variant='dark' onClick={() => getRegistrationPage(origin)}> Don't Have An Account? </Button>
+              <Button variant='dark' onClick={() => forgotPasswordPage(origin)}> </Button>
             </form>
           </div>
         )
+      }
+      function forgotPasswordPage(origin = ""){
+        changeLoginCode(
+          <div>
+            <h1> Forgot Your Password? </h1>
+            <div> If you've forgotten your password, you can enter your email below to set a new password. </div>
+            <form onSubmit={handleForgotPassword}>
+              <input id='email' name='email' type='email' required> </input>
+              <Button type='submit'> Submit </Button>
+            </form>
+            <Button onClick={getRegistrationPage}> I don't have an account. </Button>
+            <Button onClick={getLoginPage}> I remember my password. </Button>
+          </div>
+        )
+      }
+      function handleForgotPassword(event){
+
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
