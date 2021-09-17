@@ -959,9 +959,10 @@ function App() {
           </div>
         )
       }
-      function forgotPasswordPage(origin = ""){
+      function forgotPasswordPage(msg = ""){
         changeLoginCode(
           <div>
+            <div className = "errorMsg"> {msg} </div>
             <h1> Forgot Your Password? </h1>
             <div> If you've forgotten your password, you can enter your email below to set a new password. </div>
             <form onSubmit={handleForgotPassword}>
@@ -976,6 +977,25 @@ function App() {
       function handleForgotPassword(event){
         event.preventDefault();
         var email = document.getElementById('email').value;
+        const requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({email:email})
+        };
+        fetch(serverLocation + "/forgotPassword",requestSetup)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              showErrorPage({origin: "forgotPassword", message: data.message})
+            }else if (data.status === -2){
+              forgotPasswordPage("That email was not found.")
+            }else{
+              showForgotPasswordChancesScreen(email);
+            }
+          })
+      }
+      function showForgotPasswordChancesScreen(email, chances = 3){
+        
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
@@ -2899,7 +2919,10 @@ function App() {
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"comments")}}> Return </Button>)
           }else if (origin === "userProfilePosts"){
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"posts")}}> Return </Button>)
-          }else{//origin is a common thing, use cancel
+          }else if (origin === "forgotPassword"){
+            returnButton = (<Button onClick={()=>{forgotPasswordPage()}}> Return </Button>);
+          }
+          else{//origin is a common thing, use cancel
             returnButton = (<Button onClick={()=>{cancel(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
           }
         }else{ // data.origin did not exist, redirect to home
