@@ -974,7 +974,8 @@ function App() {
         )
       }
       function handleForgotPassword(event){
-
+        event.preventDefault();
+        var email = document.getElementById('email').value;
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){

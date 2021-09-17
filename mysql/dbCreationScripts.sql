@@ -83,3 +83,8 @@ create table darkModePrefs(
 	userID int NOT NULL primary key,
 	preference varchar(255)
 );
+create table forgottenPasswordCodes(
+	email varchar(255) NOT NULL primary key,
+    fpCode varchar(10),
+    addDate datetime NOT NULL
+);

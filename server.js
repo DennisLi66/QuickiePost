@@ -941,7 +941,7 @@ app.route("/reactivationCode")
           var mailOptions = {
             from: process.env.EMAILUSER,
             to: results[1][0].email,
-            subject: 'Password Recovery Link',
+            subject: 'Reactivation Account Link',
             html: 'Your code is ' + code  + '.'
           };
           transporter.sendMail(mailOptions, function(error, info) {
@@ -953,8 +953,8 @@ app.route("/reactivationCode")
             }else{
               return res.status(200).json({
                 status: 0,
-                message: "Successful Action.",
-                code: code
+                message: "Successful Action."
+                // ,code: code
               })
             }
           })
@@ -1027,6 +1027,98 @@ app.route("/checkReactivationCode")
       })
     }
   })
+  app.route("/forgotPassword")
+    .post(function(req,res){
+      if (!req.body.email){
+        return res.status(200).json({
+          status: -1,
+          message: "Not Enough Information."
+        })
+      }
+      else{
+        //generate random code and insert
+        var code = randomatic('A0', 6);
+        var iorUQuery =
+        `
+        INSERT INTO forgottenPasswordCodes
+          (email,fpCode,addDate)
+        values
+          (?,?,NOW())
+        ON DUPLICATE KEY UPDATE
+          email = VALUES(email),
+          fpCode = VALUES(fpCode),
+          addDate = VALUES(addDate);
+        SELECT * FROM users WHERE email = ?;
+        `;
+        connection.query(iorUQuery,[req.body.email,code,req.body.email],function(error,results,fields){
+          if (err){
+            return res.status(200).json({
+              status: -1,
+              message: error
+            })
+          }else{
+            var mailOptions = {
+              from: process.env.EMAILUSER,
+              to: req.body.email,
+              subject: 'Password Recovery Link',
+              html: 'Your code is ' + code  + '.'
+            };
+            transporter.sendMail(mailOptions,function(error,info){
+              if (error){
+                return res.status(200).json({
+                  status: 1,
+                  message: error
+                })
+            })
+              else{
+                return res.status(200).json({
+                  status: 0,
+                  message: "Successful Forgotten Password Stored."
+                })
+              }
+          }
+        })
+      }
+        })
+      }
+    })
+  app.route("/checkForgottenPassword")
+    .post(function(req,res){
+      //will need to edit user
+      if (!req.body.email || !req.body.fpCode){
+        return res.status(200).json({
+          status: -1,
+          message: "Not enough information."
+        })
+      }
+      else{
+        var sQuery =
+        `
+        SELECT * FROM
+        forgottenPasswordCodes
+        WHERE email = ? AND fpCode = ?;
+        `
+        connection.query(sQuery,[req.body.email,req.body.fpCode],function(err,results,fields){
+          if (err){
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          }
+          else if (results.length === 0){
+            return res.status(200).status({
+              message: "Invalid Combination.",
+              status: -2
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "Worked."
+            })
+          }
+        })
+      }
+    })
 app.route("/user")
   //Get User and Associated Posts
   .get(function(req, res) {
@@ -1269,7 +1361,55 @@ app.route("/user")
   })
   //Edit User Info
   .patch(function(req, res) { //right now only visibility is updatable, maybe pswrd, maybe classification
-
+    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) || (!req.body.pswrd)){
+      return res.status(200).json({
+        status: -1,
+        message: "Not enough information."
+      })
+    }
+    else{
+      var uQueryFragment =
+      `
+      UPDATE users
+      SET
+      `
+      var fragments = [];
+      var variables = [];
+      if (req.body.visibility){
+        fragments.push('visibility = ?');
+        variables.push(req.body.visibility);
+      }
+      if (req.body.userName){
+        fragments.push('userName = ?');
+        variables.push(req.body.userName);
+      }
+      if (req.body.pswrd){
+        fragments.push('pswrd = ?');
+        variables.push(req.body.pswrd);
+      }
+      var finalFragment;
+      if (req.body.email){
+        finalFragment = " WHERE email = ?;"
+        variables.push(req.body.email);
+      }else{
+        finalFragment = " WHERE userID = ?;"
+        variables.push(req.body.userID);
+      }
+      var finalQuery = uQueryFragment + fragments.join(",") + finalFragment;
+      connection.query(finalQuery,variables,function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            message: err,
+            status: -1
+          })
+        }else{
+          return res.status(200).json({
+            status: 0,
+            message: "Update Successful."
+          })
+        }
+      })
+    }
   })
 //Delete User (and maybe posts) // Set a user to hidden
 app.route("/comment")
@@ -2454,11 +2594,6 @@ app.route("/mylikedcomments")
         }
       })
     }
-  })
-//Admin Actions
-app.route("/admin")
-  .get(function(req, res) {
-
   })
 
 app.listen(3001, function() {
