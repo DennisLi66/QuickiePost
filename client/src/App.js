@@ -1054,6 +1054,7 @@ function App() {
                 <div>
                   <h1> Password Change </h1>
                   <form onSubmit={changePassword}>
+                    <input type='hidden' value={email}> </input>
                     <label htmlFor='newPass'> Enter New Password: </label>
                     <br></br>
                     <input id='newPass' name='newPass' required></input>
@@ -1068,8 +1069,52 @@ function App() {
             }
           })
       }
-      function changePassword(){
-
+      function changePassword(event){
+        event.preventDefault();
+        var password = document.getElementById('newPass').value;
+        var confPass = document.getElementById('confPass').value;
+        var email = document.getElementById('email').value;
+        if (password !== confPass){
+          changeLoginCode(
+            <div>
+              <div className='errorMsg'> Those passwords did not match. </div>
+              <h1> Password Change </h1>
+              <form onSubmit={changePassword}>
+                <input type='hidden' value={email}> </input>
+                <label htmlFor='newPass'> Enter New Password: </label>
+                <br></br>
+                <input id='newPass' name='newPass' required></input>
+                <br></br>
+                <label htmlFor='confPass'>Confirm Password:</label>
+                <br></br>
+                <input id='confPass' name='confPass' required></input>
+                <Button type="submit"> Change Password </Button>
+              </form>
+            </div>
+          )
+        }else{
+          var requestSetup = {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({email:email,fpCode:code})
+          }
+          fetch(serverLocation + "/user",requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === -1){
+                showErrorPage({message: data.message, origin: "forgotPassword"})
+              }else{
+                changeLoginCode(
+                  <div>
+                    <h1> Password Successfully Changed</h1>
+                    You may now use your new password to log in.
+                    <br></br>
+                    <Button onClick={getLoginPage}> Login </Button>
+                  </div>
+                )
+              }
+            })
+        }
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
