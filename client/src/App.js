@@ -990,12 +990,86 @@ function App() {
             }else if (data.status === -2){
               forgotPasswordPage("That email was not found.")
             }else{
-              showForgotPasswordChancesScreen(email);
+              changeLoginCode(
+                <div>
+                  <h1> Password Recovery </h1>
+                  <h3> You have been sent a code to the email {email}. Find it and enter it below.</h3>
+                  Chances Left: 3
+                  <br></br>
+                  <form onSubmit={(event) => {handleForgotPasswordChances(email)}}>
+                    Enter Code Here
+                    <br></br>
+                    <input type='hidden' value={email} id='email'> </input>
+                    <input id='code' name='code' required> </input>
+                    <Button type='submit'> Submit </Button>
+                  </form>
+                  <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
+                </div>
+              )
             }
           })
       }
-      function showForgotPasswordChancesScreen(email, chances = 3){
-        
+      function handleForgotPasswordChances(event,email,chances = 3){
+        var code = document.getElementById('code').value;
+        var requestSetup = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({email:email,fpCode:code})
+        }
+        fetch(serverLocation + "/checkForgottenPassword" , requestSetup)
+          .then(response=>response.json())
+          .then(data=>{
+            if (data.status === -1){
+              showErrorPage({origin: "forgotPassword", message: data.message});
+            }else if (data.status === -2){
+              if (chances <= 1){
+                changeLoginCode(
+                  <div>
+                  <h1> Password Recovery </h1>
+                    <h3> You have run out of tries. </h3>
+                    <input type='hidden' value={email} id='email'> </input>
+                    <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
+                  </div>
+                )
+              }else{
+                changeLoginCode(
+                  <div>
+                  <h1> Password Recovery </h1>
+                    <h3> You have been sent a code to the email {email}. Find it and enter it below.</h3>
+                    Chances Left: {chances - 1}
+                    <br></br>
+                    <form onSubmit={(event) => {handleForgotPasswordChances(email,chances - 1)}}>
+                      Enter Code Here
+                      <br></br>
+                      <input id='code' name='code' required> </input>
+                      <input type='hidden' value={email} id='email'> </input>
+                      <Button type='submit'> Submit </Button>
+                    </form>
+                    <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
+                  </div>
+                )
+              }
+            }else{
+              changeLoginCode(
+                <div>
+                  <h1> Password Change </h1>
+                  <form onSubmit={changePassword}>
+                    <label htmlFor='newPass'> Enter New Password: </label>
+                    <br></br>
+                    <input id='newPass' name='newPass' required></input>
+                    <br></br>
+                    <label htmlFor='confPass'>Confirm Password:</label>
+                    <br></br>
+                    <input id='confPass' name='confPass' required></input>
+                    <Button type="submit"> Change Password </Button>
+                  </form>
+                </div>
+              )
+            }
+          })
+      }
+      function changePassword(){
+
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
