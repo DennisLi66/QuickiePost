@@ -839,7 +839,63 @@ app.route("/like")
   })
 app.route("/getPostWithHashtag")
   .get(function(req,res){
+    if (!req.query.hashtag){
+      return res.status(200).json({
+        message: "Not Enough Information.",
+        status: -1
+      })
+    }
+    else{
+      if (req.query.userID && req.query.sessionID){
 
+      }else{
+        var sQuery =
+        `
+        SELECT
+        posts.postID as postID, posts.userID as userID,title,content, posts.visibility as postVisibility, subDate,
+        users.userID as userID, userName as username, users.visibility as userVisibility, ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments
+        FROM posts
+        LEFT JOIN users ON users.userID = posts.userID
+        LEFT JOIN (SELECT postID, count(*) as likeAmount FROM likes group by postID) as totalLikes ON posts.postID = totalLikes.postID
+        LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
+        WHERE title LIKE ?
+        OR content LIKE ?
+        AND posts.visibility != 'hidden'
+        AND users.visibility != 'hidden'
+        AND (posts.visibility != 'private')
+        AND (users.visibility != 'private')
+        order by subDate DESC
+        `;
+        connection.query(sQuery,[req.query.hashtag,req.query.hashtag],function(err,results,fields){
+          if (err){
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          }
+          else{
+            var toPrep = [];
+            for (let i = 0; i < results.length; i++) {
+              toPrep.push({
+                title: results[i].title,
+                userID: results[i].userID,
+                content: results[i].content,
+                subDate: results[i].subDate,
+                username: results[i].username,
+                totalLikes: results[i].totalLikes,
+                totalComments: results[i].totalComments,
+                postID: results[i].postID
+              })
+            }
+            return res.status(200).json({
+              status: 0,
+              message: "Request Received.",
+              contents: toPrep
+            })
+          }
+        })
+      }
+    }
   })
 // User Info Endpoints
 app.post("/register", function(req, res) {

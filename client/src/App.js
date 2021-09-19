@@ -119,7 +119,7 @@ function App() {
         }
         return (
         <Card key={key}>
-          <Card.Title> {dict.title} </Card.Title>
+          <Card.Title> {parseMessage(dict.title)} </Card.Title>
           <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
           <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
           <Card.Body> {parseMessage(dict.content)} </Card.Body>
@@ -174,7 +174,7 @@ function App() {
         }
         return (<div dangerouslySetInnerHTML={{__html:newMessage}}></div>);
       }
-      function searchHashtag(){
+      function searchHashtag(hashtag){
 
       }
       //Cancel Button
