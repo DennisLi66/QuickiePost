@@ -18,26 +18,20 @@ require('dotenv').config();
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
 //page should also include origin
-//DELETE SessionID check and make it server side
-//on checking session: extend if by an hour
 //Queries need to be rechecked
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
 /////
 //!!!PRIORITY
-//FIX THIS UPDATE DISPLAYING ALL POSTS
 //Need to integrate the impact of being blocked; upgrade existing mysql queries
 //check all buttons are in () => {} format
-//Notifcation List
+//Notifcation List - what has changed since last sessionID update?
 //Cancelling a conferred viewership request does not appear to work
 //test showOptions features on other profiles
-//INCLUDE Private posts for self users
 //SHould memoize pagination so its faster, and check that pagination is actually correct
-//Maybe use nodemailer for forgotten passwords.
 ////////////////
 //test acccount reactivation
 //add a highlight effect to the pagination bar
-//Make sure all appropirate functions check session
 //Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
 //FIX THIS: Add a display if there are no posts
@@ -52,15 +46,16 @@ require('dotenv').config();
 //rewrite post pages to include pagination
 //VIEWERSHIP ENABLEMENT Check if it works
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
+//test forgotten password
 //MAke sure to test everything
-
+//fix home
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
   // const serverLocation = process.env.SERVERLOCATION;
   const cookies = React.useMemo(() => {return new Cookies()},[])
   //Important Variables
-  const [code,changeCode] = React.useState(
+  const [mainCode,changeCode] = React.useState(
     <div>
     <h1> QuickiePost </h1>
     </div>
@@ -108,6 +103,80 @@ function App() {
   //
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
+      //Helper Functions
+      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
+        var likePostButton;
+        var commentButton;
+        if (cookies.get('sessionID') && cookies.get('id')){
+          likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
+          if (hasLiked || dict.Liked === "Liked"){
+            likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
+          }
+          commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
+        }else{
+          likePostButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
+          commentButton = (<Button onClick ={() => {getLoginPage(origin)}}> Comment </Button>);
+        }
+        return (
+        <Card key={key}>
+          <Card.Title> {dict.title} </Card.Title>
+          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+          <Card.Body> {parseMessage(dict.content)} </Card.Body>
+          <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+          <Card.Body>
+          Likes: {dict.totalLikes}
+          <br></br>
+          {likePostButton}
+          <br></br>
+          Comments: {dict.totalComments}
+          <br></br>
+          {commentButton}
+          <br></br>
+          <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+          </Card.Body>
+        </Card>
+        )
+      }
+      function parseMessage(message){ //use in both posts and comments
+        var newMessage = "";
+        for (let i = 0; i < message.length; i++){
+          if (message[i] === '#'){
+            var hashtag = '#';
+            for (let i1 = 1; i + i1 < message.length; i++){
+              if (message[i] === ' ' || message[i] === '#'){
+                if (hashtag.length === 1){
+                  newMessage += hashtag;
+                  i = i1 + i;
+                  break;
+                }else{
+                  newMessage += "<Button onClick=searchHashtag("+ hashtag +")>" + hashtag + "</Button>"
+                  i = i1 + i;
+                  break;
+                }
+              }else if (i + i1 + 1 === message.length){
+                if (hashtag.length === 1){
+                  newMessage += hashtag;
+                  i = i1 + i;
+                  break;
+                }else{
+                  newMessage += "<Button onClick=searchHashtag("+ hashtag +")>" + hashtag + "</Button>"
+                  i = i1 + i;
+                  break;
+                }
+              }else{
+                hashtag += message[i];
+              }
+            }
+          }else{
+            newMessage += message[i];
+          }
+        }
+        return (<div dangerouslySetInnerHTML={{__html:newMessage}}></div>);
+      }
+      function searchHashtag(){
+
+      }
       //Cancel Button
       function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         if (origin === ""){
@@ -818,7 +887,7 @@ function App() {
                       you will be able to see your private posts and comments.
                       <br></br>
                       If you would like to reactivate your account, you can receive an email to do so.
-                      <Button onClick={getHome}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin)}> Reactivate Account </Button>
+                      <Button onClick={() => {getHome()}}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin)}> Reactivate Account </Button>
                     </div>
                   </div>
                 )
@@ -1096,7 +1165,7 @@ function App() {
           var requestSetup = {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({email:email,fpCode:code})
+            body: JSON.stringify({email:email,pswrd: password})
           }
           fetch(serverLocation + "/user",requestSetup)
             .then(response => response.json())
@@ -2505,40 +2574,6 @@ function App() {
                 );
               }
             })}
-      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
-        var likePostButton;
-        var commentButton;
-        if (cookies.get('sessionID') && cookies.get('id')){
-          likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
-          if (hasLiked || dict.Liked === "Liked"){
-            likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
-          }
-          commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
-        }else{
-          likePostButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
-          commentButton = (<Button onClick ={() => {getLoginPage(origin)}}> Comment </Button>);
-        }
-        return (
-        <Card key={key}>
-          <Card.Title> {dict.title} </Card.Title>
-          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
-          <Card.Body> {dict.content} </Card.Body>
-          <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-          <Card.Body>
-          Likes: {dict.totalLikes}
-          <br></br>
-          {likePostButton}
-          <br></br>
-          Comments: {dict.totalComments}
-          <br></br>
-          {commentButton}
-          <br></br>
-          <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
-          </Card.Body>
-        </Card>
-        )
-      }
       //Search Page
       function getSearchPage(){
         showOnlyMain();
@@ -2599,7 +2634,6 @@ function App() {
         }
         url += toJoin.join('&')
         url = encodeURI(url);
-        // console.log(url);
         //fetch and changecode to a new screen that displays all the posts
         fetch(url)
         .then(response=>response.json())
@@ -3071,7 +3105,7 @@ function App() {
         fetch(serverLocation + "/posts")
           .then(response=>response.json())
           .then(data => {
-              getHome('exit');
+              getHome();
           })
       }
       //MAIN
@@ -3096,7 +3130,6 @@ function App() {
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
-            console.log(data);
             for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
               listOfPosts.push(simplePost(key,data.contents[key],data.isLiked,"home",beginPosition,endPosition))
             }
@@ -3147,7 +3180,7 @@ function App() {
       {inDepthCode}
     </div>
     <div className='mainBody' style={mainBodyCSS}>
-    {code}
+    {mainCode}
     </div>
     <div className='loginForm' style={loginCSS}>
     {loginCode}

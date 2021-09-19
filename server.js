@@ -1,7 +1,7 @@
 //Things to Do
 //Maybe Search By Hashtags?
-//Add updating sessions
 //add an error for if user is blocked
+//add hashtags to search
 
 require('dotenv').config();
 const express = require("express");
@@ -401,6 +401,7 @@ app.get("/search", function(req, res) {
     })
   }
 })
+///Post Endpoints
 app.route("/post")
   //Retrieve Single Post
   .get(function(req, res) {
@@ -755,7 +756,92 @@ app.route("/post")
       }
     })
   })
-// Register Account -- Requires Look up
+app.route("/like")
+  .put(function(req, res) {
+    //check sessions and userID, then add like
+    if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    var iQuery =
+      `
+    INSERT INTO likes (postID,userID) VALUES (?,?);
+    `;
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          message: err1,
+          status: -1
+        })
+      } else if (results1.length === 0) {
+        return res.status(200).json({
+          status: -11,
+          message: "Not Valid Session"
+        })
+      } else {
+        connection.query(iQuery, [req.query.postID, req.query.userID], function(err2, results2, fields) {
+          if (err2) {
+            return res.status(200).json({
+              message: err2,
+              status: -1
+            })
+          } else {
+            return res.status(200).json({
+              status: 0,
+              message: "Like Inserted."
+            })
+          }
+        })
+      }
+    })
+  })
+  .delete(function(req, res) {
+    //check sessions and userID, then remove like
+    if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    var dQuery =
+      `
+    DELETE FROM likes WHERE userID = ? AND postID = ?;
+    `;
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      if (err1) {
+        return res.status(200).json({
+          status: -1,
+          message: err1
+        })
+      } else if (results1.length === 0) {
+        return res.status(200).json({
+          status: -11,
+          message: "Not Valid Session"
+        })
+      } else {
+        connection.query(dQuery, [req.query.userID, req.query.postID], function(err2, results2, fields) {
+          if (err2) {
+            return res.status(200).json({
+              status: -1,
+              message: err2
+            })
+          } else {
+            return res.status(200).json({
+              status: 0,
+              message: "Deletion Occured."
+            })
+          }
+        })
+      }
+    })
+  })
+app.route("/getPostWithHashtag")
+  .get(function(req,res){
+
+  })
+// User Info Endpoints
 app.post("/register", function(req, res) {
   var email = req.body.email;
   var pswrd = req.body.pswrd;
@@ -1069,19 +1155,18 @@ app.route("/checkReactivationCode")
                   status: 1,
                   message: error
                 })
-            })
+              }
               else{
                 return res.status(200).json({
                   status: 0,
                   message: "Successful Forgotten Password Stored."
                 })
               }
-          }
+          })
+        }
         })
-      }
-        })
-      }
-    })
+        }
+      })
   app.route("/checkForgottenPassword")
     .post(function(req,res){
       //will need to edit user
@@ -1119,10 +1204,10 @@ app.route("/checkReactivationCode")
         })
       }
     })
+//User Info Endpoints
 app.route("/user")
-  //Get User and Associated Posts
   .get(function(req, res) {
-    //get comments of affiliated user
+  //Get User and Associated Posts
     var sessionID = req.query.sessionID;
     var userID = req.query.userID;
     var profileID = req.query.profileID;
@@ -1359,8 +1444,7 @@ app.route("/user")
       })
     }
   })
-  //Edit User Info
-  .patch(function(req, res) { //right now only visibility is updatable, maybe pswrd, maybe classification
+  .patch(function(req, res) {   //Edit User Info
     if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) || (!req.body.pswrd)){
       return res.status(200).json({
         status: -1,
@@ -1411,7 +1495,6 @@ app.route("/user")
       })
     }
   })
-//Delete User (and maybe posts) // Set a user to hidden
 app.route("/comment")
   .get(function(req, res) {
     //REWORK THIS ROUTE
@@ -1701,87 +1784,6 @@ app.route("/comment")
         })
       } else {
         connection.query(eQuery, [req.query.commentID], function(err2, results2, fields) {
-          if (err2) {
-            return res.status(200).json({
-              status: -1,
-              message: err2
-            })
-          } else {
-            return res.status(200).json({
-              status: 0,
-              message: "Deletion Occured."
-            })
-          }
-        })
-      }
-    })
-  })
-app.route("/like")
-  .put(function(req, res) {
-    //check sessions and userID, then add like
-    if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
-      return res.status(200).json({
-        status: -1,
-        message: "Not Enough Information."
-      })
-    }
-    var iQuery =
-      `
-    INSERT INTO likes (postID,userID) VALUES (?,?);
-    `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
-      if (err1) {
-        return res.status(200).json({
-          message: err1,
-          status: -1
-        })
-      } else if (results1.length === 0) {
-        return res.status(200).json({
-          status: -11,
-          message: "Not Valid Session"
-        })
-      } else {
-        connection.query(iQuery, [req.query.postID, req.query.userID], function(err2, results2, fields) {
-          if (err2) {
-            return res.status(200).json({
-              message: err2,
-              status: -1
-            })
-          } else {
-            return res.status(200).json({
-              status: 0,
-              message: "Like Inserted."
-            })
-          }
-        })
-      }
-    })
-  })
-  .delete(function(req, res) {
-    //check sessions and userID, then remove like
-    if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
-      return res.status(200).json({
-        status: -1,
-        message: "Not Enough Information."
-      })
-    }
-    var dQuery =
-      `
-    DELETE FROM likes WHERE userID = ? AND postID = ?;
-    `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
-      if (err1) {
-        return res.status(200).json({
-          status: -1,
-          message: err1
-        })
-      } else if (results1.length === 0) {
-        return res.status(200).json({
-          status: -11,
-          message: "Not Valid Session"
-        })
-      } else {
-        connection.query(dQuery, [req.query.userID, req.query.postID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
               status: -1,
@@ -2436,10 +2438,6 @@ app.route("/changeVisibility")
         }
       })
     }
-  })
-app.route("/visibility")
-  .get(function(req, res) {
-
   })
 app.route("/mylikedposts")
   .get(function(req, res) {
