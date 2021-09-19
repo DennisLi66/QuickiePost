@@ -95,7 +95,7 @@ app.get("/posts", function(req, res) {
   var variables = [];
   if (req.query.userID && req.query.sessionID) {
     console.log("Logged In Posts")
-    sQuery = //works
+    sQuery = //FIX THIS: VISIBILITY PRIVACY
       `
     SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, if(desig.userID is null,'Unliked','Liked') as Liked,  ifnull(totalComments,0) as totalComments, subDate FROM
     ( SELECT * from posts
@@ -119,7 +119,6 @@ app.get("/posts", function(req, res) {
     `;
     variables.push(req.query.userID);
     connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
-      console.log(results1);
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -847,26 +846,84 @@ app.route("/getPostWithHashtag")
     }
     else{
       if (req.query.userID && req.query.sessionID){
-
+        connection.query(cQuery + updateSessionQuery,[req.query.userID, req.query.sessionID,req.query.sessionID],function(err1,resu;ts1,fields1){
+          if (err1) {
+            return res.status(200).json({
+              status: -1,
+              message: err1
+            })
+          } else if (results1.length === 0) {
+            return res.status(200).json({
+              status: -11,
+              message: "Not Valid Session."
+            })
+          } else {
+            var sQuery =
+            `
+            SELECT
+            posts.postID as postID, posts.userID as userID,title,content, posts.visibility as postVisibility, subDate, users.userID as userID,
+            userName as username, users.visibility as userVisibility, ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments,
+            if(isLiked.userID is null,"false","true") as Liked, if(viewership.viewerID is null,'false','true') as isViewer
+            FROM posts
+            LEFT JOIN users ON users.userID = posts.userID
+            LEFT JOIN (SELECT postID, count(*) as likeAmount FROM likes group by postID) as totalLikes ON posts.postID = totalLikes.postID
+            LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
+            LEFT JOIN (SELECT postID, userID from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
+            LEFT JOIN (SELECT * from viewers WHERE viewerID = ?) viewership on viewership.posterID = posts.userID
+            WHERE title LIKE ? OR content LIKE ?
+            AND posts.visibility != 'hidden' AND users.visibility != 'hidden'
+            AND (posts.visibility != 'private' OR viewerID is not null)
+            AND (users.visibility != 'private' OR viewerID is not null)
+            order by subDate DESC
+            `;
+            connection.query(sQuery, [req.query.userID,req.query.userID,'%' + req.query.hashtag + "%",'%' + req.query.hashtag + "%"], function(err, results, fields) {
+              if (err){
+                return res.status(200).json({
+                  status: -1,
+                  message: err
+                })
+              }
+              else{
+                var toPrep = [];
+                for (let i = 0; i < results.length; i++) {
+                  toPrep.push({
+                    title: results[i].title,
+                    userID: results[i].userID,
+                    content: results[i].content,
+                    subDate: results[i].subDate,
+                    username: results[i].username,
+                    totalLikes: results[i].totalLikes,
+                    totalComments: results[i].totalComments,
+                    postID: results[i].postID
+                  })
+                }
+                return res.status(200).json({
+                  status: 0,
+                  message: "Request Received.",
+                  contents: toPrep
+                })
+              }
+            })
+          }
+        })
       }else{
         var sQuery =
         `
         SELECT
         posts.postID as postID, posts.userID as userID,title,content, posts.visibility as postVisibility, subDate,
-        users.userID as userID, userName as username, users.visibility as userVisibility, ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments
-        FROM posts
-        LEFT JOIN users ON users.userID = posts.userID
+        users.userID as userID, userName as username, users.visibility as userVisibility,
+        ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments
+        FROM posts LEFT JOIN users ON users.userID = posts.userID
         LEFT JOIN (SELECT postID, count(*) as likeAmount FROM likes group by postID) as totalLikes ON posts.postID = totalLikes.postID
         LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
-        WHERE title LIKE ?
-        OR content LIKE ?
+        WHERE title LIKE ? OR content LIKE ?
         AND posts.visibility != 'hidden'
         AND users.visibility != 'hidden'
         AND (posts.visibility != 'private')
         AND (users.visibility != 'private')
         order by subDate DESC
         `;
-        connection.query(sQuery,[req.query.hashtag,req.query.hashtag],function(err,results,fields){
+        connection.query(sQuery,['%' + req.query.hashtag + '%','%' + req.query.hashtag + '%'],function(err,results,fields){
           if (err){
             return res.status(200).json({
               status: -1,
