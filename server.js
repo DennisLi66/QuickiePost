@@ -1,5 +1,4 @@
 //Things to Do
-//Maybe Search By Hashtags?
 //add an error for if user is blocked
 
 require('dotenv').config();
@@ -636,7 +635,7 @@ app.route("/post")
         })
       } else {
         //search for valid session
-        connection.query(cQuery, [userID, sessionID], function(errorr, resultss, fieldss) {
+        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(errorr, resultss, fieldss) {
           if (errorr) {
             return res.status(200).json({
               status: -1,
@@ -1468,7 +1467,7 @@ app.route("/user")
       AND users.visibility != 'hidden' AND
       (users.visibility != 'private' OR users.userID = ?);
       `;
-      connection.query(cQuery, [userID, sessionID], function(cErr, cResults, cFields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(cErr, cResults, cFields) {
         if (cErr) {
           return res.status(200).json({
             status: -1,
@@ -1708,7 +1707,7 @@ app.route("/comment")
         )
         AND comments.commentID = ?
         `;
-        connection.query(cQuery, [userID, sessionID], function(err1, results1, fields) {
+        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
           if (err1) {
             return res.status(200).json({
               status: -1,
@@ -2495,7 +2494,7 @@ app.route("/changeVisibility")
       SET visibility = ?
       WHERE email = ?;
       `;
-      connection.query(cQuery, [req.body.userID, req.body.sessionID], function(err1, results1, fields1) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2699,6 +2698,54 @@ app.route("/mylikedcomments")
                 status: 0,
                 message: "Request Received.",
                 contents: toPrep
+              })
+            }
+          })
+        }
+      })
+    }
+  })
+app.route("/setLightingPreference")
+  .post(function(req,res){
+    if (!req.body.userID || !req.body.sessionID || !req.body.lighting){
+      return res.status(200).json({
+        message: "Not Enough Information",
+        status: -1
+      })
+    }
+    else{
+      connection.query(cQuery + updateSessionQuery, [req.body.userID, req.body.sessionID,req.body.sessionID], function(err1, results1, fields1) {
+        if (err1) {
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        } else if (results1.length === 0) {
+          return res.status(200).json({
+            status: -11,
+            message: "Not Valid Session"
+          })
+        } else {
+          var iorUQuery =
+          `
+          INSERT INTO darkModePrefs
+            (userID,preference)
+          values
+            (?,?)
+          ON DUPLICATE KEY UPDATE
+            userID = VALUES(userID),
+            preference = VALUES(preference),
+          `;
+          connection.query(iorUQuery, [req.body.userID,req.body.lighting], function(err, results, fields) {
+            if (err){
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            }else{
+              return res.status(200).json({
+                status: 0,
+                message: "Insert/Update Occurred"
               })
             }
           })

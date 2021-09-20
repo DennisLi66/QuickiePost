@@ -3144,7 +3144,15 @@ function App() {
       }
       //Visibility modes
       function toggleLightAndDarkMode(){
+        if (cookies.get("id") && cookies.get("sessionID")){
 
+        }else{
+          if (lightDarkMode.lightingMode === "light"){
+            changeLighting({lightingMode: "dark"})
+          }else{
+            changeLighting({lightingMode: "light"})
+          }
+        }
       }
       //log out
       function logOut(){
@@ -3215,7 +3223,7 @@ function App() {
               </div>
             )
           })
-    },[serverLocation,cookies,changeCode])
+    },[serverLocation,cookies,changeCode, lightDarkMode])
 
   React.useEffect(() => {
     getHome()
