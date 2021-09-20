@@ -174,10 +174,6 @@ function App() {
         }
         return (<div dangerouslySetInnerHTML={{__html:newMessage}}></div>);
       }
-      function searchHashtag(hashtag){
-
-      }
-      //Cancel Button
       function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         if (origin === ""){
           getHome();
@@ -2700,6 +2696,61 @@ function App() {
           <br></br><br></br>
           <Button variant='dark' type="submit"> Submit </Button>
           </form>
+          {paginationBar}
+          {listOfPosts}
+          {paginationBar}
+          </div>
+        )
+      }
+      function searchHashtag(hashtag){
+        console.log(hashtag);
+        var fetchString = serverLocation + "/getPostWithHashtag?hashtag=" + hashtag;
+        if (cookies.get("id") && cookies.get("sessionID")){
+          fetchString += "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID");
+        }
+        fetch(fetchString)
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === -1){
+              showErrorPage({message:data.message})
+            }else{
+              paginateHashtagSearch(hashtag,data.contents)
+            }
+          })
+      }
+      function paginateHashtagSearch(hashtag, contents, start = 0, end = 10){
+        var listOfPosts = [];
+        var paginationBar;
+        if (!contents|| contents.length === 0){
+          listOfPosts = (<div> No posts were found. </div>)
+        }else{
+          for (let key = start; key < Math.min(end,contents.length); key++){
+            listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search",contents))
+          }
+          if (listOfPosts.length === 0){
+            listOfPosts = (<div>There were no posts matching your criteria.</div>)
+          }
+          if (contents.length > 10){
+            var paginationSlots = [];
+            for (let i = 0; i < Math.ceil(contents.length / 10); i++){
+              paginationSlots.push(
+                <li key={i}><div className="dropdown-item" onClick={() => {paginateHashtagSearch(hashtag,contents,10 * i,Math.min(10*i+10,contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,contents.length)}</div></li>
+              )
+            }
+            paginationBar = (
+             <ul className="nav nav-tabs">
+              <li className="nav-item dropdown">
+                <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                <ul className="dropdown-menu">
+                  {paginationSlots}
+                </ul>
+              </li>
+            </ul>)
+          }
+        }
+        changeCode(
+          <div>
+          <h1> Posts Associated With {hashtag} </h1>
           {paginationBar}
           {listOfPosts}
           {paginationBar}

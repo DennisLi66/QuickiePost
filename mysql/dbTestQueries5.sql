@@ -106,18 +106,19 @@ select * from sessions;
 
 SELECT 
 posts.postID as postID, posts.userID as userID,title,content, posts.visibility as postVisibility, subDate, users.userID as userID, 
-userName as username, users.visibility as userVisibility, ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments, if(isLiked.userID is null,"false","true") as Liked
+userName as username, users.visibility as userVisibility, ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments,
+if(isLiked.userID is null,"false","true") as Liked, if(viewership.viewerID is null,'false','true') as isViewer
 FROM posts
 LEFT JOIN users ON users.userID = posts.userID
 LEFT JOIN (SELECT postID, count(*) as likeAmount FROM likes group by postID) as totalLikes ON posts.postID = totalLikes.postID
 LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
 LEFT JOIN (SELECT postID, userID from likes WHERE userID = 3) isLiked ON isLiked.postID = posts.postID
-LEFT JOIN ()
+LEFT JOIN (SELECT * from viewers WHERE viewerID = 3) viewership on viewership.posterID = posts.userID
 WHERE title LIKE "%PIE%"
 OR content LIKE "%PIE%"
 AND posts.visibility != 'hidden'
 AND users.visibility != 'hidden'
-AND (posts.visibility != 'private')
-AND (users.visibility != 'private')
+AND (posts.visibility != 'private' OR viewerID is not null)
+AND (users.visibility != 'private' OR viewerID is not null)
 order by subDate DESC
 

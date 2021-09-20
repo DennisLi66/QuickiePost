@@ -1,7 +1,6 @@
 //Things to Do
 //Maybe Search By Hashtags?
 //add an error for if user is blocked
-//add hashtags to search
 
 require('dotenv').config();
 const express = require("express");
@@ -894,7 +893,8 @@ app.route("/getPostWithHashtag")
                     username: results[i].username,
                     totalLikes: results[i].totalLikes,
                     totalComments: results[i].totalComments,
-                    postID: results[i].postID
+                    postID: results[i].postID,
+                    isLiked: results[i].Liked
                   })
                 }
                 return res.status(200).json({
