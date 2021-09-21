@@ -32,7 +32,7 @@ require('dotenv').config();
 //test showOptions features on other profiles
 //SHould memoize pagination so its faster, and check that pagination is actually correct
 ////////////////
-//test acccount reactivation
+//test acccount reactivation and make sure the results interacts the way it should
 //add a highlight effect to the pagination bar
 //Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
@@ -914,7 +914,7 @@ function App() {
                   <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,chances)}}> Resend Code </Button>
                   <br></br>
                   Remaining Chances: {chances}
-                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,username,data.sessionID,rememberMe,origin,3)}>
+                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,username,rememberMe,origin,3)}>
                     <input id="reactivationCode" name="reactivationCode" required>  </input>
                     <br></br>
                     <Button type='submit'> Reactivate Account </Button>
@@ -924,12 +924,12 @@ function App() {
             )
           })
       }
-      function handleReactivationCodeSubmission(event,userID,username,sessionID,rememberMe,origin,chances){
+      function handleReactivationCodeSubmission(event,userID,username,rememberMe,origin,chances){
         event.preventDefault();
         const requestSetup = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({userID:userID,reactivationCode:document.getElementById("reactivationCode")})
+          body: JSON.stringify({rememberMe:rememberMe,userID:userID,reactivationCode:document.getElementById("reactivationCode")})
         }
         fetch(serverLocation + "/checkReactivationCode",requestSetup)
           .then(response => response.json())
@@ -954,12 +954,12 @@ function App() {
                 sendActivationAccountMessage(userID,username,rememberMe,origin,chances - 1)
               }
             }else if (data.status === 0){
-              //reactivate account //FIX THIS
-              // cookies.set('name',username,{path:'/'});
-              // cookies.set('id',userID,{path:'/'});
-              // cookies.set('sessionID',sessionID,{path:'/'})
-              // cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-              //                 cookies.set('lightingMode',data.preference,{path:"/"})
+              // reactivate account
+              cookies.set('name',username,{path:'/'});
+              cookies.set('id',userID,{path:'/'});
+              cookies.set('sessionID',data.sessionID,{path:'/'})
+              cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              cookies.set('lightingMode',data.preference,{path:"/"})
               if (origin === ""){
                 window.location.reload();
               }else if (origin === "userProfileOptions"){

@@ -1,5 +1,6 @@
 //Things to Do
 //add an error for if user is blocked
+//FIX THIS CONVERT ADDING NEW SESSIONS WITH UPDATING OLD ONE SIF POSSIBLE
 
 require('dotenv').config();
 const express = require("express");
@@ -1110,7 +1111,7 @@ app.post("/login", function(req, res) {
 })
 app.route("/reactivationCode")
   .post(function(req, res) {
-    if (req.body.userID) {
+    if (!req.body.userID) {
       return res.status(200).status(200).json({
         status: -1,
         message: "UserID Not Included."
@@ -1191,7 +1192,7 @@ app.route("/reactivationCode")
   })
 app.route("/checkReactivationCode")
   .post(function(req, res) {
-    if (!req.body.userID || !req.body.reactivationCode) {
+    if (!req.body.userID || !req.body.reactivationCode || !req.body.rememberMe) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
@@ -1215,7 +1216,34 @@ app.route("/checkReactivationCode")
             status: -2
           })
         } else {
-          //create and insert session, update user visibility, and pull new user
+          //create and insert session and update user visibility
+          var sessionID = randomatic('Aa0', 20);
+          var remembered = rememberMe === "hour" ? "HOUR" : "FOREVER";
+          var megasQuery =
+          `
+          INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),?);
+          UPDATE users SET visibility = 'private' WHERE userID = ?;
+          SELECT users.userID as userID,userName,email,pswrd,visibility,
+          classification, ifnull(preference,"light") as preference
+          FROM users left join darkModePrefs ON darkModePrefs.userID = users.userID
+          WHERE userID = ?;
+          `
+          connection.query(megasQuery,[sessionID,userID,remembered,userID,userID],function(err,results,fields){
+            if (err){
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            }else{
+              //return sessionID and preference //FIX THIS NEEDS A CHECK
+              return res.status(200).json({
+                status: 0,
+                message: "Worked...",
+                sessionID: sessionID,
+                preference: results[-1].preference
+              })
+            }
+          })
         }
       })
     }

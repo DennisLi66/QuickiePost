@@ -122,5 +122,5 @@ AND (posts.visibility != 'private' OR viewerID is not null)
 AND (users.visibility != 'private' OR viewerID is not null)
 order by subDate DESC
 ;
-select users.userID,userName,email,pswrd,visibility,classification, ifnull(preference,"light") as preference from users left join darkModePrefs ON darkModePrefs.userID = users.userID
+select users.userID as userID,userName,email,pswrd,visibility,classification, ifnull(preference,"light") as preference from users left join darkModePrefs ON darkModePrefs.userID = users.userID
 
