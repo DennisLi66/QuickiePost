@@ -62,7 +62,7 @@ var cQuery =
   ON sessions.userID = a.userID AND sessions.sessionDate = a.high;
 `;
 var updateSessionQuery =
-`
+  `
 UPDATE sessions
 SET sessionDate = NOW()
 WHERE sessionID = ?
@@ -116,7 +116,7 @@ app.get("/posts", function(req, res) {
     ORDER BY posts.subDate desc;
     `;
     variables.push(req.query.userID);
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -211,7 +211,7 @@ app.get("/myfeed", function(req, res) {
   ORDER by subDate DESC
   ;
   `;
-  connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+  connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
     if (err1) {
       return res.status(200).json({
         status: -1,
@@ -287,7 +287,7 @@ app.get("/search", function(req, res) {
   if (sessionID && userID) {
     //logged in version -- perform cQuery -- do other one first
     //update query to consider user being hidden or private
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -317,7 +317,7 @@ app.get("/search", function(req, res) {
           AND (uzers.visibility != 'private' OR viewerID is not null)
         `;
         sQuery += toJoinQuery.join("") + " ORDER BY posts.subDate desc";
-        var stuff = [userID,userID].concat(variables);
+        var stuff = [userID, userID].concat(variables);
         connection.query(sQuery, stuff, function(err, results, fields) {
           if (err) {
             return res.status(200).json({
@@ -436,7 +436,7 @@ app.route("/post")
         AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
         ORDER BY commentDate DESC;
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -635,7 +635,7 @@ app.route("/post")
         })
       } else {
         //search for valid session
-        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(errorr, resultss, fieldss) {
+        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(errorr, resultss, fieldss) {
           if (errorr) {
             return res.status(200).json({
               status: -1,
@@ -692,7 +692,7 @@ app.route("/post")
         message: "Nothing to Change."
       })
     }
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -766,7 +766,7 @@ app.route("/like")
       `
     INSERT INTO likes (postID,userID) VALUES (?,?);
     `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -806,7 +806,7 @@ app.route("/like")
       `
     DELETE FROM likes WHERE userID = ? AND postID = ?;
     `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -835,16 +835,15 @@ app.route("/like")
     })
   })
 app.route("/getPostWithHashtag")
-  .get(function(req,res){
-    if (!req.query.hashtag){
+  .get(function(req, res) {
+    if (!req.query.hashtag) {
       return res.status(200).json({
         message: "Not Enough Information.",
         status: -1
       })
-    }
-    else{
-      if (req.query.userID && req.query.sessionID){
-        connection.query(cQuery + updateSessionQuery,[req.query.userID, req.query.sessionID,req.query.sessionID],function(err1,resu;ts1,fields1){
+    } else {
+      if (req.query.userID && req.query.sessionID) {
+        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, resu; ts1, fields1) {
           if (err1) {
             return res.status(200).json({
               status: -1,
@@ -857,7 +856,7 @@ app.route("/getPostWithHashtag")
             })
           } else {
             var sQuery =
-            `
+              `
             SELECT
             posts.postID as postID, posts.userID as userID,title,content, posts.visibility as postVisibility, subDate, users.userID as userID,
             userName as username, users.visibility as userVisibility, ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments,
@@ -874,14 +873,13 @@ app.route("/getPostWithHashtag")
             AND (users.visibility != 'private' OR viewerID is not null)
             order by subDate DESC
             `;
-            connection.query(sQuery, [req.query.userID,req.query.userID,'%' + req.query.hashtag + "%",'%' + req.query.hashtag + "%"], function(err, results, fields) {
-              if (err){
+            connection.query(sQuery, [req.query.userID, req.query.userID, '%' + req.query.hashtag + "%", '%' + req.query.hashtag + "%"], function(err, results, fields) {
+              if (err) {
                 return res.status(200).json({
                   status: -1,
                   message: err
                 })
-              }
-              else{
+              } else {
                 var toPrep = [];
                 for (let i = 0; i < results.length; i++) {
                   toPrep.push({
@@ -905,9 +903,9 @@ app.route("/getPostWithHashtag")
             })
           }
         })
-      }else{
+      } else {
         var sQuery =
-        `
+          `
         SELECT
         posts.postID as postID, posts.userID as userID,title,content, posts.visibility as postVisibility, subDate,
         users.userID as userID, userName as username, users.visibility as userVisibility,
@@ -922,14 +920,13 @@ app.route("/getPostWithHashtag")
         AND (users.visibility != 'private')
         order by subDate DESC
         `;
-        connection.query(sQuery,['%' + req.query.hashtag + '%','%' + req.query.hashtag + '%'],function(err,results,fields){
-          if (err){
+        connection.query(sQuery, ['%' + req.query.hashtag + '%', '%' + req.query.hashtag + '%'], function(err, results, fields) {
+          if (err) {
             return res.status(200).json({
               status: -1,
               message: err
             })
-          }
-          else{
+          } else {
             var toPrep = [];
             for (let i = 0; i < results.length; i++) {
               toPrep.push({
@@ -1008,7 +1005,13 @@ app.post("/login", function(req, res) {
       message: "Not enough information."
     })
   } else {
-    var sQuery = "select * from users WHERE email = ?" //works
+    var sQuery =
+    `
+    select users.userID as userID,userName,email,pswrd,visibility,
+    classification, ifnull(preference,"light") as preference
+    from users left join darkModePrefs ON darkModePrefs.userID = users.userID
+    WHERE email = ?
+    `
     connection.query(sQuery, [email], function(e3rr, results, fields) {
       if (e3rr) {
         return res.status(200).json({
@@ -1031,23 +1034,20 @@ app.post("/login", function(req, res) {
                 message: err3
               })
             } else if (rresult) {
-              if (results[0].visibility === "hidden"){
-                var sessionID = randomatic('Aa0', 20);
+              var sessionID = randomatic('Aa0', 20);
+              if (results[0].visibility === "hidden") {
                 return res.status(200).json({
                   status: -3,
                   message: "Hidden Account",
                   rememberMe: rememberMe,
                   userID: results[0].userID,
-                  username: results[0].userName,
-                  sessionID: sessionID
+                  username: results[0].userName
                 })
-              }
-              else{
+              } else {
                 //Create a Session ID
-                var sessionID = randomatic('Aa0', 20);
                 if (rememberMe === 'hour') {
                   var iQuery =
-                    `
+                  `
                   INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),"HOUR");
                   `
                   connection.query(iQuery, [sessionID, results[0].userID], function(err, rresults, fields) {
@@ -1062,7 +1062,8 @@ app.post("/login", function(req, res) {
                         message: "Confirmation.",
                         userID: results[0].userID,
                         username: results[0].userName,
-                        sessionID: sessionID
+                        sessionID: sessionID,
+                                          lightingMode: results[0].preference
                       })
                     }
                   })
@@ -1083,7 +1084,8 @@ app.post("/login", function(req, res) {
                         message: "Confirmation.",
                         userID: results[0].userID,
                         username: results[0].userName,
-                        sessionID: sessionID
+                        sessionID: sessionID,
+                                          lightingMode: results[0].preference
                       })
                     }
                   })
@@ -1107,17 +1109,16 @@ app.post("/login", function(req, res) {
   }
 })
 app.route("/reactivationCode")
-  .post(function(req,res){
-    if (req.body.userID){
+  .post(function(req, res) {
+    if (req.body.userID) {
       return res.status(200).status(200).json({
         status: -1,
         message: "UserID Not Included."
       })
-    }
-    else{
+    } else {
       //generate random 6 digit code and submit to mysql database
       var iorUQuery =
-      `
+        `
       INSERT INTO reactivationCodes
         (userID,reactivationCode,addDate)
       values
@@ -1129,26 +1130,26 @@ app.route("/reactivationCode")
       SELECT * FROM users WHERE userID = ?;
       `;
       var code = randomatic('A0', 6);
-      connection.query(iorUQuery,[req.body.userID,code,req.body.userID],function(err,results,fields){
-        if (err){
+      connection.query(iorUQuery, [req.body.userID, code, req.body.userID], function(err, results, fields) {
+        if (err) {
           return res.status(200).json({
             status: -1,
             message: err
           })
-        }else{
+        } else {
           var mailOptions = {
             from: process.env.EMAILUSER,
             to: results[1][0].email,
             subject: 'Reactivation Account Link',
-            html: 'Your code is ' + code  + '.'
+            html: 'Your code is ' + code + '.'
           };
           transporter.sendMail(mailOptions, function(error, info) {
-            if (error){
+            if (error) {
               return res.status(200).json({
                 status: 1,
                 message: error
               })
-            }else{
+            } else {
               return res.status(200).json({
                 status: 0,
                 message: "Successful Action."
@@ -1160,28 +1161,26 @@ app.route("/reactivationCode")
       })
     }
   })
-  .delete(function(req,res){
-    if (req.body.userID){
+  .delete(function(req, res) {
+    if (req.body.userID) {
       return res.status(200).status(200).json({
         status: -1,
         message: "UserID Not Included."
       })
-    }
-    else{
+    } else {
       // delete 6 digit code from database associated to userID
       var dQuery =
-      `
+        `
       DELETE FROM reactivationCodes
       WHERE userID = ?;
       `;
-      connection.query(dQuery,[req.body.userID],function(err,results,fields){
-        if (err){
+      connection.query(dQuery, [req.body.userID], function(err, results, fields) {
+        if (err) {
           return res.status(200).json({
             status: -1,
             message: err
           })
-        }
-        else{
+        } else {
           return res.status(200).json({
             status: 0,
             message: "Deletion Occurred."
@@ -1191,52 +1190,47 @@ app.route("/reactivationCode")
     }
   })
 app.route("/checkReactivationCode")
-  .post(function(req,res){
-    if (!req.body.userID || !req.body.reactivationCode){
+  .post(function(req, res) {
+    if (!req.body.userID || !req.body.reactivationCode) {
       return res.status(200).json({
         status: -1,
         message: "Not Enough Information."
       })
-    }else{
+    } else {
       var sQuery =
-      `
+        `
       SELECT * FROM
       reactivationCodes
-      WHERE userID = ? AND reactivationCode = ?
+      WHERE userID = ? AND reactivationCode = ?;
       `;
-      connection.query(sQuery,[req.body.userID,req.body.reactivationCOde],function(err,results,fields){
-        if (err){
+      connection.query(sQuery, [req.body.userID, req.body.reactivationCOde], function(err, results, fields) {
+        if (err) {
           return res.status(200).json({
             status: -1,
             message: err
           })
-        }
-        else if (results.length === 0){
+        } else if (results.length === 0) {
           return res.status(200).status({
             message: "Invalid Combination.",
             status: -2
           })
-        }else{
-          return res.status(200).json({
-            status: 0,
-            message: "Worked."
-          })
+        } else {
+          //create and insert session, update user visibility, and pull new user
         }
       })
     }
   })
-  app.route("/forgotPassword")
-    .post(function(req,res){
-      if (!req.body.email){
-        return res.status(200).json({
-          status: -1,
-          message: "Not Enough Information."
-        })
-      }
-      else{
-        //generate random code and insert
-        var code = randomatic('A0', 6);
-        var iorUQuery =
+app.route("/forgotPassword")
+  .post(function(req, res) {
+    if (!req.body.email) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    } else {
+      //generate random code and insert
+      var code = randomatic('A0', 6);
+      var iorUQuery =
         `
         INSERT INTO forgottenPasswordCodes
           (email,fpCode,addDate)
@@ -1248,78 +1242,75 @@ app.route("/checkReactivationCode")
           addDate = VALUES(addDate);
         SELECT * FROM users WHERE email = ?;
         `;
-        connection.query(iorUQuery,[req.body.email,code,req.body.email],function(error,results,fields){
-          if (err){
-            return res.status(200).json({
-              status: -1,
-              message: error
-            })
-          }else{
-            var mailOptions = {
-              from: process.env.EMAILUSER,
-              to: req.body.email,
-              subject: 'Password Recovery Link',
-              html: 'Your code is ' + code  + '.'
-            };
-            transporter.sendMail(mailOptions,function(error,info){
-              if (error){
-                return res.status(200).json({
-                  status: 1,
-                  message: error
-                })
-              }
-              else{
-                return res.status(200).json({
-                  status: 0,
-                  message: "Successful Forgotten Password Stored."
-                })
-              }
+      connection.query(iorUQuery, [req.body.email, code, req.body.email], function(error, results, fields) {
+        if (err) {
+          return res.status(200).json({
+            status: -1,
+            message: error
+          })
+        } else {
+          var mailOptions = {
+            from: process.env.EMAILUSER,
+            to: req.body.email,
+            subject: 'Password Recovery Link',
+            html: 'Your code is ' + code + '.'
+          };
+          transporter.sendMail(mailOptions, function(error, info) {
+            if (error) {
+              return res.status(200).json({
+                status: 1,
+                message: error
+              })
+            } else {
+              return res.status(200).json({
+                status: 0,
+                message: "Successful Forgotten Password Stored."
+              })
+            }
           })
         }
-        })
-        }
       })
-  app.route("/checkForgottenPassword")
-    .post(function(req,res){
-      //will need to edit user
-      if (!req.body.email || !req.body.fpCode){
-        return res.status(200).json({
-          status: -1,
-          message: "Not enough information."
-        })
-      }
-      else{
-        var sQuery =
+    }
+  })
+app.route("/checkForgottenPassword")
+  .post(function(req, res) {
+    //will need to edit user
+    if (!req.body.email || !req.body.fpCode) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not enough information."
+      })
+    } else {
+      var sQuery =
         `
         SELECT * FROM
         forgottenPasswordCodes
         WHERE email = ? AND fpCode = ?;
         `
-        connection.query(sQuery,[req.body.email,req.body.fpCode],function(err,results,fields){
-          if (err){
-            return res.status(200).json({
-              status: -1,
-              message: err
-            })
-          }
-          else if (results.length === 0){
-            return res.status(200).status({
-              message: "Invalid Combination.",
-              status: -2
-            })
-          }else{
-            return res.status(200).json({
-              status: 0,
-              message: "Worked."
-            })
-          }
-        })
-      }
-    })
+      connection.query(sQuery, [req.body.email, req.body.fpCode], function(err, results, fields) {
+        if (err) {
+          return res.status(200).json({
+            status: -1,
+            message: err
+          })
+        } else if (results.length === 0) {
+          return res.status(200).status({
+            message: "Invalid Combination.",
+            status: -2
+          })
+        } else {
+          return res.status(200).json({
+            status: 0,
+            message: "Worked."
+          })
+        }
+      })
+    }
+  })
 //User Info Endpoints
 app.route("/user")
   .get(function(req, res) {
-  //Get User and Associated Posts
+    //Get User and Associated Posts
     var sessionID = req.query.sessionID;
     var userID = req.query.userID;
     var profileID = req.query.profileID;
@@ -1467,7 +1458,7 @@ app.route("/user")
       AND users.visibility != 'hidden' AND
       (users.visibility != 'private' OR users.userID = ?);
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(cErr, cResults, cFields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(cErr, cResults, cFields) {
         if (cErr) {
           return res.status(200).json({
             status: -1,
@@ -1556,49 +1547,48 @@ app.route("/user")
       })
     }
   })
-  .patch(function(req, res) {   //Edit User Info
-    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) || (!req.body.pswrd)){
+  .patch(function(req, res) { //Edit User Info
+    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) || (!req.body.pswrd)) {
       return res.status(200).json({
         status: -1,
         message: "Not enough information."
       })
-    }
-    else{
+    } else {
       var uQueryFragment =
-      `
+        `
       UPDATE users
       SET
       `
       var fragments = [];
       var variables = [];
-      if (req.body.visibility){
+      if (req.body.visibility) {
         fragments.push('visibility = ?');
         variables.push(req.body.visibility);
       }
-      if (req.body.userName){
+      if (req.body.userName) {
         fragments.push('userName = ?');
         variables.push(req.body.userName);
       }
-      if (req.body.pswrd){
+      if (req.body.pswrd) {
         fragments.push('pswrd = ?');
         variables.push(req.body.pswrd);
       }
       var finalFragment;
-      if (req.body.email){
+      if (req.body.email) {
         finalFragment = " WHERE email = ?;"
         variables.push(req.body.email);
-      }else{
+      } else {
         finalFragment = " WHERE userID = ?;"
         variables.push(req.body.userID);
       }
       var finalQuery = uQueryFragment + fragments.join(",") + finalFragment;
-      connection.query(finalQuery,variables,function(err,results,fields){
-        if (err){
+      connection.query(finalQuery, variables, function(err, results, fields) {
+        if (err) {
           return res.status(200).json({
             message: err,
             status: -1
           })
-        }else{
+        } else {
           return res.status(200).json({
             status: 0,
             message: "Update Successful."
@@ -1707,7 +1697,7 @@ app.route("/comment")
         )
         AND comments.commentID = ?
         `;
-        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
           if (err1) {
             return res.status(200).json({
               status: -1,
@@ -1781,7 +1771,7 @@ app.route("/comment")
         message: "No search terms."
       })
     }
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1841,7 +1831,7 @@ app.route("/comment")
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
     `;
     var variables = [req.query.postID, req.query.userID, req.query.content, privacy]
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1883,7 +1873,7 @@ app.route("/comment")
     SET visibility = 'hidden'
     WHERE commentID = ?;
     `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -1923,7 +1913,7 @@ app.route("/likeComment")
       `
     INSERT INTO commentLikes (commentID,userID) VALUES (?,?);
     `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           message: err1,
@@ -1963,7 +1953,7 @@ app.route("/likeComment")
       `
     DELETE FROM commentLikes WHERE userID = ? AND commentID = ?;
     `;
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2006,7 +1996,7 @@ app.route("/block")
         message: 'Not Enough Information'
       })
     } else {
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             message: err1,
@@ -2055,7 +2045,7 @@ app.route("/block")
       INSERT INTO blocked (blockedID,blockerID) VALUES (?,?);
       DELETE FROM viewers WHERE (posterID = ? AND viewerID = ?) OR (posterID = ? AND viewerID = ?)
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             message: err1,
@@ -2067,7 +2057,7 @@ app.route("/block")
             message: "Not Valid Session"
           })
         } else {
-          connection.query(iQuery, [req.query.blockedID, req.query.userID,req.query.blockedID, req.query.userID, req.query.userID,req.query.blockedID], function(err2, results2, fields) {
+          connection.query(iQuery, [req.query.blockedID, req.query.userID, req.query.blockedID, req.query.userID, req.query.userID, req.query.blockedID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
                 message: err2,
@@ -2095,7 +2085,7 @@ app.route("/block")
         `
       DELETE FROM blocked WHERE blockedID = ? AND blockerID = ?;
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2149,7 +2139,7 @@ app.route("/viewership")
       } else {
         variables = [req.query.posterID, req.query.viewerID, req.query.viewerID];
       }
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2237,7 +2227,7 @@ app.route("/viewership")
       } else {
         variables = [];
       }
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2277,7 +2267,7 @@ app.route("/viewership")
         status: -1
       })
     } else {
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2344,7 +2334,7 @@ app.route("/relationship")
     var u = req.query.userID;
     var p = req.query.profileID;
     var variables = [u, u, p, p, u, u, p, u, p, u, p, p, u, p, u, p, u, u, p, u, p];
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2392,7 +2382,7 @@ app.route("/whosviewingme")
         message: "Not Enough Information."
       })
     }
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2440,7 +2430,7 @@ app.route("/whoimviewing")
         message: "Not Enough Information."
       })
     }
-    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields) {
+    connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
           status: -1,
@@ -2494,7 +2484,7 @@ app.route("/changeVisibility")
       SET visibility = ?
       WHERE email = ?;
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields1) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2577,7 +2567,7 @@ app.route("/mylikedposts")
        AND ((postVisibility != 'private'AND userVisibility != 'private') OR userID = ? OR viewerID is not null)
       order by subDate desc
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields1) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2651,7 +2641,7 @@ app.route("/mylikedcomments")
       AND ((commenterVisibility != 'private' AND commentVisibility != 'private') OR commentViewerID is not null OR commenterID = ?)
       AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVisibility is not null OR posterID = ?)
       `;
-      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID,req.query.sessionID], function(err1, results1, fields1) {
+      connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2706,15 +2696,14 @@ app.route("/mylikedcomments")
     }
   })
 app.route("/setLightingPreference")
-  .post(function(req,res){
-    if (!req.body.userID || !req.body.sessionID || !req.body.lighting){
+  .post(function(req, res) {
+    if (!req.body.userID || !req.body.sessionID || !req.body.lighting) {
       return res.status(200).json({
         message: "Not Enough Information",
         status: -1
       })
-    }
-    else{
-      connection.query(cQuery + updateSessionQuery, [req.body.userID, req.body.sessionID,req.body.sessionID], function(err1, results1, fields1) {
+    } else {
+      connection.query(cQuery + updateSessionQuery, [req.body.userID, req.body.sessionID, req.body.sessionID], function(err1, results1, fields1) {
         if (err1) {
           return res.status(200).json({
             status: -1,
@@ -2727,7 +2716,7 @@ app.route("/setLightingPreference")
           })
         } else {
           var iorUQuery =
-          `
+            `
           INSERT INTO darkModePrefs
             (userID,preference)
           values
@@ -2736,13 +2725,13 @@ app.route("/setLightingPreference")
             userID = VALUES(userID),
             preference = VALUES(preference),
           `;
-          connection.query(iorUQuery, [req.body.userID,req.body.lighting], function(err, results, fields) {
-            if (err){
+          connection.query(iorUQuery, [req.body.userID, req.body.lighting], function(err, results, fields) {
+            if (err) {
               return res.status(200).json({
                 status: -1,
                 message: err
               })
-            }else{
+            } else {
               return res.status(200).json({
                 status: 0,
                 message: "Insert/Update Occurred"

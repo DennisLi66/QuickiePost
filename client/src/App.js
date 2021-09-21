@@ -13,6 +13,8 @@ require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
 //////////////////////////////Client: Make use of client variables
+//check reactivation code and login should return lighting preference
+///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
 //Cancel Button may not work properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
@@ -863,8 +865,9 @@ function App() {
               }else if (data.status === 0){//No Error
                 cookies.set('name',data.username,{path:'/'});
                 cookies.set('id',data.userID,{path:'/'});
-                cookies.set('sessionID',data.sessionID,{path:'/'})
-                cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+                cookies.set('sessionID',data.sessionID,{path:'/'});
+                cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"});
+                cookies.set('lightingMode',data.preference,{path:"/"})
                 if (origin === ""){
                   window.location.reload();
                 }else if (origin === "indepthPost" || origin === "indepthComment"){
@@ -951,11 +954,12 @@ function App() {
                 sendActivationAccountMessage(userID,username,rememberMe,origin,chances - 1)
               }
             }else if (data.status === 0){
-              //reactivate account
-              cookies.set('name',username,{path:'/'});
-              cookies.set('id',userID,{path:'/'});
-              cookies.set('sessionID',sessionID,{path:'/'})
-              cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              //reactivate account //FIX THIS
+              // cookies.set('name',username,{path:'/'});
+              // cookies.set('id',userID,{path:'/'});
+              // cookies.set('sessionID',sessionID,{path:'/'})
+              // cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              //                 cookies.set('lightingMode',data.preference,{path:"/"})
               if (origin === ""){
                 window.location.reload();
               }else if (origin === "userProfileOptions"){
@@ -2235,6 +2239,7 @@ function App() {
                     cookies.remove("expireTime",{path:"/"})
                     cookies.remove("name",{path:'/'});
                     cookies.remove("id",{path:'/'});
+                    cookies.remove("lightingMode",{path:'/'});
                     changeNavToLoggedOut();
                     changeCode(
                       <div>You have successfully deactivated your account. You will be redirected in a few seconds.</div>
@@ -3049,6 +3054,7 @@ function App() {
         cookies.remove("expireTime",{path:"/"})
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
+        cookies.remove("lightingMode",{path:'/'});
         changeNavToLoggedOut();
         showOnlyMain();
         //produce a page and redirect link, or redirect automatically
@@ -3145,7 +3151,13 @@ function App() {
       //Visibility modes
       function toggleLightAndDarkMode(){
         if (cookies.get("id") && cookies.get("sessionID")){
-
+          if (lightDarkMode.lightingMode === "light"){
+            changeLighting({lightingMode: "dark"})
+            cookies.set('lightingMode',"dark",{path:'/'})
+          }else{
+            changeLighting({lightingMode: "light"})
+            cookies.set('lightingMode',"light",{path:'/'})
+          }
         }else{
           if (lightDarkMode.lightingMode === "light"){
             changeLighting({lightingMode: "dark"})
@@ -3160,6 +3172,7 @@ function App() {
         cookies.remove("expireTime",{path:"/"})
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
+        cookies.remove("lightingMode",{path:'/'});
         changeNavToLoggedOut();
         fetch(serverLocation + "/posts")
           .then(response=>response.json())
@@ -3179,6 +3192,7 @@ function App() {
         cookies.remove("expireTime",{path:"/"})
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
+        cookies.remove("lightingMode",{path:'/'});
         changeNavToLoggedOut();
       }
       var listOfPosts = [];
