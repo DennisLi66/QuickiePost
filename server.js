@@ -646,7 +646,12 @@ app.route("/post")
               status: -1,
               message: errorr
             })
-          } else {
+          } else if (resultss.length === 0){
+            return res.status(200).json({
+              status: -11,
+              message: "Bad Session..."
+            })
+          }else {
             var iQuery;
             var variables = [];
             iQuery =
