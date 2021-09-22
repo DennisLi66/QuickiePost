@@ -1,7 +1,9 @@
 //Things to Do
 //add an error for if user is blocked
-//FIX THIS CONVERT ADDING NEW SESSIONS WITH UPDATING OLD ONE SIF POSSIBLE
-
+//establish ADMIN powers
+//If user is admin or mod, allow regardless
+//IF user is owner, Allow
+//If user not logged in or not owner, disallow
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -570,48 +572,50 @@ app.route("/post")
   })
   //Change Post Visibility to Hidden
   .delete(function(req, res) {
-    //FIX THIS: Will Need to Establish Permissions based on mod powers
-    var userID = req.query.userID;
-    var sessionID = req.query.sessionID;
-    if (!userID) {
+    if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
       return res.status(200).json({
         status: -1,
-        message: "User Not Logged In."
+        message: "Not Enough Information."
       })
     } else {
-      if (!req.query.postID) {
-        return res.status(200).json({
-          status: -1,
-          message: "Post ID Not Given."
-        })
-      }
-      //If user is admin or mod, allow regardless
-      //IF user is owner, Allow
-      //If user not logged in or not owner, disallow
-      var uQuery = `
-        UPDATE posts
-        SET visibility = "hidden"
-        WHERE postID = ?;
-        `;
-      connection.query(uQuery, [req.query.postid], function(err, results, fields) {
-        if (err) {
-          console.log(err);
+      connection.query(cQuery + updateSessionQuery,[req.query.userID,req.query.sessionID,req.query.sessionID],function(err1,results1,fields1){
+        if (err1){
           return res.status(200).json({
             status: -1,
-            message: err
+            message: err1
           })
-        } else {
-          if (results.length == 0) {
-            return res.status(200).json({
-              status: -1,
-              message: "Could not find a post with that ID."
-            })
-          } else {
-            return res.status(200).json({
-              status: 0,
-              message: "Update Occured."
-            })
-          }
+        }else if (results1.length === 0){
+          return res.status(200).json({
+            status: -11,
+            message: "Bad Session..."
+          })
+        }else{
+          var uQuery = `
+          UPDATE posts
+          SET visibility = "hidden"
+          WHERE postID = ? AND userID = ?;
+          `;
+          connection.query(uQuery, [req.query.postid,req.query.userID], function(err, results, fields) {
+            if (err) {
+              console.log(err);
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            } else {
+              if (results.length == 0) {
+                return res.status(200).json({
+                  status: -1,
+                  message: "Could not find a post with that ID."
+                })
+              } else {
+                return res.status(200).json({
+                  status: 0,
+                  message: "Update Occured."
+                })
+              }
+            }
+          })
         }
       })
     }

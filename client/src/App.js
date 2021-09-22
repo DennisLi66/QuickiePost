@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
+//implement admin powers
 //////////////////////////////Client: Make use of client variables
 //check reactivation code and login should return lighting preference
 ///will need to set lighting based on cookie recieved from login
