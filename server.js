@@ -4,6 +4,7 @@
 //If user is admin or mod, allow regardless
 //IF user is owner, Allow
 //If user not logged in or not owner, disallow
+//Consider if needs block addition, admin addition, or both
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -98,27 +99,24 @@ app.get("/posts", function(req, res) {
     console.log("Logged In Posts")
     sQuery = //FIX THIS: VISIBILITY PRIVACY
       `
-    SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility, ifnull(total,0) as totalLikes, if(desig.userID is null,'Unliked','Liked') as Liked,  ifnull(totalComments,0) as totalComments, subDate FROM
-    ( SELECT * from posts
-    LEFT JOIN
-    (select userid as UID,username,visibility as uvisibility from users) uzers
-    on uzers.UID = posts.userID
-    WHERE posts.visibility != 'hidden' AND posts.visibility != 'private'
-    AND uzers.uvisibility != 'hidden' AND uzers.uvisibility != 'private'
-    ORDER BY subDate DESC
-    ) posts
-    LEFT JOIN
-    (SELECT count(*) as total, postID FROM likes GROUP BY postID) totalLikes
-    on totalLikes.postID = posts.postID
-    LEFT JOIN
-    (  select * from likes WHERE userID = ?) desig
-    on desig.postID = posts.postID
-    LEFT JOIN
-    (  SELECT count(*) as totalComments, postID from comments GROUP BY postID) comments
-    ON comments.postID = posts.postID
-    ORDER BY posts.subDate desc;
-    `;
-    variables.push(req.query.userID);
+      SELECT * FROM (
+      SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content, posts.visibility as postVisibility, posts.subDate as postDate,
+      users.userName as username, users.email as email, users.visibility as userVisibility, ifnull(tLikes,0) as totalLikes, if(isLiked.postID is null,"false","true") as Liked,
+      ifnull(tComments,0) as totalComments, if(blockingThem.blockerID is null, "false","true") as amBlockingThem, if(blockingMe.blockedID is null,"false","true") as isBlockingMe,
+      if(viewers.viewerID is null, "false","true") as isViewer, checkAdmin.classification as viewerClassification
+      FROM posts LEFT JOIN users ON posts.userID = users.userID
+      LEFT JOIN (select postID,count(*) as tLikes from likes GROUP BY postID) totalLikes ON totalLikes.postID = posts.postID -- totalLikes
+      LEFT JOIN (select * FROM likes as Liked WHERE userID = ?) isLiked ON isLiked.postID = posts.postID -- isLiked
+      LEFT JOIN (select postID, count(*) as tComments from comments GROUP BY postID) comments ON comments.postID = posts.postID -- totalComments
+      LEFT JOIN (select * from blocked WHERE blockerID = ?) blockingThem ON blockingThem.blockedID = posts.userID --  meblockingthem
+      LEFT JOIN (select * from blocked where blockedID = ?) blockingMe on blockingMe.blockerID = posts.userID  -- themblockingme
+      LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = posts.userID -- viewingThem
+      , (select * from users WHERE userID = ?) checkAdmin) posts
+      WHERE viewerClassification = "admin" OR ((amBlockingThem = "false" AND isBlockingMe = "false")
+      AND userVisibility != "hidden" AND postVisibility != "hidden" AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private"))
+      Order BY postDate DESC
+      `;
+    variables.push(req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID);
     connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
@@ -145,7 +143,7 @@ app.get("/posts", function(req, res) {
                 title: results[i].title,
                 userID: results[i].userID,
                 content: results[i].content,
-                subDate: results[i].subDate,
+                subDate: results[i].postDate,
                 username: results[i].username,
                 totalLikes: results[i].totalLikes,
                 totalComments: results[i].totalComments,
@@ -193,6 +191,8 @@ app.get("/posts", function(req, res) {
     })
   }
 })
+
+
 app.get("/myfeed", function(req, res) {
   //show my posts and posts Im allowed to view from friends
   if (!req.query.userID || !req.query.sessionID) {
@@ -2779,6 +2779,7 @@ app.route("/setLightingPreference")
       })
     }
   })
+
 
 app.listen(3001, function() {
   console.log("Server Started.")
