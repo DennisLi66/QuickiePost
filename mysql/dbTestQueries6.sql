@@ -66,8 +66,9 @@ OR ((amBlockingCommenter = "false" AND commenterBlockingMe = "false")
 AND commenterVisibility != "hidden" AND commentVisibility != "hidden"
 AND (isViewerCommenter = "true") OR (commenterVisibility != "private" OR commentVisibility != "private")
 )) comments on posts.postID = comments.pyostID
-WHERE postID = 1 AND  (viewerClassification = "admin"
+WHERE postID = 6 AND  (viewerClassification = "admin"
 OR ((amBlockingThem = "false" AND isBlockingMe = "false")
 AND userVisibility != "hidden" AND postVisibility != "hidden"
 AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private")
 ))         ORDER BY commentDate DESC;
+;

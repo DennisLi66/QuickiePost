@@ -63,7 +63,9 @@ var cQuery =
   (timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
   )
   sessions
-  ON sessions.userID = a.userID AND sessions.sessionDate = a.high;
+  ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+  RIGHT JOIN (SELECT userID, classification FROM users) users
+  ;
 `;
 var updateSessionQuery =
   `
@@ -580,8 +582,6 @@ app.route("/post")
     }
   })
   //Change Post Visibility to Hidden
-
-  
   .delete(function(req, res) {
     if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
       return res.status(200).json({
@@ -604,9 +604,9 @@ app.route("/post")
           var uQuery = `
           UPDATE posts
           SET visibility = "hidden"
-          WHERE postID = ? AND userID = ?;
+          WHERE postID = ? AND (userID = ? OR ?);
           `;
-          connection.query(uQuery, [req.query.postid,req.query.userID], function(err, results, fields) {
+          connection.query(uQuery, [req.query.postid,req.query.userID, (data.classification === "admin" ? true : false)], function(err, results, fields) {
             if (err) {
               console.log(err);
               return res.status(200).json({
@@ -855,7 +855,7 @@ app.route("/like")
       }
     })
   })
-app.route("/getPostWithHashtag")
+app.route("/getPostsWithHashtag")
   .get(function(req, res) {
     if (!req.query.hashtag) {
       return res.status(200).json({
@@ -888,13 +888,19 @@ app.route("/getPostWithHashtag")
             LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
             LEFT JOIN (SELECT postID, userID from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
             LEFT JOIN (SELECT * from viewers WHERE viewerID = ?) viewership on viewership.posterID = posts.userID
-            WHERE title LIKE ? OR content LIKE ?
-            AND posts.visibility != 'hidden' AND users.visibility != 'hidden'
+            LEFT JOIN (select * from blocked WHERE blockerID = ?) blockingThem ON blockingThem.blockedID = posts.userID --  meblockingthem
+            LEFT JOIN (select * from blocked where blockedID = ?) blockingMe on blockingMe.blockerID = posts.userID  -- themblockingme
+            , (SELECT * FROM users WHERE userID = ?) adminClassification
+            WHERE
+            (title LIKE ? OR content LIKE ?)
+            AND
+            adminClassification.classification = "admin"
+            OR ( blockingMe.blockingID is null AND (posts.visibility != 'hidden' AND users.visibility != 'hidden'
             AND (posts.visibility != 'private' OR viewerID is not null)
-            AND (users.visibility != 'private' OR viewerID is not null)
+            AND (users.visibility != 'private' OR viewerID is not null)))
             order by subDate DESC
             `;
-            connection.query(sQuery, [req.query.userID, req.query.userID, '%' + req.query.hashtag + "%", '%' + req.query.hashtag + "%"], function(err, results, fields) {
+            connection.query(sQuery, [req.query.userID,req.query.userID, req.query.userID,req.query.userID, req.query.userID, '%' + req.query.hashtag + "%", '%' + req.query.hashtag + "%"], function(err, results, fields) {
               if (err) {
                 return res.status(200).json({
                   status: -1,
@@ -972,6 +978,9 @@ app.route("/getPostWithHashtag")
     }
   })
 // User Info Endpoints
+
+
+
 app.post("/register", function(req, res) {
   var email = req.body.email;
   var pswrd = req.body.pswrd;

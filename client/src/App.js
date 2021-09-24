@@ -13,6 +13,7 @@ require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
 //implement admin powers
+//FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
 //check reactivation code and login should return lighting preference
 ///will need to set lighting based on cookie recieved from login
@@ -2710,7 +2711,7 @@ function App() {
       }
       function searchHashtag(hashtag){
         console.log(hashtag);
-        var fetchString = serverLocation + "/getPostWithHashtag?hashtag=" + hashtag;
+        var fetchString = serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag;
         if (cookies.get("id") && cookies.get("sessionID")){
           fetchString += "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID");
         }
