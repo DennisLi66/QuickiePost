@@ -136,7 +136,6 @@ app.get("/posts", function(req, res) {
               message: err
             })
           } else if (results) {
-            // console.log(results);
             var toPrep = [];
             for (let i = 0; i < results.length; i++) {
               toPrep.push({
@@ -191,8 +190,6 @@ app.get("/posts", function(req, res) {
     })
   }
 })
-
-
 app.get("/myfeed", function(req, res) {
   //show my posts and posts Im allowed to view from friends
   if (!req.query.userID || !req.query.sessionID) {
@@ -201,7 +198,6 @@ app.get("/myfeed", function(req, res) {
       message: "Not Enough Information."
     })
   }
-  //check for valid sessions
   var sQuery = //works
     `
   select * from posts
@@ -304,23 +300,24 @@ app.get("/search", function(req, res) {
       } else {
         var sQuery = //works
           `
-          SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content,
-          posts.visibility as postVisibility, subDate, username, uzers.visibility as userVisibility,
-          if(viewerID is null,'false','true') as amViewing, if(likes.userID is null,'false','true') as isLiked
-          from posts
-          LEFT JOIN
-          (select userid,username,visibility,viewerID from users left join
-          (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = users.userID) uzers
-          on uzers.userID = posts.userID
-          LEFT JOIN (select * from likes WHERE userID = ?) as likes ON likes.postID = posts.postID
-          WHERE
-          posts.visibility != 'hidden'
-          AND uzers.visibility != 'hidden'
-          AND (posts.visibility != 'private' OR viewerID is not null)
-          AND (uzers.visibility != 'private' OR viewerID is not null)
+          SELECT * FROM (
+          SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content, posts.visibility as postVisibility, posts.subDate as postDate,
+          users.userName as username, users.email as email, users.visibility as userVisibility, ifnull(tLikes,0) as totalLikes, if(isLiked.postID is null,"false","true") as Liked,
+          ifnull(tComments,0) as totalComments, if(blockingThem.blockerID is null, "false","true") as amBlockingThem, if(blockingMe.blockedID is null,"false","true") as isBlockingMe,
+          if(viewers.viewerID is null, "false","true") as isViewer, checkAdmin.classification as viewerClassification
+          FROM posts LEFT JOIN users ON posts.userID = users.userID
+          LEFT JOIN (select postID,count(*) as tLikes from likes GROUP BY postID) totalLikes ON totalLikes.postID = posts.postID -- totalLikes
+          LEFT JOIN (select * FROM likes as Liked WHERE userID = ?) isLiked ON isLiked.postID = posts.postID -- isLiked
+          LEFT JOIN (select postID, count(*) as tComments from comments GROUP BY postID) comments ON comments.postID = posts.postID -- totalComments
+          LEFT JOIN (select * from blocked WHERE blockerID = ?) blockingThem ON blockingThem.blockedID = posts.userID --  meblockingthem
+          LEFT JOIN (select * from blocked where blockedID = ?) blockingMe on blockingMe.blockerID = posts.userID  -- themblockingme
+          LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = posts.userID -- viewingThem
+          , (select * from users WHERE userID = ?) checkAdmin) posts
+          WHERE viewerClassification = "admin" OR ((amBlockingThem = "false" AND isBlockingMe = "false")
+          AND userVisibility != "hidden" AND postVisibility != "hidden" AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private"))
         `;
-        sQuery += toJoinQuery.join("") + " ORDER BY posts.subDate desc";
-        var stuff = [userID, userID].concat(variables);
+        sQuery += toJoinQuery.join("") + "  Order BY postDate DESC";
+        var stuff = [userID, userID,userID,userID,userID].concat(variables);
         connection.query(sQuery, stuff, function(err, results, fields) {
           if (err) {
             return res.status(200).json({
@@ -332,17 +329,20 @@ app.get("/search", function(req, res) {
               var toPrep = [];
               for (let i = 0; i < results.length; i++) {
                 toPrep.push({
-                  postID: results[i].postID,
                   title: results[i].title,
                   userID: results[i].userID,
                   content: results[i].content,
-                  subDate: results[i].subDate,
-                  username: results[i].username
-                })
+                  subDate: results[i].postDate,
+                  username: results[i].username,
+                  totalLikes: results[i].totalLikes,
+                  totalComments: results[i].totalComments,
+                  Liked: results[i].Liked,
+                  postID: results[i].postID
+                });
               }
               return res.status(200).json({
                 status: 0,
-                message: "Posts Returned.",
+                message: "Request Received.",
                 contents: toPrep
               })
             } else {
@@ -404,7 +404,7 @@ app.get("/search", function(req, res) {
 ///Post Endpoints
 app.route("/post")
   //Retrieve Single Post
-  .get(function(req, res) {
+  .get(function(req, res) { //FIX THIS CHECK ON public post with one private comment
     console.log(req.query.postID)
     //Retrieve Amount of Likes and Comments
     // console.log(req.query.userID,req.query.sessionID,req.query.postID)
@@ -417,27 +417,40 @@ app.route("/post")
       var sQuery =
         `
         SELECT * FROM (
-        SELECT
-        posts.postID as postID, comments.commentID, comments.userID as commenterID, comments, comments.visibility as commentVisibility,  users.userName as commenterName,
-        users.visibility as commenterVisibility, ifnull(commentLikes,0) as commentLikes,
-        comments.submissionDate as commentDate, ifnull(totalLikes,0) as totalLikes, uzers.userID as authorID, title,content,
-        posts.visibility as postVisibility, posts.subDate as postDate, uzers.userName as authorName, uzers.visibility as authorVisibility,
-        if (isLiked.userID is null, "Unliked","Liked") as postLiked, if (commentLiked.userID is null,"Unliked","Liked") as commentLiked,  postViewers.viewerID as viewerID
-        FROM posts
-        left join comments on posts.postID = comments.postID
-        left join users on users.userID = comments.userID
-        left join (select postID, count(*) as totalLikes from likes group by postID) totalLikes on totalLikes.postID = posts.postID
-        left join (select * from users) uzers on uzers.userID = posts.userID
-        left join (select count(*) as commentLikes, commentID from commentLikes group by commentID) commentLikes ON commentLikes.commentID = comments.commentID
-        LEFT JOIN (select * from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
-        LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked on commentLiked.commentID = comments.commentID
-        LEFT JOIN (select * from viewers WHERE viewerID = ?) commentViewers ON commentViewers.posterID = comments.userID
-        LEFT JOIN (select * from viewers where viewerID = ?) postViewers ON postViewers.posterID = posts.userID
-        ) bigQuery
-        WHERE postID = ?
-        AND postVisibility != 'hidden'  AND (postVisibility != 'private' OR viewerID is not null)
-        AND (commentVisibility != 'private'  OR viewerID is not null OR commentVisibility is null) AND (NOT commentVisibility = 'hidden'  OR commentVisibility is null)
-        ORDER BY commentDate DESC;
+        SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content, posts.visibility as postVisibility, posts.subDate as postDate,
+        users.userName as username, users.email as email, users.visibility as userVisibility, ifnull(tLikes,0) as totalLikes, if(isLiked.postID is null,"false","true") as Liked,
+        ifnull(tComments,0) as totalComments, if(blockingThem.blockerID is null, "false","true") as amBlockingThem, if(blockingMe.blockedID is null,"false","true") as isBlockingMe,
+        if(viewers.viewerID is null, "false","true") as isViewer, checkAdmin.classification as viewerClassification
+        FROM posts LEFT JOIN users ON posts.userID = users.userID
+        LEFT JOIN (select postID,count(*) as tLikes from likes GROUP BY postID) totalLikes ON totalLikes.postID = posts.postID -- totalLikes
+        LEFT JOIN (select * FROM likes as Liked WHERE userID = ?) isLiked ON isLiked.postID = posts.postID -- isLiked
+        LEFT JOIN (select postID, count(*) as tComments from comments GROUP BY postID) comments ON comments.postID = posts.postID -- totalComments
+        LEFT JOIN (select * from blocked WHERE blockerID = ?) blockingThem ON blockingThem.blockedID = posts.userID --  meblockingthem
+        LEFT JOIN (select * from blocked where blockedID = ?) blockingMe on blockingMe.blockerID = posts.userID  -- themblockingme
+        LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = posts.userID -- viewingThem
+        , (select * from users WHERE userID = ?) checkAdmin
+        ) posts LEFT JOIN (SELECT * FROM
+        (SELECT comments.commentID as commentID, postID as pyostID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, submissionDate as commentDate,
+        users.userName as commentername, users.visibility as commenterVisibility, ifnull(totalCommentLikes,0) as totalCommentLikes, if(commentLiked.commentID is null,"false","true") as commentLiked,
+        if(meBlockingThem.blockerID is null,"false","true") as amBlockingCommenter, if(themBlockingMe.blockerID is null,"false","true") as CommenterBlockingMe,
+        if(viewers.viewerID is null, "false","true") as isViewerCommenter, checkAdmin.classification as userClassification
+        FROM comments LEFT JOIN users on comments.userID = users.userID
+        LEFT JOIN (select commentID, count(*) as totalCommentLikes from commentLikes GROUP BY commentID) commentLikes on commentLikes.commentID = comments.commentID
+        LEFT JOIN (select * from commentLikes WHERE userID = ?) commentLiked on commentLiked.commentID = comments.commentID
+        LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingThem on meBlockingThem.blockedID = comments.userID
+        LEFT JOIN (select * from blocked WHERE blockedID = ?) themBlockingMe on themBlockingMe.blockerID = comments.userID
+        LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = comments.userID -- viewingThem
+        ,(select * from users WHERE userID = ?) checkAdmin
+        ) comments WHERE userClassification = "admin"
+        OR ((amBlockingCommenter = "false" AND commenterBlockingMe = "false")
+        AND commenterVisibility != "hidden" AND commentVisibility != "hidden"
+        AND (isViewerCommenter = "true") OR (commenterVisibility != "private" OR commentVisibility != "private")
+        )) comments on posts.postID = comments.pyostID
+        WHERE postID = ? AND  (viewerClassification = "admin"
+        OR ((amBlockingThem = "false" AND isBlockingMe = "false")
+        AND userVisibility != "hidden" AND postVisibility != "hidden"
+        AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private")
+        )) ORDER BY commentDate DESC;
       `;
       connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
         if (err1) {
@@ -451,8 +464,7 @@ app.route("/post")
             message: "Not Valid Session."
           })
         } else {
-          console.log(req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.postID);
-          connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.postID], function(err, results, fields) {
+          connection.query(sQuery, [req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID, req.query.postID], function(err, results, fields) {
             if (err) {
               console.log(err);
               return res.status(200).json({
@@ -467,35 +479,32 @@ app.route("/post")
                 })
               } else {
                 var toPrep = [];
-                for (let i = 0; i < results.length; i++) {
-                  if (results[i].commentID && results[i].commenterVisibility !== 'hidden' && results[i].commenterVisibility !== 'private' &&
-                    results[i].commentVisibility !== 'private' && results[i].commentVisibility !== 'hidden') {
-                    toPrep.push({
-                      commentID: results[i].commentID,
-                      commenterID: results[i].commenterID,
-                      commenterName: results[i].commenterName,
-                      comments: results[i].comments,
-                      commentLikes: results[i].commentLikes,
-                      commentVisibility: results[i].commentVisibility,
-                      commenterVisibility: results[i].commenterVisibility,
-                      commentDate: results[i].commentDate,
-                      commentLiked: results[i].commentLiked
-                    })
-                  }
+                for (let i = 0; i < results.length; i++) { //FIX THIS: Test how it works on commentlessposts
+                  toPrep.push({
+                    commentID: results[i].commentID,
+                    commenterID: results[i].commenterID,
+                    commenterName: results[i].commentername,
+                    comments: results[i].comments,
+                    commentLikes: results[i].totalCommentLikes,
+                    // commentVisibility: results[i].commentVisibility,
+                    // commenterVisibility: results[i].commenterVisibility,
+                    commentDate: results[i].commentDate,
+                    commentLiked: results[i].commentLiked
+                  })
                 }
                 return res.status(200).json({
                   status: 0,
                   message: "Here's your post!",
                   postID: results[0].postID,
-                  totalLikes: results[0].totalLikes,
-                  authorID: results[0].authorID,
+                  authorID: results[0].userID,
                   title: results[0].title,
                   content: results[0].content,
                   postVisibility: results[0].postVisibility,
+                  totalLikes: results[0].totalLikes,
                   postDate: results[0].postDate,
-                  authorName: results[0].authorName,
-                  authorVisibility: results[0].authorVisibility,
-                  likedPost: results[0].postLiked,
+                  authorName: results[0].username,
+                  authorVisibility: results[0].userVisibility,
+                  likedPost: results[0].Liked,
                   comments: toPrep
                 })
               }
@@ -571,6 +580,8 @@ app.route("/post")
     }
   })
   //Change Post Visibility to Hidden
+
+  
   .delete(function(req, res) {
     if (!req.query.userID || !req.query.sessionID || !req.query.postID) {
       return res.status(200).json({

@@ -2905,9 +2905,7 @@ function App() {
       function getMyFeed(start = 0, end = 10){
         showOnlyMain();
         var listOfPosts = [];
-        var userSession = cookies.get("sessionID");
-        var userId = cookies.get("id");
-        fetch(serverLocation + "/myfeed?userID=" + userId + "&sessionID="+userSession)
+        fetch(serverLocation + "/myfeed?userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
           .then(response=>response.json())
           .then(data =>{
             console.log(data);
@@ -2950,7 +2948,7 @@ function App() {
               )
             }
           })
-      }
+      } //FIX THIS: DOUBT IT WORKS
       function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
         showOnlyMain();
         showUserProfile(cookies.get("id"));
