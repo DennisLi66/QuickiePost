@@ -72,3 +72,42 @@ AND userVisibility != "hidden" AND postVisibility != "hidden"
 AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private")
 ))         ORDER BY commentDate DESC;
 ;
+-- get comment
+        select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+        , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+        ,if (isLiked.userID is null, "Unliked","Liked") as postLiked
+        ,if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
+        from comments LEFT JOIN (select userID,username,visibility from users) uzers -- commentUsers
+        on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
+        LEFT JOIN (select userID, username,visibility from users) ucers -- postUsers
+        ON posts.userID = ucers.userID
+        LEFT JOIN (select * from viewers) commenterViewer
+        ON commenterViewer.posterID = ucers.userID
+        LEFT JOIN (select * from viewers) postViewer
+        ON postViewer.posterID = uzers.userID
+        LEFT JOIN (select * from likes WHERE userID = 3) isLiked -- variable
+        ON isLiked.postID = posts.postID
+        LEFT JOIN (SELECT * FROM commentLikes WHERE userID = 3) commentLiked
+        on commentLiked.commentID = comments.commentID
+        LEFT JOIN (select * from blocked WHERE blockedID = 3) commenterBlockingMe on comments.userID = commenterBlockingMe.blockerID
+        LEFT JOIN (select * from blocked WHERE blockerID = 3) MeBlockingCommenter on comments.userID = commenterBlockingMe.blockedID
+        LEFT JOIN (select * from blocked WHERE blockedID = 3) posterBlockingMe on posts.userID = posterBlockingMe.blockerID
+        LEFT JOIN (select * from blocked WHERE blockerID = 3) MeBlockingPoster on posts.userID = meBlockingPoster.blockedID
+        ,(select userID, classification from users WHERE userID = 3) checkAdmin
+        WHERE
+        checkAdmin.classification = "admin" OR
+        (
+        commenterBlockingMe.blockedID is null
+        AND posterBlockingMe.blockedID is null
+        AND meBlockingPoster.blockerID is null
+        AND meBlockingCommenter.blockerID is null
+        AND comments.visibility != 'hidden'
+        AND posts.visibility != 'hidden'
+        AND ucers.visibility != 'hidden'
+        AND uzers.visibility != 'hidden'
+		AND (comments.visibility != 'private' OR commenterViewer.viewerID = 3 or comments.userID = 3)
+        AND (posts.visibility != 'private' OR postViewer.viewerID = 3 OR posts.userID  = 3)
+        AND (ucers.visibility != 'private' or commenterViewer.viewerID = 3 OR comments.userID = 3)
+        AND (uzers.visibility != 'private' or postViewer.viewerID = 3 OR posts.userID  = 3)
+        )
+        AND comments.commentID = 2

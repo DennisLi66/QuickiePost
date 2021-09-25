@@ -115,10 +115,10 @@ app.get("/posts", function(req, res) {
       LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = posts.userID -- viewingThem
       , (select * from users WHERE userID = ?) checkAdmin) posts
       WHERE viewerClassification = "admin" OR ((amBlockingThem = "false" AND isBlockingMe = "false")
-      AND userVisibility != "hidden" AND postVisibility != "hidden" AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private"))
+      AND userVisibility != "hidden" AND postVisibility != "hidden" AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private" OR userID = ?))
       Order BY postDate DESC
       `;
-    variables.push(req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID);
+    variables.push(req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID);
     connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
         return res.status(200).json({
@@ -446,12 +446,12 @@ app.route("/post")
         ) comments WHERE userClassification = "admin"
         OR ((amBlockingCommenter = "false" AND commenterBlockingMe = "false")
         AND commenterVisibility != "hidden" AND commentVisibility != "hidden"
-        AND (isViewerCommenter = "true") OR (commenterVisibility != "private" OR commentVisibility != "private")
+        AND (isViewerCommenter = "true") OR (commenterVisibility != "private" OR commentVisibility != "private" OR commenterID = ?)
         )) comments on posts.postID = comments.pyostID
         WHERE postID = ? AND  (viewerClassification = "admin"
         OR ((amBlockingThem = "false" AND isBlockingMe = "false")
         AND userVisibility != "hidden" AND postVisibility != "hidden"
-        AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private")
+        AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private" or userID = ?)
         )) ORDER BY commentDate DESC;
       `;
       connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
@@ -466,7 +466,7 @@ app.route("/post")
             message: "Not Valid Session."
           })
         } else {
-          connection.query(sQuery, [req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID, req.query.postID], function(err, results, fields) {
+          connection.query(sQuery, [req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID, req.query.userID, req.query.postID, req.query.userID], function(err, results, fields) {
             if (err) {
               console.log(err);
               return res.status(200).json({
@@ -606,7 +606,7 @@ app.route("/post")
           SET visibility = "hidden"
           WHERE postID = ? AND (userID = ? OR ?);
           `;
-          connection.query(uQuery, [req.query.postid,req.query.userID, (data.classification === "admin" ? true : false)], function(err, results, fields) {
+          connection.query(uQuery, [req.query.postid,req.query.userID, (results1[0].classification === "admin" ? true : false)], function(err, results, fields) {
             if (err) {
               console.log(err);
               return res.status(200).json({
@@ -978,9 +978,6 @@ app.route("/getPostsWithHashtag")
     }
   })
 // User Info Endpoints
-
-
-
 app.post("/register", function(req, res) {
   var email = req.body.email;
   var pswrd = req.body.pswrd;
@@ -1364,6 +1361,11 @@ app.route("/checkForgottenPassword")
       })
     }
   })
+
+
+
+
+
 //User Info Endpoints
 app.route("/user")
   .get(function(req, res) {
@@ -1493,7 +1495,7 @@ app.route("/user")
       AND users.visibility != 'hidden'
       AND posts.visibility != 'hidden'
       AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = ? or viewers.viewerID is not null);
-      `;
+      `; //getPosts
       var sQuery2 =
         `
       select comments.commentID as commentID,comments.postID as postID,comments.userID as userID,comments.comments as comments,comments.visibility as commentVisibility,
@@ -1508,8 +1510,8 @@ app.route("/user")
       AND comments.visibility != 'hidden'
       AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = ? or viewers.viewerID = ?)
       ;
-      `;
-      var uQuery =
+      `; //getComments
+      var sQuery =
         `
       SELECT userID,userName, visibility FROM users WHERE users.userID = ?
       AND users.visibility != 'hidden' AND
@@ -1527,7 +1529,7 @@ app.route("/user")
             message: "Not Valid Session"
           })
         } else {
-          connection.query(uQuery, [profileID, userID], function(err1, results1, fields1) {
+          connection.query(sQuery, [profileID, userID], function(err1, results1, fields1) {
             if (err1) {
               return res.status(200).json({
                 status: -1,
@@ -1654,6 +1656,12 @@ app.route("/user")
       })
     }
   })
+
+
+
+
+
+  
 app.route("/comment")
   .get(function(req, res) {
     //REWORK THIS ROUTE
@@ -1720,40 +1728,6 @@ app.route("/comment")
         })
       } else {
         //can pull friendly comments
-        var sQuery =
-          `
-        select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
-        , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
-        ,if (isLiked.userID is null, "Unliked","Liked") as postLiked
-        ,if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
-        from comments LEFT JOIN (select userID,username,visibility from users) uzers
-        on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
-        LEFT JOIN (select userID, username,visibility from users) ucers
-        ON posts.userID = ucers.userID
-        LEFT JOIN (select * from viewers) commenterViewer
-        ON commenterViewer.posterID = ucers.userID
-        LEFT JOIN (select * from viewers) postViewer
-        ON postViewer.posterID = uzers.userID
-        LEFT JOIN (select * from likes WHERE userID = ?) isLiked -- variable
-        ON isLiked.postID = posts.postID
-        LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked
-        on commentLiked.commentID = comments.commentID
-        WHERE
-        (
-        comments.visibility != 'hidden'
-        AND posts.visibility != 'hidden'
-        AND ucers.visibility != 'hidden'
-        AND uzers.visibility != 'hidden'
-        )
-        AND posts.userID  = ? OR
-        (
-        (comments.visibility != 'private' OR commenterViewer.viewerID = ?)
-        AND (posts.visibility != 'private' OR postViewer.viewerID = ?)
-        AND (ucers.visibility != 'private' or commenterViewer.viewerID = ?)
-        AND (uzers.visibility != 'private' or postViewer.viewerID = ?)
-        )
-        AND comments.commentID = ?
-        `;
         connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
           if (err1) {
             return res.status(200).json({
@@ -1766,7 +1740,48 @@ app.route("/comment")
               message: "Not Valid Session"
             })
           } else {
-            connection.query(sQuery, [userID, userID, userID, userID, userID, userID, userID, commentID], function(err2, results2, fields) {
+            var sQuery =
+              `
+              select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+              , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+              ,if (isLiked.userID is null, "Unliked","Liked") as postLiked
+              ,if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
+              from comments LEFT JOIN (select userID,username,visibility from users) uzers -- commentUsers
+              on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
+              LEFT JOIN (select userID, username,visibility from users) ucers -- postUsers
+              ON posts.userID = ucers.userID
+              LEFT JOIN (select * from viewers) commenterViewer
+              ON commenterViewer.posterID = ucers.userID
+              LEFT JOIN (select * from viewers) postViewer
+              ON postViewer.posterID = uzers.userID
+              LEFT JOIN (select * from likes WHERE userID = ?) isLiked -- variable
+              ON isLiked.postID = posts.postID
+              LEFT JOIN (SELECT * FROM commentLikes WHERE userID = ?) commentLiked
+              on commentLiked.commentID = comments.commentID
+              LEFT JOIN (select * from blocked WHERE blockedID = ?) commenterBlockingMe on comments.userID = commenterBlockingMe.blockerID
+              LEFT JOIN (select * from blocked WHERE blockerID = ?) MeBlockingCommenter on comments.userID = commenterBlockingMe.blockedID
+              LEFT JOIN (select * from blocked WHERE blockedID = ?) posterBlockingMe on posts.userID = posterBlockingMe.blockerID
+              LEFT JOIN (select * from blocked WHERE blockerID = ?) MeBlockingPoster on posts.userID = meBlockingPoster.blockedID
+              ,(select userID, classification from users WHERE userID = ?) checkAdmin
+              WHERE
+              checkAdmin.classification = "admin" OR
+              (
+              commenterBlockingMe.blockedID is null
+              AND posterBlockingMe.blockedID is null
+              AND meBlockingPoster.blockerID is null
+              AND meBlockingCommenter.blockerID is null
+              AND comments.visibility != 'hidden'
+              AND posts.visibility != 'hidden'
+              AND ucers.visibility != 'hidden'
+              AND uzers.visibility != 'hidden'
+              AND (comments.visibility != 'private' OR commenterViewer.viewerID = ? or comments.userID = ?)
+              AND (posts.visibility != 'private' OR postViewer.viewerID = ? OR posts.userID  = ?)
+              AND (ucers.visibility != 'private' or commenterViewer.viewerID = ? OR comments.userID = ?)
+              AND (uzers.visibility != 'private' or postViewer.viewerID = ? OR posts.userID  = ?)
+              )
+              AND comments.commentID = ?
+            `;
+            connection.query(sQuery, [userID, userID, userID, userID,userID, userID, userID, userID,userID, userID, userID, userID, userID, userID, userID, commentID], function(err2, results2, fields) {
               if (err2) {
                 return res.status(200).json({
                   status: -1,
@@ -1928,7 +1943,7 @@ app.route("/comment")
       `
     UPDATE comments
     SET visibility = 'hidden'
-    WHERE commentID = ?;
+    WHERE commentID = ? AND (userID = ? OR ? );
     `;
     connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
@@ -1942,7 +1957,7 @@ app.route("/comment")
           message: "Not Valid Session"
         })
       } else {
-        connection.query(eQuery, [req.query.commentID], function(err2, results2, fields) {
+        connection.query(eQuery, [req.query.commentID,req.query.userID, (results1[0].classification === "admin" ? true : false)], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
               status: -1,
@@ -2799,7 +2814,7 @@ app.route("/setLightingPreference")
       })
     }
   })
-
+//ADMIN: Ban User
 
 app.listen(3001, function() {
   console.log("Server Started.")
