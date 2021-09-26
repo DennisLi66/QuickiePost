@@ -1361,11 +1361,6 @@ app.route("/checkForgottenPassword")
       })
     }
   })
-
-
-
-
-
 //User Info Endpoints
 app.route("/user")
   .get(function(req, res) {
@@ -1491,32 +1486,45 @@ app.route("/user")
       LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
       LEFT JOIN (select * from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
+      LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = posts.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = ?) userBlockingMe ON userBlockingMe.blockerID = posts.userID
+      ,(select * from users WHERE userID = ?) adminClass
       WHERE users.userID = ?
-      AND users.visibility != 'hidden'
-      AND posts.visibility != 'hidden'
-      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = ? or viewers.viewerID is not null);
+      AND ( adminClass.classification = "admin" OR
+	  (meBlockingUser.blockerID is null AND userBlockingMe.blockedID is null AND
+      users.visibility != 'hidden' AND posts.visibility != 'hidden'
+      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = ? or viewers.viewerID is not null)));
       `; //getPosts
       var sQuery2 =
         `
       select comments.commentID as commentID,comments.postID as postID,comments.userID as userID,comments.comments as comments,comments.visibility as commentVisibility,
-      comments.submissionDate as submissionDate, userName, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes,
+      comments.submissionDate as submissionDate, users.userName as userName, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes,
       if(isLiked.userID is null,"Unliked","Liked") as Liked
       from comments LEFT JOIN users ON users.userID = comments.userID
       LEFT JOIN (select * from viewers where viewers.viewerID = ?) viewers ON users.userID = viewers.posterID
       LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
       LEFT JOIN (select * from commentLikes WHERE userID = ?) isLiked ON isLiked.commentID = comments.commentID
-      WHERE users.userID = ?
-      AND users.visibility != 'hidden'
-      AND comments.visibility != 'hidden'
-      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = ? or viewers.viewerID = ?)
+      LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = comments.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = ?) userBlockingMe ON userBlockingMe.blockerID = comments.userID
+      , (select * from users WHERE userID = ?) checkAdmin
+      WHERE users.userID = ? AND (checkAdmin.classification = 'admin'
+      OR (users.visibility != 'hidden' AND comments.visibility != 'hidden'
+      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = ? or viewers.viewerID = ?)))
       ;
       `; //getComments
       var sQuery =
         `
-      SELECT userID,userName, visibility FROM users WHERE users.userID = ?
-      AND users.visibility != 'hidden' AND
-      (users.visibility != 'private' OR users.userID = ?);
-      `;
+      SELECT users.userID as userID,users.userName as userName, users.visibility as visibility FROM users
+      LEFT JOIN (select * from viewers WHERE viewerID = ?) viewership ON viewership.posterID = users.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = ?) userBlockingMe ON userBlockingMe.blockerID = users.userID
+      LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = users.userID
+      , (select * from users WHERE userID = 3) adminClass
+      WHERE users.userID = ?
+      AND (adminClass.classification = "admin"
+      OR (users.visibility != 'hidden' AND
+      (userBlockingMe.blockedID is null AND meBlockingUser.blockerID is null) AND
+      (users.visibility != 'private' OR users.userID = ? OR viewership.posterID is not null)));
+      `; //getUser
       connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(cErr, cResults, cFields) {
         if (cErr) {
           return res.status(200).json({
@@ -1529,7 +1537,7 @@ app.route("/user")
             message: "Not Valid Session"
           })
         } else {
-          connection.query(sQuery, [profileID, userID], function(err1, results1, fields1) {
+          connection.query(sQuery, [userID,userID,userID,profileID, userID], function(err1, results1, fields1) {
             if (err1) {
               return res.status(200).json({
                 status: -1,
@@ -1541,7 +1549,7 @@ app.route("/user")
                 message: "No such account."
               })
             } else {
-              connection.query(sQuery1, [userID, userID, profileID, userID], function(err2, results2, fields2) {
+              connection.query(sQuery1, [userID, userID,userID,userID, profileID, userID], function(err2, results2, fields2) {
                 if (err2) {
                   return res.status(200).json({
                     status: -1,
@@ -1565,7 +1573,7 @@ app.route("/user")
                       isLiked: res2.Liked
                     })
                   }
-                  connection.query(sQuery2, [userID, userID, profileID, userID, userID], function(err3, results3, fields3) {
+                  connection.query(sQuery2, [userID, userID,userID,userID, userID, profileID, userID, userID], function(err3, results3, fields3) {
                     if (err3) {
                       return res.status(200).json({
                         status: -1,
@@ -1656,12 +1664,6 @@ app.route("/user")
       })
     }
   })
-
-
-
-
-
-  
 app.route("/comment")
   .get(function(req, res) {
     //REWORK THIS ROUTE

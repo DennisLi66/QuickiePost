@@ -111,3 +111,49 @@ AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "pr
         AND (uzers.visibility != 'private' or postViewer.viewerID = 3 OR posts.userID  = 3)
         )
         AND comments.commentID = 2
+        ;
+        
+
+        -- get user queries
+      SELECT users.userID as userID,users.userName as userName, users.visibility as visibility FROM users
+      LEFT JOIN (select * from viewers WHERE viewerID = 3) viewership ON viewership.posterID = users.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = 3) userBlockingMe ON userBlockingMe.blockerID = users.userID
+      LEFT JOIN (select * from blocked WHERE blockerID = 3) meBlockingUser ON meBlockingUser.blockedID = users.userID
+      , (select * from users WHERE userID = 3) adminClass
+      WHERE users.userID = 2
+      AND (adminClass.classification = "admin"
+      OR (users.visibility != 'hidden' AND
+      (userBlockingMe.blockedID is null AND meBlockingUser.blockerID is null) AND 
+      (users.visibility != 'private' OR users.userID = 3 OR viewership.posterID is not null)));
+      
+      -- get posts
+      select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility,
+      ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments, if(isLiked.userID is null,"Unliked","Liked") as Liked from posts
+      LEFT JOIN users ON users.userID = posts.userID
+      LEFT JOIN (select * from viewers where viewers.viewerID = 3) viewers ON users.userID = viewers.posterID
+      LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
+      LEFT JOIN (select * from likes WHERE userID = 3) isLiked ON isLiked.postID = posts.postID
+      LEFT JOIN (select * from blocked WHERE blockerID = 3) meBlockingUser ON meBlockingUser.blockedID = posts.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = 3) userBlockingMe ON userBlockingMe.blockerID = posts.userID
+      ,(select * from users WHERE userID = 3) adminClass
+      WHERE users.userID = 1
+      AND ( adminClass.classification = "admin" OR
+	  (meBlockingUser.blockerID is null AND userBlockingMe.blockedID is null AND
+      users.visibility != 'hidden' AND posts.visibility != 'hidden'
+      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 3 or viewers.viewerID is not null)));
+      
+      -- get users comments
+            select comments.commentID as commentID,comments.postID as postID,comments.userID as userID,comments.comments as comments,comments.visibility as commentVisibility,
+      comments.submissionDate as submissionDate, users.userName as userName, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes,
+      if(isLiked.userID is null,"Unliked","Liked") as Liked
+      from comments LEFT JOIN users ON users.userID = comments.userID
+      LEFT JOIN (select * from viewers where viewers.viewerID = 3) viewers ON users.userID = viewers.posterID
+      LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
+      LEFT JOIN (select * from commentLikes WHERE userID = 3) isLiked ON isLiked.commentID = comments.commentID
+      LEFT JOIN (select * from blocked WHERE blockerID = 3) meBlockingUser ON meBlockingUser.blockedID = comments.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = 3) userBlockingMe ON userBlockingMe.blockerID = comments.userID
+      , (select * from users WHERE userID = 3) checkAdmin
+      WHERE users.userID = 1 AND (checkAdmin.classification = 'admin'
+      OR (users.visibility != 'hidden' AND comments.visibility != 'hidden'
+      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 3 or viewers.viewerID = 3)))
