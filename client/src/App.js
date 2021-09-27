@@ -12,10 +12,9 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
-//implement admin powers
+//implement admin powers -- URGENT
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
-//check reactivation code and login should return lighting preference
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
 //Cancel Button may not work properly
@@ -869,7 +868,7 @@ function App() {
                 cookies.set('id',data.userID,{path:'/'});
                 cookies.set('sessionID',data.sessionID,{path:'/'});
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"});
-                cookies.set('lightingMode',data.preference,{path:"/"})
+                cookies.set('lightingMode',data.preference,{path:"/"});
                 if (origin === ""){
                   window.location.reload();
                 }else if (origin === "indepthPost" || origin === "indepthComment"){
@@ -890,6 +889,15 @@ function App() {
                       If you would like to reactivate your account, you can receive an email to do so.
                       <Button onClick={() => {getHome()}}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin)}> Reactivate Account </Button>
                     </div>
+                  </div>
+                )
+              }
+              else if (data.status === -13){
+                changeCode(
+                  <div>
+                    <h1> Account Banned </h1>
+                    <div> This account has been banned. </div>
+                    <Button onClick={() => getHome()}> Return to Home </Button>
                   </div>
                 )
               }

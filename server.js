@@ -1096,7 +1096,8 @@ app.post("/login", function(req, res) {
                         userID: results[0].userID,
                         username: results[0].userName,
                         sessionID: sessionID,
-                                          lightingMode: results[0].preference
+                        isAdmin: results[0].banStatus,
+                        lightingMode: results[0].preference
                       })
                     }
                   })
@@ -1118,7 +1119,8 @@ app.post("/login", function(req, res) {
                         userID: results[0].userID,
                         username: results[0].userName,
                         sessionID: sessionID,
-                                          lightingMode: results[0].preference
+                        isAdmin: results[0].banStatus,
+                        lightingMode: results[0].preference
                       })
                     }
                   })
