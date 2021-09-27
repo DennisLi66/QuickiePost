@@ -88,3 +88,6 @@ create table forgottenPasswordCodes(
     fpCode varchar(10),
     addDate datetime NOT NULL
 );
+create table bans(
+	bannedID int NOT NULL primary key
+);

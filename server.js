@@ -1035,8 +1035,9 @@ app.post("/login", function(req, res) {
     var sQuery =
     `
     select users.userID as userID,userName,email,pswrd,visibility,
-    classification, ifnull(preference,"light") as preference
+    classification, ifnull(preference,"light") as preference, if(bannedID is null, "false", "true") as banStatus
     from users left join darkModePrefs ON darkModePrefs.userID = users.userID
+    left join bans ON bans.bannedID = users.userID
     WHERE email = ?
     `
     connection.query(sQuery, [email], function(e3rr, results, fields) {
@@ -1070,7 +1071,12 @@ app.post("/login", function(req, res) {
                   userID: results[0].userID,
                   username: results[0].userName
                 })
-              } else {
+              } else if (results[0].banStatus === "banned"){
+                return res.status(200).json({
+                  status: -13,
+                  message: "This user is banned."
+                })
+              }else {
                 //Create a Session ID
                 if (rememberMe === 'hour') {
                   var iQuery =
@@ -2817,7 +2823,99 @@ app.route("/setLightingPreference")
     }
   })
 //ADMIN: Ban User
-
+app.route("/banUser")
+  .post(function(req,res){
+    if (!req.body.userID || !req.body.sessionID || !req.body.profileID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information..."
+      })
+    }
+    else{
+      connection.query(cQuery + updateSessionQuery, [req.body.userID, req.body.sessionID, req.body.sessionID], function(err1, results1, fields1) {
+        if (err1) {
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        } else if (results1.length === 0) {
+          return res.status(200).json({
+            status: -11,
+            message: "Not Valid Session"
+          })
+        } else {
+          if (results1[0].classification === "admin"){
+            var iQuery =
+            `INSERT INTO bans (bannedID) VALUES (?);`;
+            connection.query(iQuery,[req.query.profileID],function(err,results,fields){
+              if (err){
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Banned."
+                })
+              }else{
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Banned."
+                })
+              }
+            })
+          }else{
+            return res.status(200).json({
+              status: -1,
+              message: "Not Enough Permissions."
+            })
+          }
+        }
+      })
+    }
+  })
+  .delete(function(req,res){
+    if (!req.body.userID || !req.body.sessionID || !req.body.profileID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information..."
+      })
+    }
+    else{
+      connection.query(cQuery + updateSessionQuery, [req.body.userID, req.body.sessionID, req.body.sessionID], function(err1, results1, fields1) {
+        if (err1) {
+          return res.status(200).json({
+            status: -1,
+            message: err1
+          })
+        } else if (results1.length === 0) {
+          return res.status(200).json({
+            status: -11,
+            message: "Not Valid Session"
+          })
+        } else {
+          if (results1[0].classification === "admin"){
+            var dQuery =
+            `DELETE FROM bans WHERE bannedID = ?`;
+            connection.query(dQuery,[req.query.profileID],function(err,results,fields){
+              if (err){
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Unbanned."
+                })
+              }else{
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Unbanned."
+                })
+              }
+            })
+          }else{
+            return res.status(200).json({
+              status: -1,
+              message: "Not Enough Permissions."
+            })
+          }
+        }
+      })
+    }
+  })
 app.listen(3001, function() {
   console.log("Server Started.")
 });
