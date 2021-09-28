@@ -13,6 +13,11 @@ require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
 //implement admin powers -- URGENT
+  //Ban User page
+  //Unban User page
+  //Delete Posts and Comments
+//Display a banner or information that says user is banned
+//check that a user isnt banned on page refresh
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
@@ -209,7 +214,7 @@ function App() {
           getHome();
         }
       }
-      //Deleting Handlers
+      //Deleting Handlers --ADMINS EDIT
       function showDeletePostConfirmation(postID,origin,startPos,endPos){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -869,6 +874,9 @@ function App() {
                 cookies.set('sessionID',data.sessionID,{path:'/'});
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"});
                 cookies.set('lightingMode',data.preference,{path:"/"});
+                if (data.isAdmin && data.isAdmin === "admin"){
+                  cookies.set("adminStatus",data.isAdmin,{path:"/"})
+                }
                 if (origin === ""){
                   window.location.reload();
                 }else if (origin === "indepthPost" || origin === "indepthComment"){
@@ -969,7 +977,10 @@ function App() {
               cookies.set('id',userID,{path:'/'});
               cookies.set('sessionID',data.sessionID,{path:'/'})
               cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
-              cookies.set('lightingMode',data.preference,{path:"/"})
+              cookies.set('lightingMode',data.preference,{path:"/"});
+              if (data.isAdmin && data.isAdmin === "admin"){
+                cookies.set("adminStatus",data.isAdmin,{path:"/"})
+              }
               if (origin === ""){
                 window.location.reload();
               }else if (origin === "userProfileOptions"){
@@ -1281,12 +1292,20 @@ function App() {
           displayCommentWriter(postID,origin,startPos,endPos,content);
         }
       }
-      //Set up Functions
+      //Show Main Stuff Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
           //Block List functions
           //FIX THIS: Expired Page should redirect to userprofule
+          //Admin functions
+          function confirmUserBan(toDo){
+
+          }
+          function handleUserBan(toDo){
+
+          }
+          //User Functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
             //show blocked users for a certain id
             showOnlyMain();
@@ -1846,7 +1865,7 @@ function App() {
                   {optionsMenu}
                   </div>
                 )
-              }else{//issomeoneelse
+              }else if (cookies.get("adminStatus") === "admin"){
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
@@ -1859,6 +1878,88 @@ function App() {
                     }else{
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
                       if (data.blockingThem && data.blockingThem === 'true'){
+                        blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
+                      }
+                      var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
+                      if (data.viewingMe && data.viewingMe === "true"){
+                        conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
+                      }
+                      else if (data.blockingThem && data.blockingThem === 'true'){
+                        conferViewershipButton = (<div> Since you are blocking them, you may not interact with viewership between you and this user.</div>);
+                      }
+                      else if (data.blockingMe && data.blockingMe === "true"){
+                        conferViewershipButton = (<div> Since this user is blocking you, you may not interact with viewership between you and this user.</div>);
+                      }
+                      else if (data.theyHaveRequestedToViewMe && data.theyHaveRequestedToViewMe === 'true'){
+                        conferViewershipButton =
+                          (
+                            <div>
+                              This user has sent you a viewership request for them to view you.
+                              <br></br>
+                              <Button onClick={() => {viewershipRequest(cookies.get('id'),userID,'viewer')}}>Accept Request</Button>
+                              <br></br>
+                              <Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Deny Request</Button>
+                              <br></br>
+                            </div>
+                          )
+                      } else if (data.iHaveRequestedToViewMe && data.iHaveRequestedToViewMe === 'true'){
+                        conferViewershipButton = (<div>This user has not yet responded to your request for them to view you.<br></br><Button onClick={() => {cancelViewershipRequest(cookies.get("id"),userID,"profile")}}>Cancel Request</Button></div>)
+                      }
+                      var banButton = (<div></div>);
+                      if (data.classification !== 'admin' && data.isBanned === "false"){
+                        banButton = (<Button onClick={confirmUserBan("ban")}> Ban User </Button>);
+                      }else if (data.classification !== 'admin' && data.isBanned === "true"){
+                        banButton = (<Button onClick={confirmUserBan("unban")}> Unban User </Button>);
+                      }
+                      optionsMenu = (
+                        <div>
+                          <br></br>
+                          {conferViewershipButton}
+                          <br></br>
+                          {blockButton}
+                          <br></br>
+                          {banButton}
+                        </div>
+                      );
+                      changeCode(
+                        <div>
+                        <h1> {username}'s Profile </h1>
+                        <ul className="nav nav-tabs justify-content-center">
+                          <li className="nav-item">
+                            <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                          </li>
+                          <li className="nav-item">
+                            <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                          </li>
+                          <li className="nav-item">
+                            <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
+                          </li>
+                          <li className="nav-item">
+                            <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                          </li>
+                        </ul>
+                        {optionsMenu}
+                        </div>
+                      )
+                    }
+                  })
+              }
+              else{//issomeoneelse
+                fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
+                  .then(response=>response.json())
+                  .then(data =>{
+                    console.log(data);
+                    if (data.status === -11){
+                      showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                    }
+                    else if (data.status === -1){
+                      showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
+                    }else{
+                      var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
+                      if (data.classification === "admin"){
+                        blockButton = (<div></div>)
+                      }
+                      else if (data.blockingThem && data.blockingThem === 'true'){
                         blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
                       }
                       var requestViewershipButton = (<Button variant='info' onClick={() => viewershipRequest(userID,cookies.get('id'),"poster")}> Request Viewership </Button>);
@@ -1887,7 +1988,10 @@ function App() {
                         requestViewershipButton = (<div>This user has not yet responded to your request for you to view them.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
                       }
                       var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
-                      if (data.viewingMe && data.viewingMe === "true"){
+                      if (data.classification === "admin"){
+                        conferViewershipButton = (<div></div>)
+                      }
+                      else if (data.viewingMe && data.viewingMe === "true"){
                         conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
                       }
                       else if (data.blockingThem && data.blockingThem === 'true'){
@@ -2250,6 +2354,7 @@ function App() {
                     cookies.remove("name",{path:'/'});
                     cookies.remove("id",{path:'/'});
                     cookies.remove("lightingMode",{path:'/'});
+                    cookies.remove("adminStatus",{path:'/'});
                     changeNavToLoggedOut();
                     changeCode(
                       <div>You have successfully deactivated your account. You will be redirected in a few seconds.</div>
@@ -3063,6 +3168,7 @@ function App() {
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
         cookies.remove("lightingMode",{path:'/'});
+                            cookies.remove("adminStatus",{path:'/'});
         changeNavToLoggedOut();
         showOnlyMain();
         //produce a page and redirect link, or redirect automatically
@@ -3181,6 +3287,7 @@ function App() {
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
         cookies.remove("lightingMode",{path:'/'});
+                            cookies.remove("adminStatus",{path:'/'});
         changeNavToLoggedOut();
         fetch(serverLocation + "/posts")
           .then(response=>response.json())
@@ -3201,6 +3308,7 @@ function App() {
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
         cookies.remove("lightingMode",{path:'/'});
+                            cookies.remove("adminStatus",{path:'/'});
         changeNavToLoggedOut();
       }
       var listOfPosts = [];

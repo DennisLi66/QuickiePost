@@ -1119,7 +1119,7 @@ app.post("/login", function(req, res) {
                         userID: results[0].userID,
                         username: results[0].userName,
                         sessionID: sessionID,
-                        isAdmin: results[0].banStatus,
+                        isAdmin: results[0].classification,
                         lightingMode: results[0].preference
                       })
                     }
@@ -1274,6 +1274,7 @@ app.route("/checkReactivationCode")
                 status: 0,
                 message: "Worked...",
                 sessionID: sessionID,
+                isAdmin: results[0].classification,
                 preference: results[-1].preference
               })
             }
@@ -2394,7 +2395,9 @@ app.route("/relationship")
     if (theirViewershipRequestToViewMe.posterID is null,'false','true') as theyHaveRequestedToViewMe,
     if (myViewershipRequestToViewMe.posterID is null,'false','true') as iHaveRequestedToViewMe,
     if (theirViewershipRequestToViewThem.posterID is null,'false','true') as theyHaveRequestedToViewThem,
-    if (myViewershipRequestToViewThem.posterID is null,'false','true') as iHaveRequestedToViewThem
+    if (myViewershipRequestToViewThem.posterID is null,'false','true') as iHaveRequestedToViewThem,
+    if (bannedID is null, "true", "false") as isBanned,
+    class.classification as classification
     FROM (select ? as userID) base LEFT JOIN
     (select * from blocked WHERE blockerID = ? and blockedID = ?) blockingThem
     ON base.userID = blockingThem.blockerID LEFT JOIN
@@ -2411,7 +2414,9 @@ app.route("/relationship")
     (select * from viewershipRequests WHERE posterID = ? AND viewerID = ? AND initiatedBy = ?) myViewershipRequestToViewThem
     ON base.userID = myViewershipRequestToViewThem.viewerID LEFT JOIN
     (select * from viewershipRequests WHERE posterID = ? AND viewerID = ? AND initiatedBy = ?) theirViewershipRequestToViewThem
-    ON base.userID = theirViewershipRequestToViewThem.viewerID;
+    ON base.userID = theirViewershipRequestToViewThem.viewerID LEFT JOIN
+    bans ON bannedID = base.userID LEFT join
+    (SELECT userID, classification FROM users) class ON class.userID = base.userID;
     `;
     var u = req.query.userID;
     var p = req.query.profileID;
@@ -2445,7 +2450,9 @@ app.route("/relationship")
               theyHaveRequestedToViewMe: results2[0].theyHaveRequestedToViewMe,
               theyHaveRequestedToViewThem: results2[0].theyHaveRequestedToViewThem,
               iHaveRequestedToViewMe: results2[0].iHaveRequestedToViewMe,
-              iHaveRequestedToViewThem: results2[0].iHaveRequestedToViewThem
+              iHaveRequestedToViewThem: results2[0].iHaveRequestedToViewThem,
+              isBanned: results2[0].isBanned,
+              classification: results2[0].classification
             })
           }
         })
@@ -2848,7 +2855,9 @@ app.route("/banUser")
         } else {
           if (results1[0].classification === "admin"){
             var iQuery =
-            `INSERT INTO bans (bannedID) VALUES (?);`;
+            `INSERT INTO bans
+            SELECT userID FROM users
+            WHERE userID = ? AND classification != "admin"`;
             connection.query(iQuery,[req.query.profileID],function(err,results,fields){
               if (err){
                 return res.status(200).json({
