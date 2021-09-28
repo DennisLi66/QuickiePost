@@ -2831,6 +2831,42 @@ app.route("/setLightingPreference")
       })
     }
   })
+app.route("/isthisuserbanned")
+  .get(function(req,res){
+    if (!req.query.userID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information"
+      })
+    }
+    else{
+      var sQuery =
+      `
+      SELECT * FROM bans WHERE userID = ?;
+      `;
+      connection.query(sQuery,[req.query.userID],function(err,results,fields){
+        if (err){
+          return res.status(200).json({
+            message: err,
+            status: -1
+          })
+        }
+        else{
+          if (results.length === 0){
+            return res.status(200).json({
+              status: -2,
+              message: "User Not Banned."
+            })
+          }else{
+            return res.status(200).json({
+              status: 0,
+              message: "User is Banned."
+            })
+          }
+        }
+      })
+    }
+  })
 //ADMIN: Ban User
 app.route("/banUser")
   .post(function(req,res){

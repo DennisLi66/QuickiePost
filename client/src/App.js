@@ -13,8 +13,6 @@ require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
 //implement admin powers -- URGENT
-  //Ban User page
-  //Unban User page
   //Delete Posts and Comments
 //Display a banner or information that says user is banned
 //check that a user isnt banned on page refresh
@@ -1940,6 +1938,10 @@ function App() {
                     else if (data.status === -1){
                       showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
                     }else{
+                      var banBanner = (<div></div>);
+                      if (data.isBanned){
+                        banBanner = <div className='errorMsg'>This user is currently banned.</div>
+                      }
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
                       if (data.blockingThem && data.blockingThem === 'true'){
                         blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
@@ -1988,6 +1990,7 @@ function App() {
                       changeCode(
                         <div>
                         <h1> {username}'s Profile </h1>
+                        {banBanner}
                         <ul className="nav nav-tabs justify-content-center">
                           <li className="nav-item">
                             <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
@@ -2019,6 +2022,10 @@ function App() {
                     else if (data.status === -1){
                       showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
                     }else{
+                      var banBanner = (<div></div>);
+                      if (data.isBanned){
+                        banBanner = <div className='errorMsg'>This user is currently banned.</div>
+                      }
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
                       if (data.classification === "admin"){
                         blockButton = (<div></div>)
@@ -2093,6 +2100,7 @@ function App() {
                       changeCode(
                         <div>
                         <h1> {username}'s Profile </h1>
+                                              {banBanner}
                         <ul className="nav nav-tabs justify-content-center">
                           <li className="nav-item">
                             <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
@@ -2121,26 +2129,37 @@ function App() {
                 <Button onClick={() => {getLoginPage("userProfileOptions")}}> Login </Button>
                 </div>
               );
-              changeCode(
-                <div>
-                <h1> {username}'s Profile </h1>
-                <ul className="nav nav-tabs justify-content-center">
-                  <li className="nav-item">
-                    <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
-                  </li>
-                  <li className="nav-item">
-                    <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                  </li>
-                  <li className="nav-item">
-                    <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
-                  </li>
-                </ul>
-                {optionsMenu}
-                </div>
-              )
+              fetch(serverLocation + "/isthisuserbanned?userID=" + userID)
+                .then(response => response.json())
+                .then(data => {
+                  var bannedBanner;
+                  if (data.status === 0){
+                    bannedBanner = (<div className="errorMsg"> This user is currently banned. </div>)
+                  }else if (data.status === -1){
+                    console.log(data.message);
+                  }
+                  changeCode(
+                    <div>
+                    <h1> {username}'s Profile </h1>
+                    {bannedBanner}
+                    <ul className="nav nav-tabs justify-content-center">
+                      <li className="nav-item">
+                        <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
+                      </li>
+                      <li className="nav-item">
+                        <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                      </li>
+                    </ul>
+                    {optionsMenu}
+                    </div>
+                  )
+                })
             }
           }
-          function showComments(username,comments,start,end,posts){
+          function showComments(username,comments,start,end,posts){ ///Doesnt test session
             showOnlyMain();
             var listOfShownComments = [];
             var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfileComments")}}>Like</Button>);
@@ -2252,7 +2271,7 @@ function App() {
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               </div>
             )
-          } ///Doesnt test session
+          }
           function showPosts(username,posts,start,end,comments, variation = ""){
             showOnlyMain();
             var listOfShownPosts = [];
