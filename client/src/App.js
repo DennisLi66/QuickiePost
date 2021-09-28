@@ -1299,11 +1299,75 @@ function App() {
           //Block List functions
           //FIX THIS: Expired Page should redirect to userprofule
           //Admin functions
-          function confirmUserBan(toDo){
-
+          function confirmUserBan(toDo,username){
+            if (toDo === "ban"){
+              changeCode(
+                <div>
+                  <h1> Banning {username} </h1>
+                  You are about to ban the user {username}. Are you sure you want to do this?<br></br>
+                  <Button onClick={() => {cancel("userProfileOptions",0,0,userID)}}> Cancel </Button>
+                  <Button onClick={handleUserBan(toDo,username)}> Confirm </Button>
+                </div>
+              )
+            }else if (toDo === "unban"){
+              changeCode(
+                <div>
+                  <h1> Unbanning {username} </h1>
+                  You are about to unban the user {username}. Are you sure you want to do this?<br></br>
+                  <Button onClick={() => {cancel("userProfileOptions",0,0,userID)}}> Cancel </Button>
+                  <Button onClick={handleUserBan(toDo,username)}> Confirm </Button>
+                </div>
+              )
+            }
           }
-          function handleUserBan(toDo){
-
+          function handleUserBan(toDo,username){
+            if (toDo === "ban"){
+              const requestSetup = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({profileID: userID, sessionID: cookies.get("sessionID"), userID: cookies.get("id")})
+              };
+              fetch(serverLocation + "/banUser",requestSetup)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === -1){
+                    showErrorPage({origin: "userProfileOptions", userID: userID});
+                  }else if (data.status === -11){
+                    showExpiredPage({origin: "userProfileOptions", userID: userID});
+                  }else{
+                    changeCode(
+                      <div>
+                        <h1> User Banned </h1>
+                        You have successfully banned {username}.<br></br>
+                      <Button onClick={() => {cancel("userProfileOptions",0,0,userID)}}> Return </Button>
+                      </div>
+                    )
+                  }
+                })
+            }else if (toDo === "unban"){
+              const requestSetup = {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({profileID: userID, sessionID: cookies.get("sessionID"), userID: cookies.get("id")})
+              };
+              fetch(serverLocation + "/banUser",requestSetup)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === -1){
+                    showErrorPage({origin: "userProfileOptions", userID: userID});
+                  }else if (data.status === -11){
+                    showExpiredPage({origin: "userProfileOptions", userID: userID});
+                  }else{
+                    changeCode(
+                      <div>
+                      <h1> User Unbanned </h1>
+                      You have successfully unbanned {username}.<br></br>
+                      <Button onClick={() => {cancel("userProfileOptions",0,0,userID)}}> Return </Button>
+                      </div>
+                    )
+                  }
+                })
+            }
           }
           //User Functions
           function showBlockedList(firstPoint = 0,secondPoint = 10){
@@ -1907,9 +1971,9 @@ function App() {
                       }
                       var banButton = (<div></div>);
                       if (data.classification !== 'admin' && data.isBanned === "false"){
-                        banButton = (<Button onClick={confirmUserBan("ban")}> Ban User </Button>);
+                        banButton = (<Button onClick={confirmUserBan("ban",username)}> Ban User </Button>);
                       }else if (data.classification !== 'admin' && data.isBanned === "true"){
-                        banButton = (<Button onClick={confirmUserBan("unban")}> Unban User </Button>);
+                        banButton = (<Button onClick={confirmUserBan("unban",username)}> Unban User </Button>);
                       }
                       optionsMenu = (
                         <div>
