@@ -55,7 +55,8 @@ connection.connect();
 //Evergreen QUERY
 var cQuery =
   `
-  SELECT * FROM
+  SELECT a.userID as userID, high, sessions.sessionID as sessionID, sessions.sessionDate as sessionDate,
+  timeDuration, classification, if(bannedID is null,"true","false") isBanned FROM
   (select userID,max(sessionDate) as high from sessions group by userID) a
   RIGHT JOIN
   (
@@ -64,7 +65,7 @@ var cQuery =
   )
   sessions
   ON sessions.userID = a.userID AND sessions.sessionDate = a.high
-  RIGHT JOIN (SELECT userID, classification FROM users) users
+  LEFT JOIN (SELECT userID, classification, bannedID FROM users LEFT JOIN bans on bannedID = userID) users ON users.userID = a.userID
   ;
 `;
 var updateSessionQuery =
@@ -130,7 +131,11 @@ app.get("/posts", function(req, res) {
           status: -11,
           message: "Not Valid Session."
         })
-      } else {
+      } else if (results1[0].isBanned === "true"){
+        	return res.status(200).json({
+        		status: -69,
+        		message: "User is Banned."})
+          }else {
         connection.query(sQuery, variables, function(err, results, fields) {
           if (err) {
             return res.status(200).json({
@@ -223,7 +228,11 @@ app.get("/myfeed", function(req, res) {
         status: -11,
         message: "Not Valid Session."
       })
-    } else {
+    } else if (results1[0].isBanned === "true"){
+        return res.status(200).json({
+          status: -69,
+          message: "User is Banned."})
+        } else {
       // console.log(req.query.userID);
       connection.query(sQuery, [req.query.userID, req.query.userID], function(err, results, fields) {
         if (err) {
@@ -286,7 +295,6 @@ app.get("/search", function(req, res) {
     variables.push(username);
   }
   if (sessionID && userID) {
-    //logged in version -- perform cQuery -- do other one first
     //update query to consider user being hidden or private
     connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields) {
       if (err1) {
@@ -299,7 +307,11 @@ app.get("/search", function(req, res) {
           status: -11,
           message: "Not Valid Session."
         })
-      } else {
+      } else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          } else {
         var sQuery = //works
           `
           SELECT * FROM (
@@ -465,7 +477,11 @@ app.route("/post")
             status: -11,
             message: "Not Valid Session."
           })
-        } else {
+        } else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            } else {
           connection.query(sQuery, [req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID, req.query.userID, req.query.postID, req.query.userID], function(err, results, fields) {
             if (err) {
               console.log(err);
@@ -600,7 +616,11 @@ app.route("/post")
             status: -11,
             message: "Bad Session..."
           })
-        }else{
+        } else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else{
           var uQuery = `
           UPDATE posts
           SET visibility = "hidden"
@@ -662,7 +682,11 @@ app.route("/post")
               status: -11,
               message: "Bad Session..."
             })
-          }else {
+          } else if (results1[0].isBanned === "true"){
+              return res.status(200).json({
+                status: -69,
+                message: "User is Banned."})
+              }else {
             var iQuery;
             var variables = [];
             iQuery =
@@ -724,7 +748,11 @@ app.route("/post")
           status: -11,
           message: "Not Valid Session."
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         var checkOwnerQuery =
           `
         SELECT * FROM posts WHERE postID = ? AND userID = ?;
@@ -798,7 +826,11 @@ app.route("/like")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(iQuery, [req.query.postID, req.query.userID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -838,7 +870,11 @@ app.route("/like")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(dQuery, [req.query.userID, req.query.postID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -875,7 +911,11 @@ app.route("/getPostsWithHashtag")
               status: -11,
               message: "Not Valid Session."
             })
-          } else {
+          }  else if (results1[0].isBanned === "true"){
+              return res.status(200).json({
+                status: -69,
+                message: "User is Banned."})
+              }else {
             var sQuery =
               `
             SELECT
@@ -1545,7 +1585,11 @@ app.route("/user")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (cResults1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(sQuery, [userID,userID,userID,profileID, userID], function(err1, results1, fields1) {
             if (err1) {
               return res.status(200).json({
@@ -1750,7 +1794,11 @@ app.route("/comment")
               status: -11,
               message: "Not Valid Session"
             })
-          } else {
+          }  else if (results1[0].isBanned === "true"){
+              return res.status(200).json({
+                status: -69,
+                message: "User is Banned."})
+              }else {
             var sQuery =
               `
               select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
@@ -1865,7 +1913,11 @@ app.route("/comment")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         //update
         var updateQuery =
           `
@@ -1925,7 +1977,11 @@ app.route("/comment")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(iQuery, variables, function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -1967,7 +2023,11 @@ app.route("/comment")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(eQuery, [req.query.commentID,req.query.userID, (results1[0].classification === "admin" ? true : false)], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -2007,7 +2067,11 @@ app.route("/likeComment")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(iQuery, [req.query.commentID, req.query.userID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -2047,7 +2111,11 @@ app.route("/likeComment")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(dQuery, [req.query.userID, req.query.commentID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -2090,7 +2158,11 @@ app.route("/block")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
@@ -2139,7 +2211,11 @@ app.route("/block")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(iQuery, [req.query.blockedID, req.query.userID, req.query.blockedID, req.query.userID, req.query.userID, req.query.blockedID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
@@ -2179,7 +2255,11 @@ app.route("/block")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(dQuery, [req.query.blockedID, req.query.userID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
@@ -2233,7 +2313,11 @@ app.route("/viewership")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(sQuery, variables, function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
@@ -2321,7 +2405,11 @@ app.route("/viewership")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        } else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            } else {
           connection.query(dQuery, variables, function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
@@ -2361,7 +2449,11 @@ app.route("/viewership")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(dQuery, [req.query.posterID, req.query.viewerID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
@@ -2432,7 +2524,11 @@ app.route("/relationship")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(sQuery, variables, function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -2482,7 +2578,11 @@ app.route("/whosviewingme")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -2530,7 +2630,11 @@ app.route("/whoimviewing")
           status: -11,
           message: "Not Valid Session"
         })
-      } else {
+      }  else if (results1[0].isBanned === "true"){
+          return res.status(200).json({
+            status: -69,
+            message: "User is Banned."})
+          }else {
         connection.query(sQuery, [req.query.userID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
@@ -2584,7 +2688,11 @@ app.route("/changeVisibility")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(cQuery2, [req.body.email], function(err2, results2, fields2) {
             if (err2) {
               return res.status(200).json({
@@ -2667,7 +2775,11 @@ app.route("/mylikedposts")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
             if (err) {
               return res.status(200).json({
@@ -2741,7 +2853,11 @@ app.route("/mylikedcomments")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
             if (err) {
               return res.status(200).json({
@@ -2803,7 +2919,11 @@ app.route("/setLightingPreference")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        } else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            } else {
           var iorUQuery =
             `
           INSERT INTO darkModePrefs
@@ -2888,7 +3008,11 @@ app.route("/banUser")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           if (results1[0].classification === "admin"){
             var iQuery =
             `INSERT INTO bans
@@ -2936,7 +3060,11 @@ app.route("/banUser")
             status: -11,
             message: "Not Valid Session"
           })
-        } else {
+        }  else if (results1[0].isBanned === "true"){
+            return res.status(200).json({
+              status: -69,
+              message: "User is Banned."})
+            }else {
           if (results1[0].classification === "admin"){
             var dQuery =
             `DELETE FROM bans WHERE bannedID = ?`;

@@ -14,8 +14,7 @@ require('dotenv').config();
 ////////////////////////UTMOST
 //implement admin powers -- URGENT
   //Delete Posts and Comments
-//Display a banner or information that says user is banned
-//check that a user isnt banned on page refresh
+//Figure out to make check session one simple function
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login

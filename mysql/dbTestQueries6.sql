@@ -156,4 +156,20 @@ AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "pr
       , (select * from users WHERE userID = 3) checkAdmin
       WHERE users.userID = 1 AND (checkAdmin.classification = 'admin'
       OR (users.visibility != 'hidden' AND comments.visibility != 'hidden'
-      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 3 or viewers.viewerID = 3)))
+      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = 3 or viewers.viewerID = 3)));
+      ;
+      
+SELECT a.userID as userID, high, sessions.sessionID as sessionID, sessions.sessionDate as sessionDate, timeDuration, classification, if(bannedID is null,"true","false") isBanned FROM
+(select userID,max(sessionDate) as high from sessions group by userID) a
+RIGHT JOIN
+(
+Select * from sessions 
+WHERE 
+-- userID = ? AND sessionID = ? AND
+(timeduration = 'FOREVER' OR (timeduration = "HOUR" AND NOW() < date_add(sessionDate,Interval 1 Hour)))
+)
+sessions
+ON sessions.userID = a.userID AND sessions.sessionDate = a.high
+LEFT JOIN (SELECT userID, classification, bannedID FROM users LEFT JOIN bans on bannedID = userID) users ON users.userID = a.userID
+;
+      
