@@ -900,7 +900,7 @@ app.route("/getPostsWithHashtag")
       })
     } else {
       if (req.query.userID && req.query.sessionID) {
-        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, resu; ts1, fields1) {
+        connection.query(cQuery + updateSessionQuery, [req.query.userID, req.query.sessionID, req.query.sessionID], function(err1, results1, fields1) {
           if (err1) {
             return res.status(200).json({
               status: -1,
@@ -1567,7 +1567,7 @@ app.route("/user")
       LEFT JOIN (select * from viewers WHERE viewerID = ?) viewership ON viewership.posterID = users.userID
       LEFT JOIN (select * from blocked WHERE blockedID = ?) userBlockingMe ON userBlockingMe.blockerID = users.userID
       LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = users.userID
-      , (select * from users WHERE userID = 3) adminClass
+      , (select * from users WHERE userID = ?) adminClass
       WHERE users.userID = ?
       AND (adminClass.classification = "admin"
       OR (users.visibility != 'hidden' AND
@@ -1585,12 +1585,12 @@ app.route("/user")
             status: -11,
             message: "Not Valid Session"
           })
-        }  else if (cResults1[0].isBanned === "true"){
+        }  else if (cResults[0].isBanned === "true"){
             return res.status(200).json({
               status: -69,
               message: "User is Banned."})
             }else {
-          connection.query(sQuery, [userID,userID,userID,profileID, userID], function(err1, results1, fields1) {
+          connection.query(sQuery, [userID,userID,userID,userID,profileID,userID], function(err1, results1, fields1) {
             if (err1) {
               return res.status(200).json({
                 status: -1,
@@ -1602,7 +1602,7 @@ app.route("/user")
                 message: "No such account."
               })
             } else {
-              connection.query(sQuery1, [userID, userID,userID,userID, profileID, userID], function(err2, results2, fields2) {
+              connection.query(sQuery1, [userID, userID,userID,userID,userID, profileID, userID], function(err2, results2, fields2) {
                 if (err2) {
                   return res.status(200).json({
                     status: -1,

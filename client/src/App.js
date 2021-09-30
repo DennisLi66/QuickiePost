@@ -28,7 +28,8 @@ require('dotenv').config();
 //Have error message if post or comment is restricted to private when you redirect to it
 /////
 //!!!PRIORITY
-//Need to integrate the impact of being blocked; upgrade existing mysql queries
+//COmments may not displaying properly
+//Test Banning Interactions and user to user interactions
 //check all buttons are in () => {} format
 //Notifcation List - what has changed since last sessionID update?
 //Cancelling a conferred viewership request does not appear to work
@@ -125,7 +126,7 @@ function App() {
         return (
         <Card key={key}>
           <Card.Title> {parseMessage(dict.title)} </Card.Title>
-          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
+          <Card.Subtitle> <div className='linkText' onClick={() => {showUserProfile(dict.userID)}}>{"Username: " + dict.username}</div> </Card.Subtitle>
           <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
           <Card.Body> {parseMessage(dict.content)} </Card.Body>
           <Card.Subtitle> {dict.subDate} </Card.Subtitle>
@@ -739,7 +740,7 @@ function App() {
             <br></br>
             <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
             <br></br>        <br></br>
-            <Button variant='dark' type="submit"> Register </Button>
+            <Button variant='dark' type="submit"> Register </Button><br></br>
             <Button variant='dark' onClick={getLoginPage}> Already Have An Account? </Button>
           </form>
           </div>
@@ -1039,9 +1040,9 @@ function App() {
               <span className="slider round"></span>
               </label>
               <br></br><br></br>
-              <Button variant='dark' type="submit"> Login </Button>
-              <Button variant='dark' onClick={() => getRegistrationPage(origin)}> Don't Have An Account? </Button>
-              <Button variant='dark' onClick={() => forgotPasswordPage(origin)}> </Button>
+              <Button variant='dark' type="submit"> Login </Button><br></br>
+              <Button variant='dark' onClick={() => getRegistrationPage(origin)}> Don't Have An Account? </Button><br></br>
+              <Button variant='dark' onClick={() => forgotPasswordPage(origin)}> Forgot Your Password? </Button>
             </form>
           </div>
         )
@@ -2182,11 +2183,11 @@ function App() {
               }
               listOfShownComments.push(
                 <Card key={i}>
-                  <Card.Subtitle> <div className='linkText' onClick={() => {showInDepthComment(comments[i].commentID,0,10)}}>View Comment</div> </Card.Subtitle>
                   <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
                   <Card.Body> {dict.comments} </Card.Body>
-                  <Card.Subtitle> {dict.subDate} </Card.Subtitle>
+                  <Card.Subtitle> {dict.submissionDate} </Card.Subtitle>
                   <Card.Body>
+                  <Button onClick={() => {showInDepthComment(comments[i].commentID,0,10)}}> View Comment </Button><br></br>
                   Likes: {dict.totalLikes}
                   <br></br>
                   {likeText}
@@ -2500,6 +2501,7 @@ function App() {
           showOnlyMain();
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
+          console.log(serverLocation + "/user?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID);
           if (sessionID && id){
             fetch(serverLocation + "/user?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
               .then(response => response.json())
@@ -3334,11 +3336,13 @@ function App() {
         }else{ // data.origin did not exist, redirect to home
           returnButton = (<Button onClick={()=>{getHome()}}> Return </Button>)
         }
+        var message = data.message;
+        if (data.message.sqlMessage) message = data.message.sqlMessage;
         changeCode(
           <div>
             <h1> Oops! We've encountered an error! </h1><br></br>
             <div> Here's the error message we got:  </div><br></br>
-            <div> {String(data.message)} </div><br></br>
+            <div> {message} </div><br></br>
             You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.<br></br>
             <div> {returnButton} </div>
           </div>
