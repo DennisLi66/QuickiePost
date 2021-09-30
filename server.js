@@ -75,6 +75,29 @@ SET sessionDate = NOW()
 WHERE sessionID = ?
 ;
 `;
+function checkSessionQueries(userID,sessionID,followUpFunction){
+  connection.query(cQuery + updateSessionQuery,[userID,sessionID,sessionID],function(err1,results1,fields1){
+    if (err1) {
+      return res.status(200).json({
+        status: -1,
+        message: err1
+      })
+    } else if (results1.length === 0) {
+      return res.status(200).json({
+        status: -11,
+        message: "Not Valid Session."
+      })
+    } else if (results1[0].isBanned === "true"){
+        return res.status(200).json({
+          status: -69,
+          message: "User is Banned."})
+        }
+    else{
+      followUpFunction();
+    }
+  })
+}
+///////Actual Endpoints
 // Get All Posts
 app.get("/posts", function(req, res) {
   //works as intended currently

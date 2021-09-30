@@ -1,5 +1,23 @@
 use quickiePostsDB;
 
+
+
+      select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility,
+      ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments, if(isLiked.userID is null,"Unliked","Liked") as Liked from posts
+      LEFT JOIN users ON users.userID = posts.userID
+      LEFT JOIN (select * from viewers where viewers.viewerID = 3) viewers ON users.userID = viewers.posterID
+      LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
+      LEFT JOIN (select * from likes WHERE userID = 3) isLiked ON isLiked.postID = posts.postID
+      LEFT JOIN (select * from blocked WHERE blockerID = 3) meBlockingUser ON meBlockingUser.blockedID = posts.userID
+      LEFT JOIN (select * from blocked WHERE blockedID = 3) userBlockingMe ON userBlockingMe.blockerID = posts.userID
+      ,(select * from users WHERE userID = 3) adminClass
+      WHERE users.userID = 1
+      AND ( adminClass.classification = "admin" OR
+	  (meBlockingUser.blockerID is null AND userBlockingMe.blockedID is null AND
+      users.visibility != 'hidden' AND posts.visibility != 'hidden'
+      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = 3 or viewers.viewerID is not null)));
+
 -- getPosts -- need follower consideration, block consideration, and admin consideration
 SELECT * FROM (
 SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content, posts.visibility as postVisibility, posts.subDate as postDate,
