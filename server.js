@@ -56,7 +56,7 @@ connection.connect();
 var cQuery =
   `
   SELECT a.userID as userID, high, sessions.sessionID as sessionID, sessions.sessionDate as sessionDate,
-  timeDuration, classification, if(bannedID is null,"true","false") isBanned FROM
+  timeDuration, classification, if(bannedID is null,"false","true") isBanned FROM
   (select userID,max(sessionDate) as high from sessions group by userID) a
   RIGHT JOIN
   (
@@ -2133,7 +2133,7 @@ app.route("/relationship")
     if (myViewershipRequestToViewMe.posterID is null,'false','true') as iHaveRequestedToViewMe,
     if (theirViewershipRequestToViewThem.posterID is null,'false','true') as theyHaveRequestedToViewThem,
     if (myViewershipRequestToViewThem.posterID is null,'false','true') as iHaveRequestedToViewThem,
-    if (bannedID is null, "true", "false") as isBanned,
+    if (bannedID is null, "false", "true") as isBanned,
     class.classification as classification
     FROM (select ? as userID) base LEFT JOIN
     (select * from blocked WHERE blockerID = ? and blockedID = ?) blockingThem

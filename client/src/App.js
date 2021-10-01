@@ -15,6 +15,8 @@ require('dotenv').config();
 //Unliking on Profile Works, but not on home, expanded post, or search
 //implement admin powers -- URGENT
 //Expired Page DOesnt Show
+//check hashtag
+//session refreshing - check it works and update cookies when it updates
   //Delete Posts and Comments
 //Figure out to make check session one simple function
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
@@ -26,7 +28,7 @@ require('dotenv').config();
 //TEST search more
 //page should also include origin
 //Queries need to be rechecked
-//OPTIONS MENU FROM PROFILE NEEDS FIX - visiting other peoples menus
+//light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
 /////
 //Allow search page to have more diverse searching options, like before/after/between dates
@@ -1944,7 +1946,7 @@ function App() {
                       showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
                     }else{
                       var banBanner = (<div></div>);
-                      if (data.isBanned){
+                      if (data.isBanned && data.isBanned === "true"){
                         banBanner = <div className='errorMsg'>This user is currently banned.</div>
                       }
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
@@ -2029,7 +2031,7 @@ function App() {
                       showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
                     }else{
                       var banBanner = (<div></div>);
-                      if (data.isBanned){
+                      if (data.isBanned === "true"){
                         banBanner = <div className='errorMsg'>This user is currently banned.</div>
                       }
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
@@ -2113,9 +2115,6 @@ function App() {
                           </li>
                           <li className="nav-item">
                             <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
-                          </li>
-                          <li className="nav-item">
-                            <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
                           </li>
                           <li className="nav-item">
                             <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
