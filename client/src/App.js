@@ -14,6 +14,7 @@ require('dotenv').config();
 ////////////////////////UTMOST
 //Unliking on Profile Works, but not on home, expanded post, or search
 //implement admin powers -- URGENT
+//Expired Page DOesnt Show
   //Delete Posts and Comments
 //Figure out to make check session one simple function
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
@@ -25,9 +26,10 @@ require('dotenv').config();
 //TEST search more
 //page should also include origin
 //Queries need to be rechecked
-//light and dark modes
+//OPTIONS MENU FROM PROFILE NEEDS FIX - visiting other peoples menus
 //Have error message if post or comment is restricted to private when you redirect to it
 /////
+//Allow search page to have more diverse searching options, like before/after/between dates
 //!!!PRIORITY
 //COmments may not displaying properly
 //Test Banning Interactions and user to user interactions
@@ -1886,7 +1888,8 @@ function App() {
             showOnlyMain();
             var optionsMenu;
             if (cookies.get("sessionID") && cookies.get("id")){
-              if (cookies.get('id') === userID){//isowner
+              if (String(cookies.get('id')) === String(userID)){//isowner
+                console.log("User is Owner Of Profile...")
                 var banner;
                 if (variation === "privacyChanged"){
                   banner = (<div className='confMsg'>Your visibility settings have successfully been changed.</div>)
@@ -1929,6 +1932,7 @@ function App() {
                   </div>
                 )
               }else if (cookies.get("adminStatus") === "admin"){
+                console.log("User is admin and not owner.")
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
@@ -2013,6 +2017,7 @@ function App() {
                   })
               }
               else{//issomeoneelse
+                console.log("User is not Owner and Not Admin")
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
@@ -2173,7 +2178,7 @@ function App() {
                 }
               }
               var ownerAbilities;
-              if (cookies.get("id") === userID){
+              if (String(cookies.get('id')) === String(userID)){
                 ownerAbilities = (
                   <Card.Body>
                   <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button>
@@ -2221,7 +2226,7 @@ function App() {
               listOfShownComments = (<div>There are no comments to view.</div>)
             }
             var topBar;
-            if (cookies.get("id") && cookies.get("id") === userID){
+            if (cookies.get("id") && String(cookies.get('id')) === String(userID)){
               topBar = (
                 <ul className="nav nav-tabs justify-content-center">
                   <li className="nav-item">
@@ -2339,7 +2344,7 @@ function App() {
               msg = (<div className='confMsg'> Your post was deleted. </div>)
             }
             var topBar;
-            if (cookies.get("id") && cookies.get("id") === userID){
+            if (cookies.get("id") && String(cookies.get('id')) === String(userID)){
               topBar = (
                 <ul className="nav nav-tabs justify-content-center">
                   <li className="nav-item">
@@ -2500,14 +2505,14 @@ function App() {
           }
           //Main
           showOnlyMain();
+          console.log(String(cookies.get('id')) === String(userID));
+          console.log(typeof(cookies.get("id")) + " " + typeof userID)
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
-          console.log(serverLocation + "/user?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID);
           if (sessionID && id){
             fetch(serverLocation + "/user?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
               .then(response => response.json())
               .then(data=>{
-                // console.log(data)
                 if (data.status === -11){
                   if (variation === "posts"){
                     showExpiredPage({origin: "showUserProfilePosts", startPos: startPos, endPos:endPos})
@@ -2663,7 +2668,9 @@ function App() {
               else{
                 openInDepthPost();
                 var listOfComments = [];
+                console.log(data.comments)
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
+                  console.log(key + " " + data.comments.length + " " + commentEnd);
                   var comment = data.comments[key];
                   var likeButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
                   if (detect){
@@ -2726,7 +2733,7 @@ function App() {
                     postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID,"indepthPost")}}>Unlike</Button>)
                   }
                 }
-                var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
+                var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Add Comment</Button>);
                 if (detect){
                   writeCommentButton = (<Button onClick={() => {displayCommentWriter(postID,'indepthPost',commentStart,commentEnd)}}>Add Comment</Button>)
                 }
@@ -2765,7 +2772,7 @@ function App() {
                     <Card.Body> {data.content} </Card.Body>
                     <ListGroup>
                     <h2> Comments </h2>
-                    {writeCommentButton}
+                    <div>{writeCommentButton}</div>
                     <div className='centerAlignPaginationBar'> {paginationBar}  </div>
                     {listOfComments}
                     <div className='centerAlignPaginationBar'> {paginationBar}  </div>

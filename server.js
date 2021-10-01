@@ -123,7 +123,7 @@ app.get("/posts", function(req, res) {
   var variables = [];
   if (req.query.userID && req.query.sessionID) {
     console.log("Logged In Posts")
-    sQuery = //FIX THIS: VISIBILITY PRIVACY
+    sQuery =
       `
       SELECT * FROM (
       SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content, posts.visibility as postVisibility, posts.subDate as postDate,
@@ -275,7 +275,6 @@ app.get("/search", function(req, res) {
     toJoinQuery.push(" AND content LIKE ?");
     variables.push('%' + content + '%');
   }
-  //FIX THIS? Maybe make Day a range
   if (sdate) {
     toJoinQuery.push(' AND DATE(subDate) = ?');
     variables.push(sdate);
@@ -453,18 +452,21 @@ app.route("/post")
             })
           } else {
             var toPrep = [];
-            for (let i = 0; i < results.length; i++) { //FIX THIS: Test how it works on commentlessposts
-              toPrep.push({
-                commentID: results[i].commentID,
-                commenterID: results[i].commenterID,
-                commenterName: results[i].commentername,
-                comments: results[i].comments,
-                commentLikes: results[i].totalCommentLikes,
-                // commentVisibility: results[i].commentVisibility,
-                // commenterVisibility: results[i].commenterVisibility,
-                commentDate: results[i].commentDate,
-                commentLiked: results[i].commentLiked
-              })
+            console.log(results);
+            for (let i = 0; i < results.length; i++) {
+              if (results[i].commentID){
+                toPrep.push({
+                  commentID: results[i].commentID,
+                  commenterID: results[i].commenterID,
+                  commenterName: results[i].commentername,
+                  comments: results[i].comments,
+                  commentLikes: results[i].totalCommentLikes,
+                  // commentVisibility: results[i].commentVisibility,
+                  // commenterVisibility: results[i].commenterVisibility,
+                  commentDate: results[i].commentDate,
+                  commentLiked: results[i].commentLiked
+                })
+              }
             }
             return res.status(200).json({
               status: 0,
@@ -1166,7 +1168,6 @@ app.route("/checkReactivationCode")
                 message: err
               })
             }else{
-              //return sessionID and preference //FIX THIS NEEDS A CHECK
               return res.status(200).json({
                 status: 0,
                 message: "Worked...",
@@ -1571,8 +1572,7 @@ app.route("/comment")
       var sessionID = req.query.sessionID;
       var userID = req.query.userID;
       if (!sessionID || !userID) {
-        //can pull not friendly private comments
-        //FIX THIS QUERY
+        //can pull not friendly private comments //FIX QUERY - NEEDS LIKE AMOUNT
         var sQuery =
           `
         select commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
@@ -1706,7 +1706,6 @@ app.route("/comment")
     }
   })
   .patch(function(req, res) {
-    //FIX THIS
     var sessionID = req.query.sessionID;
     var userID = req.query.userID;
     var commentID = req.query.commentID;
