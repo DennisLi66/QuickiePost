@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
+//Unliking on Profile Works, but not on home, expanded post, or search
 //implement admin powers -- URGENT
   //Delete Posts and Comments
 //Figure out to make check session one simple function
@@ -3153,18 +3154,16 @@ function App() {
       }
       //Event Handlers
       function handleWritePost(event){
-        //FIX THIS: TEST AGAIN AND BEGIN CHANGING THE SESSION ID STUFF
         event.preventDefault();
         var title = document.getElementById('postTitle').value;
         var content = document.getElementById('postContent').value;
         var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
-        console.log(title,content,privacy);
-        var sessionID = cookies.get('sessionID');
         const requestSetup = {
-            method: 'PUT'
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({title:title,contents:content,visibility: privacy,userID:cookies.get("id"),sessionID: cookies.get("sessionID")})
         }
-        fetch(serverLocation + "/post?title=" + title + "&contents="
-        + content + "&visibility=" + privacy + '&userID=' + cookies.get('id') + "&sessionID=" + cookies.get(sessionID),requestSetup)
+        fetch(serverLocation + "/post",requestSetup)
           .then(response => response.json())
           .then(data => {
             console.log(data);
