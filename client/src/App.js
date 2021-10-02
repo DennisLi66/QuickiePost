@@ -148,42 +148,36 @@ function App() {
         )
       }
       function parseMessage(message){ //use in both posts and comments
-        var newMessage = "";
-        for (let i = 0; i < message.length; i++){
-          if (message[i] === '#'){
-            var hashtag = '#';
-            for (let i1 = 1; i + i1 < message.length; i1++){
-              console.log(message[i+i1]);
-              if (message[i1 + i] === ' ' || message[i1 + i] === '#'){
-                if (hashtag.length === 1){
-                  newMessage += hashtag;
-                  i = i1 + i;
-                  break;
-                }else{
-                  newMessage += "<Button onClick=searchHashtag("+ hashtag +")>" + hashtag + "</Button>"
-                  i = i1 + i;
-                  break;
-                }
-              }else if (i + i1 + 1 === message.length){
-                if (hashtag.length === 1){
-                  newMessage += hashtag;
-                  i = i1 + i;
-                  break;
-                }else{
-                  console.log(hashtag);
-                  newMessage += "<Button onClick=searchHashtag("+ hashtag +")>" + hashtag + "</Button>"
-                  i = i1 + i;
-                  break;
-                }
-              }else{
-                hashtag += message[i];
+        var toReturn = [];
+        var currentMessage = "";
+        for (let c = 0; c < message.length; c++){
+          if (message[c] === '#'){
+            if (currentMessage.length > 1){
+              toReturn.push(<span key={c}>{currentMessage}</span>);
+            }
+            currentMessage = "";
+            let x = 1;
+            for (x; x + c < message.length; x++){
+              if (message[x + c] === ' ' || message[x + c] === '#'){
+                break;
               }
             }
+            if (x <= 1){
+              toReturn.push(<span key={c}>{currentMessage}</span>);
+            }else{
+              toReturn.push(<span className='linkText'
+              onClick={()=>{searchHashtag(message.slice(c,x+c+1))}}
+              key={c}>{message.slice(c,x+c+1)}</span>);
+            }
+            c += x;
+          }else if (c + 1 >= message.length){
+            currentMessage += message[c];
+            toReturn.push(<span key={c}>{currentMessage}</span>);
           }else{
-            newMessage += message[i];
+            currentMessage += message[c];
           }
         }
-        return (<div dangerouslySetInnerHTML={{__html:newMessage}}></div>);
+        return toReturn;
       }
       function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         if (origin === ""){
@@ -2911,6 +2905,7 @@ function App() {
           </div>
         )
       }
+      //Hashtag Functions
       function searchHashtag(hashtag){
         console.log(hashtag);
         var fetchString = serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag;
