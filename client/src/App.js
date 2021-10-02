@@ -165,8 +165,9 @@ function App() {
             if (x <= 1){
               toReturn.push(<span key={c}>{currentMessage}</span>);
             }else{
+              const sliced =  message.slice(c,x+c+1);
               toReturn.push(<span className='linkText'
-              onClick={()=>{searchHashtag(message.slice(c,x+c+1))}}
+              onClick={()=>{searchHashtag(sliced)}}
               key={c}>{message.slice(c,x+c+1)}</span>);
             }
             c += x;
@@ -2907,11 +2908,12 @@ function App() {
       }
       //Hashtag Functions
       function searchHashtag(hashtag){
-        console.log(hashtag);
-        var fetchString = serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag;
+        // console.log(hashtag.slice(1,hashtag.length + 1));
+        var fetchString = serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag.slice(1,hashtag.length + 1);
         if (cookies.get("id") && cookies.get("sessionID")){
           fetchString += "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID");
         }
+        // console.log(fetchString);
         fetch(fetchString)
           .then(response => response.json())
           .then(data => {

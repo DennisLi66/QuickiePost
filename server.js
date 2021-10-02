@@ -846,7 +846,7 @@ app.route("/getPostsWithHashtag")
         AND (users.visibility != 'private')
         order by subDate DESC
         `;
-        connection.query(sQuery, ['%' + req.query.hashtag + '%', '%' + req.query.hashtag + '%'], function(err, results, fields) {
+        connection.query(sQuery, ['%#' + req.query.hashtag + '%', '%#' + req.query.hashtag + '%'], function(err, results, fields) {
           if (err) {
             return res.status(200).json({
               status: -1,
