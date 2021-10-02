@@ -233,15 +233,15 @@ app.get("/myfeed", function(req, res) {
         })
       } else if (results) {
         // console.log(results);
-        var toPrep = {};
+        var toPrep = [];
         for (let i = 0; i < results.length; i++) {
-          toPrep[i] = {
+          toPrep.push({
             title: results[i].title,
             userID: results[i].userID,
             content: results[i].content,
             subDate: results[i].subDate,
             username: results[i].username
-          }
+          });
         }
         return res.status(200).json({
           status: 0,
@@ -818,7 +818,7 @@ app.route("/getPostsWithHashtag")
                   totalLikes: results[i].totalLikes,
                   totalComments: results[i].totalComments,
                   postID: results[i].postID,
-                  isLiked: results[i].Liked
+                  Liked: results[i].Liked
                 })
               }
               return res.status(200).json({
@@ -1387,7 +1387,7 @@ app.route("/user")
       var sQuery1 =
         `
       select posts.postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username, users.visibility as userVisibility,
-      ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments, if(isLiked.userID is null,"Unliked","Liked") as Liked from posts
+      ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments, if(isLiked.userID is null,"false","true") as Liked from posts
       LEFT JOIN users ON users.userID = posts.userID
       LEFT JOIN (select * from viewers where viewers.viewerID = ?) viewers ON users.userID = viewers.posterID
       LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
@@ -1406,7 +1406,7 @@ app.route("/user")
         `
       select comments.commentID as commentID,comments.postID as postID,comments.userID as userID,comments.comments as comments,comments.visibility as commentVisibility,
       comments.submissionDate as submissionDate, users.userName as userName, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes,
-      if(isLiked.userID is null,"Unliked","Liked") as Liked
+      if(isLiked.userID is null,"false","true") as Liked
       from comments LEFT JOIN users ON users.userID = comments.userID
       LEFT JOIN (select * from viewers where viewers.viewerID = ?) viewers ON users.userID = viewers.posterID
       LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
@@ -1466,7 +1466,7 @@ app.route("/user")
                     userVisibility: res2.userVisibility,
                     totalLikes: res2.totalLikes,
                     totalComments: res2.totalComments,
-                    isLiked: res2.Liked
+                    Liked: res2.Liked
                   })
                 }
                 connection.query(sQuery2, [userID, userID,userID,userID, userID, profileID, userID, userID], function(err3, results3, fields3) {
@@ -1628,8 +1628,8 @@ app.route("/comment")
             `
             select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
             , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
-            ,if (isLiked.userID is null, "Unliked","Liked") as postLiked
-            ,if (commentLiked.userID is null,"Unliked","Liked") as commentLiked
+            ,if (isLiked.userID is null, "false","true") as postLiked
+            ,if (commentLiked.userID is null,"false","true") as commentLiked
             from comments LEFT JOIN (select userID,username,visibility from users) uzers -- commentUsers
             on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
             LEFT JOIN (select userID, username,visibility from users) ucers -- postUsers

@@ -12,13 +12,11 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
-//Unliking on Profile Works, but not on home, expanded post, or search
 //implement admin powers -- URGENT
 //Expired Page DOesnt Show
-//check hashtag
+//check hashtag - it also deletes first character
 //session refreshing - check it works and update cookies when it updates
   //Delete Posts and Comments
-//Figure out to make check session one simple function
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
@@ -59,7 +57,6 @@ require('dotenv').config();
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //test forgotten password
 //MAke sure to test everything
-//fix home
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
@@ -119,9 +116,10 @@ function App() {
         var likePostButton;
         var commentButton;
         if (cookies.get('sessionID') && cookies.get('id')){
-          likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
-          if (hasLiked || dict.Liked === "Liked"){
+          if (hasLiked || dict.Liked === "true"){
             likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
+          }else{
+            likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
@@ -154,8 +152,9 @@ function App() {
         for (let i = 0; i < message.length; i++){
           if (message[i] === '#'){
             var hashtag = '#';
-            for (let i1 = 1; i + i1 < message.length; i++){
-              if (message[i] === ' ' || message[i] === '#'){
+            for (let i1 = 1; i + i1 < message.length; i1++){
+              console.log(message[i+i1]);
+              if (message[i1 + i] === ' ' || message[i1 + i] === '#'){
                 if (hashtag.length === 1){
                   newMessage += hashtag;
                   i = i1 + i;
@@ -171,6 +170,7 @@ function App() {
                   i = i1 + i;
                   break;
                 }else{
+                  console.log(hashtag);
                   newMessage += "<Button onClick=searchHashtag("+ hashtag +")>" + hashtag + "</Button>"
                   i = i1 + i;
                   break;
@@ -656,19 +656,19 @@ function App() {
             onClick={() => getHome()}
             >Home</Nav.Link>
             <Nav.Link
-            onClick={getMyFeed}
+            onClick={() => getMyFeed()}
             >My Feed</Nav.Link>
             <Nav.Link
-            onClick={getSearchPage}
+            onClick={() => getSearchPage()}
             >Search</Nav.Link>
             <Nav.Link
-            onClick={getProfile}
+            onClick={() => getProfile()}
             >My Profile</Nav.Link>
             <Nav.Link
-            onClick={showWriteForm}
+            onClick={() => showWriteForm()}
             >Write Post</Nav.Link>
             <Nav.Link
-            onClick={logOut}
+            onClick={() => logOut()}
             >Log Out</Nav.Link>
             <Nav.Link>
             Toggle Light/Dark Mode</Nav.Link>
@@ -2172,7 +2172,7 @@ function App() {
               var dict = comments[i];
               if (cookies.get('sessionID') && cookies.get('id')){
                 likeText = (<Button className='likeText' onClick={() => {handleCommentLike(comments[i].commentID,"userProfile",0,userID,start,end)}}>Like</Button>);
-                if (dict.Liked === "Liked"){
+                if (dict.Liked === "true"){
                   likeText = (<Button className='likeText'onClick={() => {handleCommentUnlike(comments[i].commentID,"userProfile",0,userID,start,end)}}>Unlike </Button>);
                 }
               }
@@ -2286,7 +2286,7 @@ function App() {
               var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfilePosts")}}>Like</Button>);
               if (detect){
                 likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Like</Button>);
-                if (dict.isLiked === "Liked"){
+                if (dict.Liked === "true"){
                   likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Unlike </Button>);
                 }
               }
@@ -2504,8 +2504,6 @@ function App() {
           }
           //Main
           showOnlyMain();
-          console.log(String(cookies.get('id')) === String(userID));
-          console.log(typeof(cookies.get("id")) + " " + typeof userID)
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
           if (sessionID && id){
@@ -2585,7 +2583,7 @@ function App() {
               var likePostButton = (
                 <Button onClick={() => {getLoginPage("indepthComment")}}> Like </Button>
               );
-              if (data.postLiked && data.postLiked === "Liked"){
+              if (data.postLiked && data.postLiked === "true"){
                 likePostButton = (
                   <Button onClick={() => {handlePostUnlike(data.postID,"indepthComment",commentID)}}> Unlike </Button>
                 )
@@ -2597,7 +2595,7 @@ function App() {
               var likeCommentButton = (
                 <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
               );
-              if (data.commentLiked && data.commentLiked === "Liked"){
+              if (data.commentLiked && data.commentLiked === "true"){
                 likeCommentButton = (
                   <Button onClick={() => {handleCommentUnlike(data.commentID,"indepthComment")}}> Unlike </Button>
                 )
@@ -2674,7 +2672,7 @@ function App() {
                   var likeButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
                   if (detect){
                     likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Like</Button>);
-                    if (comment.commentLiked && comment.commentLiked === "Liked"){
+                    if (comment.commentLiked && comment.commentLiked === "true"){
                       likeButton = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Unlike</Button>)
                     }
                   }
@@ -2728,7 +2726,7 @@ function App() {
                 var postLikedText = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);;
                 if (detect){
                   postLikedText = (<Button onClick={() => {handlePostLike(data.postID,"indepthPost")}}>Like</Button>);
-                  if (data.likedPost && data.likedPost === "Liked"){
+                  if (data.likedPost && data.likedPost === "true"){
                     postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID,"indepthPost")}}>Unlike</Button>)
                   }
                 }
@@ -2862,7 +2860,7 @@ function App() {
           listOfPosts = (<div> No posts were found. </div>)
         }else{
           for (let key = start; key < Math.min(end,contents.length); key++){
-            listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search",contents))
+            listOfPosts.push(simplePost(key,contents[key],contents[key].Liked,"search",contents))
           }
           if (listOfPosts.length === 0){
             listOfPosts = (<div>There were no posts matching your criteria.</div>)
@@ -2936,7 +2934,7 @@ function App() {
           listOfPosts = (<div> No posts were found. </div>)
         }else{
           for (let key = start; key < Math.min(end,contents.length); key++){
-            listOfPosts.push(simplePost(key,contents[key],contents[key].isLiked,"search",contents))
+            listOfPosts.push(simplePost(key,contents[key],contents[key].Liked,"search",contents))
           }
           if (listOfPosts.length === 0){
             listOfPosts = (<div>There were no posts matching your criteria.</div>)
@@ -3153,7 +3151,7 @@ function App() {
               )
             }
           })
-      } //FIX THIS: DOUBT IT WORKS
+      }
       function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
         showOnlyMain();
         showUserProfile(cookies.get("id"));
@@ -3411,7 +3409,7 @@ function App() {
           .then(response=>response.json())
           .then(data => {
             for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
-              listOfPosts.push(simplePost(key,data.contents[key],data.isLiked,"home",beginPosition,endPosition))
+              listOfPosts.push(simplePost(key,data.contents[key],data.Liked,"home",beginPosition,endPosition))
             }
             if (listOfPosts.length === 0){
               listOfPosts = (<div> There are no posts to show.</div>)
