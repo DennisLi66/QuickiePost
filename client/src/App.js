@@ -12,9 +12,14 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 ////////////////////////UTMOST
-//implement admin powers -- URGENT
+  //Cancelling a conferred viewership request does not appear to work
+  //make things, like like button, home button, etc, icons.
+//
+//Light and dark mode:
+  //change navbar
+
+//make better navbar
 //Expired Page DOesnt Show
-//check hashtag - it also deletes first character
 //session refreshing - check it works and update cookies when it updates
   //Delete Posts and Comments
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
@@ -24,22 +29,20 @@ require('dotenv').config();
 //Cancel Button may not work properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
-//page should also include origin
+  //Allow search page to have more diverse searching options, like before/after/between dates
 //Queries need to be rechecked
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
 /////
-//Allow search page to have more diverse searching options, like before/after/between dates
 //!!!PRIORITY
-//COmments may not displaying properly
 //Test Banning Interactions and user to user interactions
 //check all buttons are in () => {} format
 //Notifcation List - what has changed since last sessionID update?
-//Cancelling a conferred viewership request does not appear to work
 //test showOptions features on other profiles
+    //
 //SHould memoize pagination so its faster, and check that pagination is actually correct
 ////////////////
-//test acccount reactivation and make sure the results interacts the way it should
+//test account reactivation and make sure the results interacts the way it should
 //add a highlight effect to the pagination bar
 //Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
@@ -48,7 +51,7 @@ require('dotenv').config();
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
-//Check if i really need to set name for cookies
+//Set username in the navbar
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
 //have a remaining characters tracker for writing post
 //REDO QUERIES - SOME NEED TO BE FIXED
@@ -636,7 +639,7 @@ function App() {
       //Navbar Changers
       function changeNavToLoggedIn(){
         changeNavBar(
-          <Navbar bg="light" expand="lg" className='loggedInBar'>
+          <Navbar bg={lightDarkMode.lightingMode} expand="lg" className='loggedInBar'>
         <Navbar.Brand
         onClick={() => getHome()}
         >QuickiePost</Navbar.Brand>
@@ -665,8 +668,11 @@ function App() {
             <Nav.Link
             onClick={() => logOut()}
             >Log Out</Nav.Link>
-            <Nav.Link>
+            <Nav.Link
+            onClick = {toggleLightAndDarkMode}
+            >
             Toggle Light/Dark Mode</Nav.Link>
+            Hello, {cookies.get("name")}
           </Nav>
         </Navbar.Collapse>
           </Navbar>
@@ -674,7 +680,7 @@ function App() {
       }
       function changeNavToLoggedOut(){
         changeNavBar(
-          <Navbar bg="light" expand="lg" className='loggedOutBar'>
+          <Navbar bg={lightDarkMode.lightingMode} expand="lg" className='loggedOutBar'>
         <Navbar.Brand
         onClick={() => getHome()}
         >QuickiePost</Navbar.Brand>
@@ -697,7 +703,9 @@ function App() {
             <Nav.Link
             onClick={getSearchPage}
             >Search</Nav.Link>
-            <Nav.Link>
+            <Nav.Link
+            onClick = {toggleLightAndDarkMode}
+            >
             Toggle Light/Dark Mode</Nav.Link>
           </Nav>
         </Navbar.Collapse>
@@ -2061,7 +2069,7 @@ function App() {
                       }else if (data.iHaveRequestedToViewThem && data.iHaveRequestedToViewThem === 'true'){
                         requestViewershipButton = (<div>This user has not yet responded to your request for you to view them.<br></br><Button onClick={() => {cancelViewershipRequest(userID,cookies.get('id'),"profile")}}>Cancel Request</Button></div>)
                       }
-                      var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
+                      var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"viewer")}}> Confer Viewership </Button>);
                       if (data.classification === "admin"){
                         conferViewershipButton = (<div></div>)
                       }
@@ -2582,7 +2590,7 @@ function App() {
                 likePostButton = (
                   <Button onClick={() => {handlePostUnlike(data.postID,"indepthComment",commentID)}}> Unlike </Button>
                 )
-              }else if (data.postLiked && data.postLiked === "Unliked"){
+              }else if (data.postLiked && data.postLiked === "false"){
                 likePostButton = (
                   <Button onClick={() => {handlePostLike(data.postID,"indepthComment",commentID)}}> Like </Button>
                 )
@@ -2594,7 +2602,7 @@ function App() {
                 likeCommentButton = (
                   <Button onClick={() => {handleCommentUnlike(data.commentID,"indepthComment")}}> Unlike </Button>
                 )
-              }else if (data.commentLiked && data.commentLiked === "Unliked"){
+              }else if (data.commentLiked && data.commentLiked === "false"){
                 likeCommentButton = (
                   <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
                 )

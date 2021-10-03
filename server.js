@@ -1,10 +1,6 @@
 //Things to Do
 //add an error for if user is blocked
-//establish ADMIN powers
-//If user is admin or mod, allow regardless
-//IF user is owner, Allow
-//If user not logged in or not owner, disallow
-//Consider if needs block addition, admin addition, or both
+
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -2064,15 +2060,10 @@ app.route("/viewership")
       var dQuery =
         `
       DELETE FROM viewershipRequests
-      WHERE req.query.posterID = ? AND req.query.viewerID = ? and initiatedBy = ?;
+      WHERE posterID = ? AND viewerID = ?;
       `
-      if (req.query.userID === req.query.viewerID) {
-        variables = [];
-      } else {
-        variables = [];
-      }
       return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
-        connection.query(dQuery, variables, function(err2, results2, fields) {
+        connection.query(dQuery, [req.query.posterID,req.query.viewerID], function(err2, results2, fields) {
           if (err2) {
             return res.status(200).json({
               status: -1,
