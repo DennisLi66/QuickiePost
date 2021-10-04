@@ -17,7 +17,7 @@ require('dotenv').config();
 //
 //Light and dark mode:
   //change navbar
-
+//Editing Post Doesnt Work
 //make better navbar
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates
@@ -214,6 +214,16 @@ function App() {
         else{
           getHome();
         }
+      }
+      //Requires Editing - Writing Comments Editing Comments, Posts
+      function displayRemainingCharactersElement(toDisplay,affectedBy,baseAmount){
+        //change all elements of class remainingCharactersDisplay to hidden FIX THIS
+        var toEdit = document.getElementsByClassName('remainingCharactersDisplay');
+        for (var i = 0; i < toEdit.length; i++){
+          toEdit[i].hidden = true;
+        }
+        document.getElementById(toDisplay).hidden = false;
+        document.getElementById(toDisplay).innerHTML = "Remaining Characters: " + String(baseAmount - document.getElementById(affectedBy).value.length);
       }
       //Deleting Handlers --ADMINS EDIT
       function showDeletePostConfirmation(postID,origin,startPos,endPos){
@@ -2994,12 +3004,17 @@ function App() {
           <form onSubmit={handleWritePost}>
             <label htmlFor='postTitle'>Title:</label>
             <br></br>
-            <input name='postTitle' id="postTitle" autoComplete="off" required></input>
+            <div className='remainingCharactersDisplay' id='postTitleDisplay' hidden></div>
+            <input name='postTitle' id="postTitle" autoComplete="off" maxLength='25' required
+            onSelect = {() => {displayRemainingCharactersElement("postTitleDisplay","postTitle",25)}}
+            ></input>
             <br></br>
             <label htmlFor='postContent'>Content:</label>
             <br></br>
+            <div className='remainingCharactersDisplay' id='postContentDisplay' hidden></div>
             <textarea className='noResize' rows='5' cols='50'
-             maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
+             maxLength="200" id="postContent" name="postContent" autoComplete="off" required
+             onSelect = {() => {displayRemainingCharactersElement("postContentDisplay","postContent",200)}}>
             </textarea>
             <br></br>
             Private?
