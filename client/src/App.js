@@ -18,6 +18,7 @@ require('dotenv').config();
 //Light and dark mode:
   //change navbar
 //Editing Post Doesnt Work
+//Need to Add Edit Button to simple post
 //make better navbar
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates
@@ -215,9 +216,8 @@ function App() {
           getHome();
         }
       }
-      //Requires Editing - Writing Comments Editing Comments, Posts
+      //Requires Editing - Editing Comments, Posts
       function displayRemainingCharactersElement(toDisplay,affectedBy,baseAmount){
-        //change all elements of class remainingCharactersDisplay to hidden FIX THIS
         var toEdit = document.getElementsByClassName('remainingCharactersDisplay');
         for (var i = 0; i < toEdit.length; i++){
           toEdit[i].hidden = true;
@@ -1223,7 +1223,8 @@ function App() {
         }
       }
       //Writing Comments
-      function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10, postContent = ""){
+      function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10){
+        //FIX THIS: COuld maybe change writeFormCode instead
         openInDepthPost();
         changeInDepthCode(
           <div>
@@ -1232,20 +1233,24 @@ function App() {
           <h1>Add a Comment</h1>
           <label htmlFor='commentContent'>Content:</label>
           <br></br>
+          <div className='remainingCharactersDisplay' id='commentContentDisplay' hidden></div>
           <textarea className='noResize' rows='5' cols='50'
-           maxLength="200" id="postContent" name="postContent" autoComplete="off" value={postContent} required>
+           maxLength="200" id="commentContent" name="commentContent" autoComplete="off" required
+           onSelect={() => {displayRemainingCharactersElement('commentContentDisplay','commentContent',200)}}>
           </textarea>
           <br></br>
           Private?
           <br></br>
           <label className="switch">
           <input type="checkbox" id='privacySwitch' value={'placeholder'}
-          onChange={handlePrivacyToggled}
+          onChange={handleVisiToggled}
           ></input>
           <span className="slider round"></span>
           </label>
           <br></br>
+          <div id="whoCanSee">
           Anyone can view this comment.
+          </div>
           <br></br>
           <Button variant='dark' type="submit"> Submit Comment </Button>
           </form>
@@ -1254,7 +1259,7 @@ function App() {
       }
       function handleWritingComment(event, postID, origin = "", startPos = 0, endPos = 10){
         event.preventDefault();
-        var content = document.getElementById('postContent').value;
+        var content = document.getElementById('commentContent').value;
         var privacy = document.getElementById('privacySwitch').checked ? 'private' : 'public';
         const requestSetup = {
             method: 'PUT',
@@ -1272,40 +1277,12 @@ function App() {
             }
           })
       }
-      function handlePrivacyToggled(postID, origin = "", startPos = 0, endPos = 10){
+      function handleVisiToggled(){
         var checked = document.getElementById('privacySwitch').checked;
-        var content = document.getElementById('postContent');
-        if (checked){
-          hideWriteForm();
-          changeCode(
-            <div>
-            <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
-            <form onSubmit={handleWritingComment}>
-            <h1>Add a Comment</h1>
-
-            <label htmlFor='commentContent'>Content:</label>
-            <br></br>
-            <textarea className='noResize' rows='5' cols='50'
-             maxLength="200" id="postContent" name="postContent" autoComplete="off" required>
-            </textarea>
-            <br></br>
-            Private?
-            <br></br>
-            <label className="switch">
-            <input type="checkbox" id='privacySwitch' value={'placeholder'}
-            onChange={handlePrivacyToggled} checked
-            ></input>
-            <span className="slider round"></span>
-            </label>
-            <br></br>
-            Only those you've allowed can view this comment.
-            <br></br>
-            <Button variant='dark' type="submit"> Submit Comment </Button>
-            </form>
-            </div>
-          )
+        if (!checked){
+          document.getElementById('whoCanSee').innerText = "Anyone can view this comment."
         }else{
-          displayCommentWriter(postID,origin,startPos,endPos,content);
+          document.getElementById('whoCanSee').innerText = "Only your viewers will see this comment."
         }
       }
       //Show Main Stuff Functions
