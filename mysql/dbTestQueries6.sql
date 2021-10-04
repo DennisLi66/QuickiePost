@@ -191,4 +191,5 @@ ON sessions.userID = a.userID AND sessions.sessionDate = a.high
 LEFT JOIN (SELECT userID, classification, bannedID FROM users LEFT JOIN bans on bannedID = userID) users ON users.userID = a.userID
 ;
 
-select * from posts WHERE content = "#Hello"
+select * from posts WHERE content = "#Hello";
+select * from posts WHERE visibility = 'private'

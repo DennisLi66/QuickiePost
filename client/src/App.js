@@ -14,10 +14,12 @@ require('dotenv').config();
 ////////////////////////UTMOST
   //Cancelling a conferred viewership request does not appear to work
   //make things, like like button, home button, etc, icons.
-//
+// Limit Hashtags to only alphanumeric characters
 //Light and dark mode:
   //change navbar
 //Editing Post Doesnt Work
+  //use document.get to set value
+  //fix checked
 //Need to Add Edit Button to simple post
 //make better navbar
 //Expired Page DOesnt Show
@@ -125,6 +127,16 @@ function App() {
           }else{
             likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
           }
+          var isOwnerButtons = (<div><Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button></div>);
+          if (String(cookies.get('id')) === String(dict.userID)){
+            isOwnerButtons = (
+              <div>
+                <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+                <Button onClick={() => {showEditPost(dict.postID,origin,startPos,endPos)}}> Edit Post</Button>
+                <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
+              </div>
+            )
+          }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
           likePostButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
@@ -146,7 +158,7 @@ function App() {
           <br></br>
           {commentButton}
           <br></br>
-          <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+          {isOwnerButtons}
           </Card.Body>
         </Card>
         )
@@ -237,7 +249,7 @@ function App() {
                 showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID})
-              }else if (data.authorID !== cookies.get("id")){
+              }else if (String(data.authorID) !== String(cookies.get("id"))){
                 showErrorPage({message:"You're not allowed to delete that post.",origin: origin, startPos: startPos,endPos:endPos, postID: postID})
               }else{
                 changeCode(
@@ -251,7 +263,7 @@ function App() {
                       <Card.Title>{data.title}</Card.Title>
                       <Card.Body>{data.content}</Card.Body>
                       </Card>
-                      <Button onClick={() => {handleDeletePost(postID,origin,startPos,endPos)}} type='submit'> Do Delete </Button>
+                      <Button variant='danger' onClick={() => {handleDeletePost(postID,origin,startPos,endPos)}} type='submit'> Do Delete </Button>
                       <Button onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
                     </form>
                   </div>
@@ -270,6 +282,7 @@ function App() {
           fetch(serverLocation + "/post?postID=" + postID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"),requestSetup)
             .then(response => response.json())
             .then(data => {
+              console.log(data.message)
               if (data.status === -1){
                 showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
               }
@@ -295,7 +308,7 @@ function App() {
                 showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID, commentID: commentID});
               }else if (data.status === -1){
                                 showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID, commentID: commentID})
-              }else if (data.authorID !== cookies.get("id")){
+              }else if (String(data.authorID) !== String(cookies.get("id"))){
                 showErrorPage({message: "You're not allowed to delete that comment.", postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else{
                 changeCode(
@@ -308,7 +321,7 @@ function App() {
                       <Card>
                       <Card.Body>{data.comments}</Card.Body>
                       </Card>
-                      <Button onClick={() => {handleDeleteComment(commentID,origin,postID,startPos,endPos)}} type='submit'> Do Delete </Button>
+                      <Button variant='danger' onClick={() => {handleDeleteComment(commentID,origin,postID,startPos,endPos)}} type='submit'> Do Delete </Button>
                       <Button onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
                     </form>
                   </div>
@@ -348,7 +361,7 @@ function App() {
             visibilityToggle = (
               <div>
                 Anyone can see your post.
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                <input type="checkbox" id='privacySwitch'
                 onChange={() => {handleCommentVisiToggle(0,origin,postID,startPos,endPos)}}
                 ></input>
               </div>
@@ -357,7 +370,7 @@ function App() {
             visibilityToggle = (
               <div>
                 Only you and your viewers will be able to see this tweet.
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
+                <input type="checkbox" id='privacySwitch'
                 onChange={() => {handleCommentVisiToggle(0,origin,postID,startPos,endPos)}} checked
                 ></input>
               </div>
@@ -366,14 +379,15 @@ function App() {
           changeCode(
             <div>
               <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
-              Editing Post
               <form onSubmit={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}}>
-                <h4> Post </h4>
+                <h4> Editing Your Post </h4>
+                <label htmlFor='title'> Title: </label><br></br>
                 <input id='title' name='title' value={title}></input>
+                <br></br>
+                <label htmlFor='content'> Content: </label><br></br>
                 <textarea className='noResize' rows='5' cols='50'
-                 maxLength="200" id="comments" name="content" autoComplete="off" value={content} required>
+                 maxLength="200" id="content" name="content" autoComplete="off" value={content} required>
                 </textarea>
-                <h4> Visibility </h4>
                 {visibilityToggle}
                 <Button onClick={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}} type='submit'> Submit Changes </Button>
               </form>
@@ -393,7 +407,7 @@ function App() {
                 showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
-              }else if (data.authorID !== cookies.get("id")){
+              }else if (String(data.authorID) !== String(cookies.get("id"))){
                 showErrorPage({message: "You're not allowed to edit that post.", postID: postID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
                 displayChangedCode(data.title,data.content,data.postVisibility);
@@ -508,7 +522,7 @@ function App() {
       }
       function handleCommentVisiToggle(commentID,origin,postID,startPos,endPos){
         var visibility;
-        if (document.getElementByID('privacySwitch').checked){
+        if (document.getElementById('privacySwitch').checked){
           visibility = "private"
         }else{
           visibility = "public";
@@ -2172,7 +2186,7 @@ function App() {
                   <Card.Body>
                   <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button>
                   <br></br>
-                  <Button onClick={()=>{showDeleteCommentConfirmation(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}> Delete Comment </Button>
+                  <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}> Delete Comment </Button>
                   </Card.Body>
                 )
               }
@@ -2286,7 +2300,7 @@ function App() {
                   <Card.Body>
                     <Button onClick={() => {showEditPost(posts[i].postID,"userProfile",startPos,endPos)}}> Edit Post </Button>
                     <br></br>
-                    <Button onClick={() => {showDeletePostConfirmation(posts[i].postID,"indepthPost",startPos,endPos)}}> Delete Post </Button>
+                    <Button variant='danger' onClick={() => {showDeletePostConfirmation(posts[i].postID,"indepthPost",startPos,endPos)}}> Delete Post </Button>
                   </Card.Body>
                 )
               }
@@ -2603,7 +2617,7 @@ function App() {
                   <Card.Body>
                     <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
                     <br></br>
-                    <Button onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
+                    <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
                   </Card.Body>
                 )
               }
@@ -2672,7 +2686,7 @@ function App() {
                       <Card.Body>
                         <Button onClick={()=>{showEditComment(key,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
                         <br></br>
-                        <Button onClick={()=>{showDeleteCommentConfirmation(key,"indepthComment",postID,commentStart,commentEnd)}}> Delete Comment </Button>
+                        <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(key,"indepthComment",postID,commentStart,commentEnd)}}> Delete Comment </Button>
                       </Card.Body>
                     )
                   }
@@ -2741,7 +2755,7 @@ function App() {
                     <Card.Body>
                       <Button onClick={() => {showEditPost(data.postID,"indepthPost",commentStart,commentEnd)}}> Edit Post </Button>
                       <br></br>
-                      <Button onClick={() => {showDeletePostConfirmation(postID,"indepthPost",commentStart,commentEnd)}}> Delete Post </Button>
+                      <Button variant='danger' onClick={() => {showDeletePostConfirmation(postID,"indepthPost",commentStart,commentEnd)}}> Delete Post </Button>
                     </Card.Body>
                   )
                 }

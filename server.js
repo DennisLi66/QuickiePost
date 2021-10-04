@@ -1,5 +1,7 @@
 //Things to Do
 //add an error for if user is blocked
+//Will need to upate delete updating queries
+//make sure visibility is never null
 
 require('dotenv').config();
 const express = require("express");
@@ -135,7 +137,7 @@ app.get("/posts", function(req, res) {
       LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = posts.userID -- viewingThem
       , (select * from users WHERE userID = ?) checkAdmin) posts
       WHERE viewerClassification = "admin" OR ((amBlockingThem = "false" AND isBlockingMe = "false")
-      AND userVisibility != "hidden" AND postVisibility != "hidden" AND (isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private" OR userID = ?))
+      AND userVisibility != "hidden" AND postVisibility != "hidden" AND ((isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private" OR userID = ?)))
       Order BY postDate DESC
       `;
     variables.push(req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID);
@@ -559,35 +561,44 @@ app.route("/post")
       })
     } else {
       return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
+        var checkAdminQuery =
+        `
+        SELECT * FROM users WHERE userID = ?;
+        `
         var uQuery = `
         UPDATE posts
         SET visibility = "hidden"
         WHERE postID = ? AND (userID = ? OR ?);
         `;
-        connection.query(uQuery, [req.query.postid,req.query.userID, (results1[0].classification === "admin" ? true : false)], function(err, results, fields) {
-          if (err) {
-            console.log(err);
+        connection.query(checkAdminQuery,[req.query.userID],function(err4,results4,fields4){
+          if (err4){
             return res.status(200).json({
               status: -1,
-              message: err
+              message: err4
             })
-          } else {
-            if (results.length == 0) {
-              return res.status(200).json({
-                status: -1,
-                message: "Could not find a post with that ID."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Update Occured."
-              })
-            }
           }
-        })
-      })
-    }
-  })
+          else{
+            var adminStatus = (results4.length === 1 && results4[0].classification === "admin" ? true : false);
+            console.log(req.query.postID,req.query.userID,adminStatus)
+            connection.query(uQuery, [req.query.postID,req.query.userID, adminStatus], function(err, results, fields) {
+              if (err) {
+                console.log(err);
+                return res.status(200).json({
+                  status: -1,
+                  message: err
+                })
+              } else {
+                if (results.length == 0) {
+                  return res.status(200).json({
+                    status: -1,
+                    message: "Could not find a post with that ID."
+                  })
+                } else {
+                  return res.status(200).json({
+                    status: 0,
+                    message: "Update Occured."
+                  })}}
+            })}})})}})
   //Add Single POST
   .put(function(req, res) {
     var visibility = req.body.visibility;
