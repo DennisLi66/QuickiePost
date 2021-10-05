@@ -18,7 +18,6 @@ require('dotenv').config();
 //Light and dark mode:
   //change navbar
 //Editing Post Doesnt Work
-  //use document.get to set value
   //fix checked
 //Need to Add Edit Button to simple post
 //make better navbar
@@ -228,7 +227,7 @@ function App() {
           getHome();
         }
       }
-      //Requires Editing - Editing Comments, Posts
+      //Requires Editing - Editing Comments
       function displayRemainingCharactersElement(toDisplay,affectedBy,baseAmount){
         var toEdit = document.getElementsByClassName('remainingCharactersDisplay');
         for (var i = 0; i < toEdit.length; i++){
@@ -360,19 +359,29 @@ function App() {
           if (!visibility || visibility === "public"){
             visibilityToggle = (
               <div>
-                Anyone can see your post.
+                <div id='whoCanSee'>Anyone can see your post.</div>
+                <label className="switch">
                 <input type="checkbox" id='privacySwitch'
-                onChange={() => {handleCommentVisiToggle(0,origin,postID,startPos,endPos)}}
+                onChange={handleVisiToggled}
                 ></input>
+                <span className="slider round"></span>
+                </label>
+                <br></br>
+                <div> This post can be seen by anyone. </div>
               </div>
             )
           }else{
             visibilityToggle = (
               <div>
-                Only you and your viewers will be able to see this tweet.
+                <div id='whoCanSee'>Only you and your viewers will be able to see this post.</div>
+                <label className="switch">
                 <input type="checkbox" id='privacySwitch'
-                onChange={() => {handleCommentVisiToggle(0,origin,postID,startPos,endPos)}} checked
+                onChange={handleVisiToggled} checked
                 ></input>
+                <span className="slider round"></span>
+                </label>
+                <br></br>
+                <div> This post can be seen by anyone. </div>
               </div>
             )
           }
@@ -382,17 +391,22 @@ function App() {
               <form onSubmit={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}}>
                 <h4> Editing Your Post </h4>
                 <label htmlFor='title'> Title: </label><br></br>
-                <input id='title' name='title' value={title}></input>
+                <div className='remainingCharactersDisplay' id='titleDisplay' hidden></div>
+                <input id='title' name='title' maxLength='25'
+                onSelect={() => {displayRemainingCharactersElement('titleDisplay','title',25)}}></input>
                 <br></br>
                 <label htmlFor='content'> Content: </label><br></br>
+                <div className='remainingCharactersDisplay' id='contentDisplay' hidden></div>
                 <textarea className='noResize' rows='5' cols='50'
-                 maxLength="200" id="content" name="content" autoComplete="off" value={content} required>
-                </textarea>
+                 maxLength="200" id="content" name="content" autoComplete="off" required
+                 onSelect={() => {displayRemainingCharactersElement('contentDisplay','content',200)}}></textarea>
                 {visibilityToggle}
                 <Button onClick={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}} type='submit'> Submit Changes </Button>
               </form>
             </div>
-          )
+          );
+          document.getElementById('title').value = title;
+          document.getElementById('content').value =  content;
         }
         if (!cookies.get("sessionID") || !cookies.get("id")){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -418,10 +432,10 @@ function App() {
       function handleEditPost(event,postID,origin,commentID,startPos,endPos){
         event.preventDefault();
         const requestSetup = {
-            method: 'PATCH',
+            method: 'PATCH'
         }
         fetch(serverLocation + "/post?postID="+ postID + "&sessionID=" + cookies.get("sessionID") +
-        "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("visibility").value
+        "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("privacySwitch").value
         + "&title=" + document.getElementById("title").value
         + "&content=" + document.getElementById("content").value,requestSetup)
           .then(response => response.json())
@@ -435,6 +449,9 @@ function App() {
             }else if (origin === "userProfile"){
               showUserProfile(cookies.get("id"),startPos,endPos,"posts")
             }
+            else{
+              showInDepthPost(postID,startPos,endPos,"Edit");
+            }
           })
       }
       function showEditComment(commentID,origin,postID,startPos,endPos,comments = "",visibility = ""){
@@ -443,18 +460,18 @@ function App() {
           if (!visibility || visibility === "public"){
             visibilityToggle = (
               <div>
-                Anyone can see your post.
+                <div id='whoCanSee'>Anyone can see your post.</div>
                 <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}}
+                onChange={() => {handleVisiToggled(commentID,origin,postID,startPos,endPos)}}
                 ></input>
               </div>
             )
           }else{
             visibilityToggle = (
               <div>
-                Only you and your viewers will be able to see this tweet.
+                <div id='whoCanSee'>Only you and your viewers will be able to see this post.</div>
                 <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={() => {handleCommentVisiToggle(commentID,origin,postID,startPos,endPos)}} checked
+                onChange={() => {handleVisiToggled(commentID,origin,postID,startPos,endPos)}} checked
                 ></input>
               </div>
             )
@@ -519,15 +536,6 @@ function App() {
               showUserProfile(cookies.get("id"),startPos,endPos,"comments")
             }
           })
-      }
-      function handleCommentVisiToggle(commentID,origin,postID,startPos,endPos){
-        var visibility;
-        if (document.getElementById('privacySwitch').checked){
-          visibility = "private"
-        }else{
-          visibility = "public";
-        }
-        showEditComment(commentID,origin,postID,startPos,endPos,document.getElementById('comments').value,visibility);
       }
       //like handlers
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0, searchPosts = []){
@@ -1294,10 +1302,13 @@ function App() {
       function handleVisiToggled(){
         var checked = document.getElementById('privacySwitch').checked;
         if (!checked){
-          document.getElementById('whoCanSee').innerText = "Anyone can view this comment."
+          document.getElementById('whoCanSee').innerText = "Anyone can view this post."
         }else{
-          document.getElementById('whoCanSee').innerText = "Only your viewers will see this comment."
+          document.getElementById('whoCanSee').innerText = "Only your viewers will see this post."
         }
+      }
+      function handleVisiToggledComment(){
+
       }
       //Show Main Stuff Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){

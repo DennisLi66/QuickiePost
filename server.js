@@ -685,7 +685,7 @@ app.route("/post")
           })
         } else {
           var setPositions = [];
-          var variables;
+          var variables = [];
           if (title) {
             setPositions.push(" title = ? ")
             variables.push(title);
