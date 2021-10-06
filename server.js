@@ -1812,16 +1812,35 @@ app.route("/comment")
     WHERE commentID = ? AND (userID = ? OR ? );
     `;
     return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
-      connection.query(eQuery, [req.query.commentID,req.query.userID, (results1[0].classification === "admin" ? true : false)], function(err2, results2, fields) {
-        if (err2) {
+      var checkAdminQuery =
+      `
+      SELECT * FROM users WHERE userID = ?;
+      `
+      connection.query(checkAdminQuery,[req.query.userID],function(erre,resultsr,fieldsf){
+        if (erre){
           return res.status(200).json({
             status: -1,
-            message: err2
+            message: erre
           })
-        } else {
+        }
+        else if (resultsr.length !== 1){
           return res.status(200).json({
-            status: 0,
-            message: "Deletion Occured."
+            message: "Invalid UserID",
+            status: -1
+          })
+        }else{
+          connection.query(eQuery, [req.query.commentID,req.query.userID, (resultsr[0].classification === "admin" ? true : false)], function(err2, results2, fields) {
+            if (err2) {
+              return res.status(200).json({
+                status: -1,
+                message: err2
+              })
+            } else {
+              return res.status(200).json({
+                status: 0,
+                message: "Deletion Occured."
+              })
+            }
           })
         }
       })

@@ -17,10 +17,11 @@ require('dotenv').config();
 // Limit Hashtags to only alphanumeric characters
 //Light and dark mode:
   //change navbar
+  //need to update queries to not find hidden content: indepth post can find hidden comments, and homepage returns totalCOmmetns with hidde ones
 //make better navbar
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates
-  //Delete Posts and Comments
+  //Delete Comments
 //FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
@@ -38,7 +39,6 @@ require('dotenv').config();
 //check all buttons are in () => {} format
 //Notifcation List - what has changed since last sessionID update?
 //test showOptions features on other profiles
-    //
 //SHould memoize pagination so its faster, and check that pagination is actually correct
 ////////////////
 //test account reactivation and make sure the results interacts the way it should
@@ -303,10 +303,11 @@ function App() {
                 showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID, commentID: commentID});
               }else if (data.status === -1){
                                 showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID, commentID: commentID})
-              }else if (String(data.authorID) !== String(cookies.get("id"))){
+              }else if (String(data.commenterID) !== String(cookies.get("id"))){
                 showErrorPage({message: "You're not allowed to delete that comment.", postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else{
-                changeCode(
+                openInDepthPost();
+                changeInDepthCode(
                   <div>
                     <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
                     Editing Post
@@ -314,7 +315,7 @@ function App() {
                       <h4> Deleting A Comment </h4>
                       <h5> Are You Sure You Want To Delete This Comment?</h5>
                       <Card>
-                      <Card.Body>{data.comments}</Card.Body>
+                      <Card.Body>{data.comment}</Card.Body>
                       </Card>
                       <Button variant='danger' onClick={() => {handleDeleteComment(commentID,origin,postID,startPos,endPos)}} type='submit'> Do Delete </Button>
                       <Button onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}}> Do Not Delete </Button>
@@ -2723,7 +2724,7 @@ function App() {
                       <Card.Body>
                         <Button onClick={()=>{showEditComment(data.comments[key].commentID,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
                         <br></br>
-                        <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.comments[key].commentID,"indepthComment",postID,commentStart,commentEnd)}}> Delete Comment </Button>
+                        <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.comments[key].commentID,"indepthPost",postID,commentStart,commentEnd)}}> Delete Comment </Button>
                       </Card.Body>
                     )
                   }
