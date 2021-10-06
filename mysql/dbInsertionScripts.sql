@@ -10,8 +10,8 @@ INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES
 ;
 
 Insert Into posts (userID,title,content,visibility,subDate) VALUES
-(1,"Wow, First Post","Just wanted to say hi.",'',NOW() - interval 1 hour),
-(1,"Second Post","I hope you guys are having a nice day.",'',NOW() - interval 30 minute),
+(1,"Wow, First Post","Just wanted to say hi.",'public',NOW() - interval 1 hour),
+(1,"Second Post","I hope you guys are having a nice day.",'public',NOW() - interval 30 minute),
 (2,"Hey Losers","MachoMan",'private',NOW() - interval 20 minute)
 ;
 
@@ -38,12 +38,12 @@ INSERT INTO users (userName,email,pswrd,visibility,classification) VALUES
 ;
 
 Insert Into posts (userID,title,content,visibility,subDate) VALUES
-(4,"Pie Recipe","Pecan Pie.",'',NOW() - interval 3 hour),
-(4,"Pie Recipe","Apple Pie.",'',NOW() - interval 2 hour),
-(4,"Pie Recipe","Cherry Pie.",'',NOW() - interval 1 minute),
-(4,"Pie Recipe","Cream Pie.",'',NOW() - interval 2 minute),
-(4,"Pie Recipe","Pear Pie.",'',NOW() - interval 3 minute),
-(5,"POSTSSSSSS","This is a post",'',NOW() - interval 30 minute),
+(4,"Pie Recipe","Pecan Pie.",'public',NOW() - interval 3 hour),
+(4,"Pie Recipe","Apple Pie.",'public',NOW() - interval 2 hour),
+(4,"Pie Recipe","Cherry Pie.",'public',NOW() - interval 1 minute),
+(4,"Pie Recipe","Cream Pie.",'public',NOW() - interval 2 minute),
+(4,"Pie Recipe","Pear Pie.",'public',NOW() - interval 3 minute),
+(5,"POSTSSSSSS","This is a post",'public',NOW() - interval 30 minute),
 (4,"West","I buried treasure west.",'public',NOW() - interval 20 minute)
 ;
 
@@ -85,5 +85,5 @@ INSERT INTO blocked (blockedID,blockerID) VALUES
 
 -- Testing pagination
 Insert Into posts (userID,title,content,visibility,subDate) VALUES
-(5,"I like ladybugs.","They taste delicious.",'',NOW() - interval 25 minute),
-(5,"Speling Error","This sentence bad grammar.",'',NOW() - interval 20 minute)
+(5,"I like ladybugs.","They taste delicious.",'public',NOW() - interval 25 minute),
+(5,"Speling Error","This sentence bad grammar.",'public',NOW() - interval 20 minute)

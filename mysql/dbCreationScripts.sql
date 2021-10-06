@@ -15,7 +15,7 @@ create table posts(
     userID int,
     title varchar(255),
     content text,
-    visibility varchar(255), -- public / null , hidden, private
+    visibility varchar(255) NOT NULL, -- public , hidden, private
     subDate datetime
 );
 create table editHistory(

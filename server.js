@@ -1570,7 +1570,7 @@ app.route("/comment")
   .get(function(req, res) {
     //REWORK THIS ROUTE
     var commentID = req.query.commentID;
-    // console.log(commentID);
+    console.log(commentID);
     if (!commentID) {
       return res.status(200).json({
         status: -1,

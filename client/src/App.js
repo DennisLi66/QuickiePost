@@ -22,11 +22,11 @@ require('dotenv').config();
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates
   //Delete Comments
-//FIX THIS CHANGE HOW SITE LOOKS TO AN ADMIN
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
-//Cancel Button may not work properly
+//Cancel Button may not work properly - doesnt work to the right places
+//clicking write post from indepth doesnt work - doesnt redirect properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
   //Allow search page to have more diverse searching options, like before/after/between dates
@@ -45,14 +45,11 @@ require('dotenv').config();
 //add a highlight effect to the pagination bar
 //Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
-//FIX THIS: Add a display if there are no posts
 //change color of posts and comments to better differentiate them
 //FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
-//Set username in the navbar
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
-//have a remaining characters tracker for writing post
 //REDO QUERIES - SOME NEED TO BE FIXED
 //rewrite post pages to include pagination
 //VIEWERSHIP ENABLEMENT Check if it works
@@ -2319,7 +2316,7 @@ function App() {
                 }
               }
               var ownerAbilities;
-              if (userID === cookies.get("id")){
+              if (String(userID) === String(cookies.get("id"))){
                 ownerAbilities = (
                   <Card.Body>
                     <Button onClick={() => {showEditPost(posts[i].postID,"userProfile",startPos,endPos)}}> Edit Post </Button>
@@ -2331,7 +2328,6 @@ function App() {
               listOfShownPosts.push(
                 <Card key={i}>
                   <Card.Title> {dict.title} </Card.Title>
-                  <Card.Subtitle> <div className='linkText' onClick={() => {showInDepthPost(posts[i].postID,0,10)}}>View Post</div> </Card.Subtitle>
                   <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
                   <Card.Body> {dict.content} </Card.Body>
                   <Card.Subtitle> {dict.subDate} </Card.Subtitle>
@@ -2340,6 +2336,7 @@ function App() {
                   <br></br>
                   {likeText}
                   </Card.Body>
+                  <div><Button onClick={() => {showInDepthPost(posts[i].postID,0,10)}}>View Post</Button></div>
                   {ownerAbilities}
                 </Card>
               )
@@ -3016,6 +3013,12 @@ function App() {
       //SHOWERS AND HIDERS
       function showWriteForm(){
         //have something navigate down from the top
+        changeInDepthCSS(
+          {
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
         changeWriteFormCSS(
           {
             height: 'auto',
@@ -3347,7 +3350,7 @@ function App() {
           <div>
             <h1> Session Timed Out </h1>
             <div> You have been logged out due to inactivity. <br></br>
-            You can click the button below to attempty to return to where you were or use the navigation bar on the top of the page.<br></br>
+            You can click the button below to attempt to return to where you were or use the navigation bar on the top of the page.<br></br>
             </div>
             <div> {returnButton} </div>
           </div>

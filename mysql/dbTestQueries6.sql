@@ -192,4 +192,4 @@ LEFT JOIN (SELECT userID, classification, bannedID FROM users LEFT JOIN bans on 
 ;
 
 select * from posts WHERE content = "#Hello";
-select * from posts WHERE visibility = 'private'
+select * from posts WHERE visibility = 'private';
