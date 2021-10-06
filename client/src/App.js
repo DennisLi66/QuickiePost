@@ -17,9 +17,6 @@ require('dotenv').config();
 // Limit Hashtags to only alphanumeric characters
 //Light and dark mode:
   //change navbar
-//Edit COMMENT
-  // be able to do from post
-//Need to Add Edit Button to simple post
 //make better navbar
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates
@@ -510,7 +507,6 @@ function App() {
           fetch(serverLocation + "/comment?commentID=" + commentID + "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
             .then(response => response.json())
             .then(data => {
-              console.log(data);
               if (data.status === -11){
                 showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
               }else if (data.status === -1){
@@ -531,8 +527,8 @@ function App() {
         }
         console.log(commentID)
         fetch(serverLocation + "/comment?commentID="+ commentID + "&sessionID=" + cookies.get("sessionID") +
-        "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("visibility").value
-        + "&comments=" + document.getElementById("comments").value,requestSetup)
+        "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("privacySwitch").value
+        + "&comments=" + document.getElementById("commentContent").value,requestSetup)
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
@@ -542,7 +538,7 @@ function App() {
             }else if (origin === "indepthComment"){
               showInDepthComment(commentID,"changed");
             }else if (origin === "indepthPost"){
-              showInDepthPost(postID,startPos,endPos,"Edit")
+              showInDepthPost(postID,startPos,endPos,"EditComment")
             }else if (origin === "userProfile"){
               showUserProfile(cookies.get("id"),startPos,endPos,"comments")
             }
@@ -2790,6 +2786,9 @@ function App() {
                 } else if (pact && pact === "Delete"){
                     confrimation = (<div className='confMsg'> Your comment was deleted. </div>)
               }
+                else if (pact && pact === "EditComment"){
+                        confrimation = (<div className='confMsg'> Your comment was edited. </div>)
+                }
                 var ownerAbilities;
                 if (data.authorID === cookies.get("id")){
                   ownerAbilities = (

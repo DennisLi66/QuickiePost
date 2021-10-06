@@ -1752,7 +1752,8 @@ app.route("/comment")
       }
       variables.push(commentID);
       variables.push(userID);
-      connection.query("UPDATE COMMENTS SET " + updateStrings.join("") + "WHERE commentID = ? AND userID = ?", variables, function(err, results, fields) {
+      console.log("UPDATE COMMENTS SET " + updateStrings.join(",") + "WHERE commentID = ? AND userID = ?");
+      connection.query("UPDATE COMMENTS SET " + updateStrings.join(",") + "WHERE commentID = ? AND userID = ?", variables, function(err, results, fields) {
         if (err) {
           return res.status(200).json({
             status: -1,
