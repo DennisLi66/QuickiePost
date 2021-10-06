@@ -17,8 +17,8 @@ require('dotenv').config();
 // Limit Hashtags to only alphanumeric characters
 //Light and dark mode:
   //change navbar
-//Editing Post Doesnt Work
-  //fix checked
+//Edit COMMENT
+  // be able to do from post
 //Need to Add Edit Button to simple post
 //make better navbar
 //Expired Page DOesnt Show
@@ -227,7 +227,6 @@ function App() {
           getHome();
         }
       }
-      //Requires Editing - Editing Comments
       function displayRemainingCharactersElement(toDisplay,affectedBy,baseAmount){
         var toEdit = document.getElementsByClassName('remainingCharactersDisplay');
         for (var i = 0; i < toEdit.length; i++){
@@ -237,7 +236,7 @@ function App() {
         document.getElementById(toDisplay).innerHTML = "Remaining Characters: " + String(baseAmount - document.getElementById(affectedBy).value.length);
       }
       //Deleting Handlers --ADMINS EDIT
-      function showDeletePostConfirmation(postID,origin,startPos,endPos){
+      function showDeletePostConfirmation(postID,origin,startPos,endPos, commentID = 0){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
         }else{
@@ -253,7 +252,7 @@ function App() {
               }else{
                 changeCode(
                   <div>
-                    <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+                    <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
                     Editing Post
                     <form>
                       <h4> Deleting A Post </h4>
@@ -353,7 +352,7 @@ function App() {
         }
       }
       //Edit Handlers
-      function showEditPost(postID,origin,startPos,endPos,title = "",content = "", visibility = ""){
+      function showEditPost(postID,origin,startPos,endPos,title = "",content = "", visibility = "", commentID = 0){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
           if (!visibility || visibility === "public"){
@@ -387,7 +386,7 @@ function App() {
           }
           changeCode(
             <div>
-              <Button variant='dark' onClick={() => {cancel(origin,postID,0,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
+              <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
               <form onSubmit={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}}>
                 <h4> Editing Your Post </h4>
                 <label htmlFor='title'> Title: </label><br></br>
@@ -409,7 +408,7 @@ function App() {
           document.getElementById('content').value =  content;
         }
         if (!cookies.get("sessionID") || !cookies.get("id")){ //should replace with check sessionID FIX THIS
-          cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
+          cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
         }else if (title !== "" || content !== "" || visibility !== ""){
           displayChangedCode(title,content,visibility)
         }else{
@@ -460,37 +459,48 @@ function App() {
           if (!visibility || visibility === "public"){
             visibilityToggle = (
               <div>
-                <div id='whoCanSee'>Anyone can see your post.</div>
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={() => {handleVisiToggled(commentID,origin,postID,startPos,endPos)}}
-                ></input>
+              <div id='whoCanSee'>Anyone can see your comment.</div>
+              <label className="switch">
+              <input type="checkbox" id='privacySwitch'
+              onChange={() => {handleVisiToggledComment()}}
+              ></input>
+              <span className="slider round"></span>
+              </label>
               </div>
             )
           }else{
             visibilityToggle = (
               <div>
-                <div id='whoCanSee'>Only you and your viewers will be able to see this post.</div>
-                <input type="checkbox" id='privacySwitch' value={'placeholder'}
-                onChange={() => {handleVisiToggled(commentID,origin,postID,startPos,endPos)}} checked
-                ></input>
+              <div id='whoCanSee'>Only you and your viewers will be able to see this comment.</div>
+              <label className="switch">
+              <input type="checkbox" id='privacySwitch'
+              onChange={() => {handleVisiToggledComment()}} checked
+              ></input>
+              <span className="slider round"></span>
+              </label>
               </div>
             )
           }
-          changeCode(
+          openInDepthPost();
+          changeInDepthCode(
             <div>
               <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
               Editing Comment
               <form onSubmit={(event) => {handleEditComment(event,commentID,origin,postID,startPos,endPos)}}>
                 <h4> Comments </h4>
+                <label htmlFor='Comment Content'></label>
+                <div className='remainingCharactersDisplay' id='commentContentDisplay' hidden></div>
                 <textarea className='noResize' rows='5' cols='50'
-                 maxLength="200" id="comments" name="comments" autoComplete="off" value={comments} required>
+                 maxLength="200" id="commentContent" name="commentContent" autoComplete="off" required
+                 onSelect={() => {displayRemainingCharactersElement('commentContentDisplay','commentContent',200)}}>
                 </textarea>
                 <h4> Visibility </h4>
                 {visibilityToggle}
-                <Button onClick={(event) => {handleEditComment(event,commentID,origin,postID,startPos,endPos)}} type='submit'> Submit Changes </Button>
+                <Button type='submit'> Submit Changes </Button>
               </form>
             </div>
           )
+          document.getElementById("commentContent").innerText = comments;
         }
         if (!cookies.get("sessionID") || !cookies.get("id")){
           cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -505,10 +515,10 @@ function App() {
                 showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
-              }else if (cookies.get("id") !== data.commenterID){
+              }else if (String(cookies.get("id")) !== String(data.commenterID)){
                 showErrorPage({origin: origin, postID: postID, startPos: startPos, commentID: commentID, endPos: endPos,message: "You're not allowed to edit that comment."});
               }else{
-                displayChangedCode(data.comments,data.commentVisibility);
+                displayChangedCode(data.comment,data.commentVisibility);
               }
             })
         }
@@ -519,6 +529,7 @@ function App() {
         const requestSetup = {
             method: 'PATCH',
         }
+        console.log(commentID)
         fetch(serverLocation + "/comment?commentID="+ commentID + "&sessionID=" + cookies.get("sessionID") +
         "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("visibility").value
         + "&comments=" + document.getElementById("comments").value,requestSetup)
@@ -1265,7 +1276,7 @@ function App() {
           <br></br>
           <label className="switch">
           <input type="checkbox" id='privacySwitch' value={'placeholder'}
-          onChange={handleVisiToggled}
+          onChange={handleVisiToggledComment}
           ></input>
           <span className="slider round"></span>
           </label>
@@ -1308,7 +1319,12 @@ function App() {
         }
       }
       function handleVisiToggledComment(){
-
+        var checked = document.getElementById('privacySwitch').checked;
+        if (!checked){
+          document.getElementById('whoCanSee').innerText = "Anyone can view this comment."
+        }else{
+          document.getElementById('whoCanSee').innerText = "Only your viewers will see this comment."
+        }
       }
       //Show Main Stuff Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
@@ -2623,13 +2639,27 @@ function App() {
               if (designation === "changed"){
                 <div className='confMsg'> Your comment has changed successfully. </div>
               }
-              if (data.commenterID === cookies.get("id")){
+              if (String(data.commenterID) === String(cookies.get("id"))){
                 ownerAbilities = (
-                  <Card.Body>
+                  <div>
                     <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
                     <br></br>
                     <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
-                  </Card.Body>
+                  </div>
+                )
+              }
+              var posterAbilities;
+              if (String(data.posterID) === String(cookies.get("id"))){
+                posterAbilities = (
+                  <div>
+                  <Button onClick={() => {showEditPost(data.postID,"indepthComment",0,0,"","","",data.commentID)}}>
+                  Edit Post
+                  </Button>
+                  <br></br>
+                  <Button variant='danger' onClick={()=>{showDeletePostConfirmation(data.postID,"indepthComment",0,0,data.commentID)}}>
+                  Delete Post
+                  </Button>
+                  </div>
                 )
               }
               changeInDepthCode(
@@ -2653,6 +2683,7 @@ function App() {
                   <Card.Subtitle> {data.postDate} </Card.Subtitle>
                   </Card>
                   {ownerAbilities}
+                  {posterAbilities}
                 </div>
               )
             }
@@ -2682,7 +2713,6 @@ function App() {
                 var listOfComments = [];
                 console.log(data.comments)
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
-                  console.log(key + " " + data.comments.length + " " + commentEnd);
                   var comment = data.comments[key];
                   var likeButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
                   if (detect){
@@ -2692,12 +2722,12 @@ function App() {
                     }
                   }
                   var commentownerAbilities;
-                  if (cookies.userID === comment.commenterID){
+                  if (String(cookies.get("id")) === String(comment.commenterID)){
                     commentownerAbilities = (
                       <Card.Body>
-                        <Button onClick={()=>{showEditComment(key,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
+                        <Button onClick={()=>{showEditComment(data.comments[key].commentID,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
                         <br></br>
-                        <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(key,"indepthComment",postID,commentStart,commentEnd)}}> Delete Comment </Button>
+                        <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.comments[key].commentID,"indepthComment",postID,commentStart,commentEnd)}}> Delete Comment </Button>
                       </Card.Body>
                     )
                   }
