@@ -14,14 +14,12 @@ require('dotenv').config();
 ////////////////////////UTMOST
   //Cancelling a conferred viewership request does not appear to work
   //make things, like like button, home button, etc, icons.
-// Limit Hashtags to only alphanumeric characters
 //Light and dark mode:
   //change navbar
   //need to update queries to not find hidden content: indepth post can find hidden comments, and homepage returns totalCOmmetns with hidde ones
 //make better navbar
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates
-  //Delete Comments
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
@@ -33,20 +31,17 @@ require('dotenv').config();
 //Queries need to be rechecked
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
-/////
 //!!!PRIORITY
 //Test Banning Interactions and user to user interactions
 //check all buttons are in () => {} format
 //Notifcation List - what has changed since last sessionID update?
 //test showOptions features on other profiles
 //SHould memoize pagination so its faster, and check that pagination is actually correct
-////////////////
 //test account reactivation and make sure the results interacts the way it should
 //add a highlight effect to the pagination bar
 //Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
 //change color of posts and comments to better differentiate them
-//FIX THIS: LOGIN should redirect to previous page instead of home if a button links there
 //FIX THIS: ADD pagination and remembering paginatikn
 //FIX UI
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
@@ -167,7 +162,7 @@ function App() {
             currentMessage = "";
             let x = 1;
             for (x; x + c < message.length; x++){
-              if (message[x + c] === ' ' || message[x + c] === '#'){
+              if (!message[x + c].match('[a-zA-Z0-9]')){
                 break;
               }
             }
