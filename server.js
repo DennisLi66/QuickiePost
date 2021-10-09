@@ -822,7 +822,19 @@ app.route("/getPostsWithHashtag")
           FROM posts
           LEFT JOIN users ON users.userID = posts.userID
           LEFT JOIN (SELECT postID, count(*) as likeAmount FROM likes group by postID) as totalLikes ON posts.postID = totalLikes.postID
-          LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
+          LEFT JOIN (
+            select postID, count(*) as commentAmount
+            from comments LEFT JOIN users on users.userID = comments.userID
+            LEFT JOIN (select * from viewers WHERE viewers.viewerID = ?) viewers on viewers.posterID = comments.userID
+            LEFT JOIN (select * from blocked WHERE blockedID = ?) isBlockingMe on isBlockingMe.blockerID = comments.userID
+            LEFT JOIN (select * from blocked WHERE blockerID = ?) amBlockingThem on amBlockingThem.blockedID = comments.userID,
+            (select userID,classification from users WHERE userID = ?) classification
+            WHERE (classification.classification = "admin")
+            OR ((comments.visibility != "hidden" and  users.visibility != "hidden")
+            AND (isBlockingMe.blockedID is null AND amBlockingThem.blockerID is null)
+            AND ((comments.visibility != 'private' AND users.visibility != 'private')
+            OR viewers.viewerID is not null)) GROUP BY postID
+                    ) as totalComments ON totalComments.postID = posts.postID
           LEFT JOIN (SELECT postID, userID from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
           LEFT JOIN (SELECT * from viewers WHERE viewerID = ?) viewership on viewership.posterID = posts.userID
           LEFT JOIN (select * from blocked WHERE blockerID = ?) blockingThem ON blockingThem.blockedID = posts.userID --  meblockingthem
@@ -837,7 +849,7 @@ app.route("/getPostsWithHashtag")
           AND (users.visibility != 'private' OR viewerID is not null)))
           order by subDate DESC
           `;
-          connection.query(sQuery, [req.query.userID,req.query.userID, req.query.userID,req.query.userID, req.query.userID, '%' + req.query.hashtag + "%", '%' + req.query.hashtag + "%"], function(err, results, fields) {
+          connection.query(sQuery, [req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID,req.query.userID, req.query.userID, '%' + req.query.hashtag + "%", '%' + req.query.hashtag + "%"], function(err, results, fields) {
             if (err) {
               return res.status(200).json({
                 status: -1,
@@ -875,7 +887,12 @@ app.route("/getPostsWithHashtag")
         ifnull(likeAmount,0) as totalLikes, ifnull(commentAmount, 0) as totalComments
         FROM posts LEFT JOIN users ON users.userID = posts.userID
         LEFT JOIN (SELECT postID, count(*) as likeAmount FROM likes group by postID) as totalLikes ON posts.postID = totalLikes.postID
-        LEFT JOIN (SELECT postID, count(*) as commentAmount FROM comments group by postID) as totalComments ON totalComments.postID = posts.postID
+        LEFT JOIN (
+          select postID, count(*) as tComments from comments
+          LEFT JOIN users on users.userID = comments.userID
+          WHERE users.visiblity = "public"
+          AND comments.visibility = "public" GROUP BY postID
+                  ) as totalComments ON totalComments.postID = posts.postID
         WHERE title LIKE ? OR content LIKE ?
         AND posts.visibility != 'hidden'
         AND users.visibility != 'hidden'
@@ -912,7 +929,7 @@ app.route("/getPostsWithHashtag")
         })
       }
     }
-  }) //toFIX
+  })
 // User Info Endpoints
 app.post("/register", function(req, res) {
   var email = req.body.email;
@@ -1615,9 +1632,20 @@ app.route("/comment")
           `
         select commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
         , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+        ifnull(totalCommentLikes,0) as totalCommentLikes
+        ifnull(tComments,0) as totalComments
+        ifnull(totalPostLikes,0) as totalPostLikes
         from comments LEFT JOIN (select userID,username,visibility from users) uzers
         on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
         LEFT JOIN (select userID, username,visibility from users) ucers
+        LEFT JOIN (select commentID, count(*) as totalCommentLikes from commentLikes GROUP BY commentID) totalCommentLikes on totalCommentLikes
+        LEFT JOIN (select count(*),postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
+        LEFT JOIN (
+          select postID, count(*) as tComments from comments
+          LEFT JOIN users on users.userID = comments.userID
+          WHERE users.visiblity = "public"
+          AND comments.visibility = "public" GROUP BY postID
+        ) totalPostComments on totalPostComments.postID = posts.postID
         ON posts.userID = ucers.userID
         WHERE comments.visibility != 'hidden' AND comments.visibility != 'private'
         AND posts.visibility != 'hidden' AND posts.visibility != 'private'
@@ -1645,6 +1673,9 @@ app.route("/comment")
               comment: results.comments,
               commentID: results.commentID,
               commenterID: results.commenterID,
+              totalCommentLikes: results.totalCommentLikes,
+              totalPostLikes: results.totalPostLikes,
+              totalComments: results.totalComments,
               commentVisibility: results.commentVisibility,
               commentDate: results.commentDate,
               commenterUsername: results.commenterUsername,
@@ -1664,12 +1695,29 @@ app.route("/comment")
         return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
           var sQuery =
             `
-            select comments.commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+            select comments.commentID as commentID, comments.postID as postID, comments.userID as commenterID, comments, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
             , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
             ,if (isLiked.userID is null, "false","true") as postLiked
-            ,if (commentLiked.userID is null,"false","true") as commentLiked
+            ,if (commentLiked.userID is null,"false","true") as commentLiked,
+            ifnull(totalCommentLikes,0) as totalCommentLikes
+            ifnull(tComments,0) as totalComments
+            ifnull(totalPostLikes,0) as totalPostLikes
             from comments LEFT JOIN (select userID,username,visibility from users) uzers -- commentUsers
             on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
+            LEFT JOIN (select count(*),postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
+            LEFT JOIN (
+              select postID, count(*) as tComments
+              from comments LEFT JOIN users on users.userID = comments.userID
+              LEFT JOIN (select * from viewers WHERE viewers.viewerID = ?) viewers on viewers.posterID = comments.userID
+              LEFT JOIN (select * from blocked WHERE blockedID = ?) isBlockingMe on isBlockingMe.blockerID = comments.userID
+              LEFT JOIN (select * from blocked WHERE blockerID = ?) amBlockingThem on amBlockingThem.blockedID = comments.userID,
+              (select userID,classification from users WHERE userID = ?) classification
+              WHERE (classification.classification = "admin")
+              OR ((comments.visibility != "hidden" and  users.visibility != "hidden")
+              AND (isBlockingMe.blockedID is null AND amBlockingThem.blockerID is null)
+              AND ((comments.visibility != 'private' AND users.visibility != 'private')
+              OR viewers.viewerID is not null)) GROUP BY postID
+            ) totalPostComments on totalPostComments.postID = posts.postID
             LEFT JOIN (select userID, username,visibility from users) ucers -- postUsers
             ON posts.userID = ucers.userID
             LEFT JOIN (select * from viewers) commenterViewer
@@ -1684,6 +1732,7 @@ app.route("/comment")
             LEFT JOIN (select * from blocked WHERE blockerID = ?) MeBlockingCommenter on comments.userID = commenterBlockingMe.blockedID
             LEFT JOIN (select * from blocked WHERE blockedID = ?) posterBlockingMe on posts.userID = posterBlockingMe.blockerID
             LEFT JOIN (select * from blocked WHERE blockerID = ?) MeBlockingPoster on posts.userID = meBlockingPoster.blockedID
+            LEFT JOIN (select commentID, count(*) as totalCommentLikes from commentLikes GROUP BY commentID) totalCommentLikes on totalCommentLikes
             ,(select userID, classification from users WHERE userID = ?) checkAdmin
             WHERE
             checkAdmin.classification = "admin" OR
@@ -1703,7 +1752,8 @@ app.route("/comment")
             )
             AND comments.commentID = ?
           `;
-          connection.query(sQuery, [userID, userID, userID, userID,userID, userID, userID, userID,userID, userID, userID, userID, userID, userID, userID, commentID], function(err2, results2, fields) {
+          connection.query(sQuery, [userID, userID, userID, userID, userID, userID, userID, userID, userID, userID,
+                                    userID, userID, userID, userID, userID, userID, userID, userID, userID, commentID], function(err2, results2, fields) {
             if (err2) {
               return res.status(200).json({
                 status: -1,
@@ -1727,6 +1777,9 @@ app.route("/comment")
                 commenterUsername: results.commenterUsername,
                 commenterVisibility: results.commenterVisibility,
                 commentLiked: results.commentLiked,
+                totalCommentLikes: results.totalCommentLikes,
+                totalPostLikes: results.totalPostLikes,
+                totalComments: results.totalComments,
                 postLiked: results.postLiked,
                 posterID: results.authorID,
                 postID: results.postID,
@@ -1742,7 +1795,7 @@ app.route("/comment")
         })
       }
     }
-  }) //toFIX
+  })
   .patch(function(req, res) {
     var sessionID = req.query.sessionID;
     var userID = req.query.userID;
@@ -2380,17 +2433,34 @@ app.route("/mylikedposts")
         message: "Not Enough Information."
       })
     } else {
-      var sQuery =
+      var sQuery = //totalLikes, totalCOmments, isBlocked
         `
       SELECT *
     	FROM (
-    	select
-    		posts.postID as postID, posts.userID as userID , users.userName as username,title, content, posts.visibility as postVisibility, users.visibility as userVisibility,viewerID, subDate
-    		from posts
-    		left join likes
-    		ON likes.postID = posts.postID
+    	  select posts.postID as postID, posts.userID as userID , users.userName as username,title, content, posts.visibility as postVisibility,
+        users.visibility as userVisibility,viewerID, subDate,
+        if(isBlockingMe.blockerID is null, "false", "true") isBlockingMe, if(amBlockingThem.blockedID is null, "false", "true") as amBlockingThem,
+        totalLikes.tLikes as totalLikes, totalComments.tComments as totalComments, userClass.classification as classification
+    		from posts left join likes ON likes.postID = posts.postID
     		left join users on users.userID = posts.userID
     		left join (select * from viewers WHERE viewerID = ?) viewers on users.userID = viewers.posterID
+        left join (SELECT * FROM blocked WHERE blockedID = ?) isBlockingMe ON isBlockingMe.blockerID = posts.userID
+        left JOIN (SELECT * FROM blocked WHERE blockedID = ?) amBlockingThem ON amBlockingThem.blockedID = posts.userID
+        left JOIN (SELECT postID,count(*) as tLikes from likes GROUP BY postID) totalLikes ON totalLikes.postID = posts.postID
+        left join (
+          select postID, count(*) as tComments
+          from comments LEFT JOIN users on users.userID = comments.userID
+          LEFT JOIN (select * from viewers WHERE viewers.viewerID = ?) viewers on viewers.posterID = comments.userID
+          LEFT JOIN (select * from blocked WHERE blockedID = ?) isBlockingMe on isBlockingMe.blockerID = comments.userID
+          LEFT JOIN (select * from blocked WHERE blockerID = ?) amBlockingThem on amBlockingThem.blockedID = comments.userID,
+          (select userID,classification from users WHERE userID = ?) classification
+          WHERE (classification.classification = "admin")
+          OR ((comments.visibility != "hidden" and  users.visibility != "hidden")
+          AND (isBlockingMe.blockedID is null AND amBlockingThem.blockerID is null)
+          AND ((comments.visibility != 'private' AND users.visibility != 'private')
+          OR viewers.viewerID is not null)) GROUP BY postID
+                  ) totalComments ON totalComments.postID = posts.postID,
+        (select userID,classification from users WHERE userID = ?) userClass
     		WHERE likes.userID = ?
     		order by subDate desc
         ) posts
@@ -2399,7 +2469,7 @@ app.route("/mylikedposts")
       order by subDate desc
       `;
       return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
-        connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
+        connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID], function(err, results, fields) {
           if (err) {
             return res.status(200).json({
               message: err,
@@ -2416,7 +2486,9 @@ app.route("/mylikedposts")
                 username: results[i].username,
                 postID: results[i].postID,
                 postVisibility: results[i].postVisibility,
-                userVisibility: results[i].userVisibility
+                userVisibility: results[i].userVisibility,
+                totalLikes: results[i].totalLikes,
+                totalComments: results[i].totalComments
               })
             }
             return res.status(200).json({
@@ -2428,7 +2500,7 @@ app.route("/mylikedposts")
         })
       })
     }
-  }) //toFIX
+  })
 app.route("/mylikedcomments")
   .get(function(req, res) {
     if (!req.query.sessionID || !req.query.userID) {
@@ -2445,7 +2517,10 @@ app.route("/mylikedcomments")
       comments.commentID as commentID, comments.postID as postID, comments.userID as commenterID, comments.comments, comments.visibility as commentVisibility,
       posts.userID as posterID, comments.submissionDate as commentDate, title, content, posts.visibility as postVisibility,
       posts.subDate as postDate, users.userName as username, users.visibility as commenterVisibility,
-      pusers.visibility as posterVisibility, viewers.viewerID as commentViewerID, viewerz.viewerID as postViewerID
+      pusers.visibility as posterVisibility, viewers.viewerID as commentViewerID, viewerz.viewerID as postViewerID,
+      if(amBlockingThem.blockerID is null, 'false','true') as amBlockingThem,
+      if(isBlockingMe.blockedID is null, 'false', 'true') as isBlockingMe,
+      classification.classification as classification
       from comments
       left join posts on posts.postID = comments.postID
       left join users on users.userID = comments.userID
@@ -2453,15 +2528,22 @@ app.route("/mylikedcomments")
       left join (select * from viewers WHERE viewerID = ?) viewers on comments.userID = viewers.posterID
       left join (select * from viewers WHERE viewerID = ?) viewerz on posts.userID = viewers.posterID
       left join commentLikes on commentLikes.commentID = comments.commentID
-      WHERE commentLikes.userID = 3
+      left join (select * from blocked WHERE blockerID = ?) amBlockingThem ON amBlockingThem.blockedID = comments.userID
+      left join (select * from blocked WHERE blockedID = ?) isBlockingMe ON isBlockingMe.blockerID = comments.userID,
+      (select * from users WHERE userID = ?) classification
+      WHERE commentLikes.userID = ?
       order by submissionDate desc
       ) comments
-      WHERE commentVisibility != 'hidden' AND postVisibility != 'hidden' AND commenterVisibility != 'hidden'
+      WHERE (classification = 'admin')
+      OR (
+      (amBlockingThem  = 'false' AND isBlockingMe = 'false') AND
+      commentVisibility != 'hidden' AND postVisibility != 'hidden' AND commenterVisibility != 'hidden'
       AND ((commenterVisibility != 'private' AND commentVisibility != 'private') OR commentViewerID is not null OR commenterID = ?)
       AND ((posterVisibility != 'private' AND postVisibility != 'private') OR posterVisibility is not null OR posterID = ?)
+      )
       `;
       return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
-        connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID], function(err, results, fields) {
+        connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID,req.query.userID], function(err, results, fields) {
           if (err) {
             return res.status(200).json({
               status: -1,
@@ -2501,7 +2583,7 @@ app.route("/mylikedcomments")
         })
       })
     }
-  }) //toFIX
+  })
 app.route("/setLightingPreference")
   .post(function(req, res) {
     if (!req.body.userID || !req.body.sessionID || !req.body.lighting) {
