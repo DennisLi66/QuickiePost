@@ -229,18 +229,34 @@ app.get("/myfeed", function(req, res) {
   }
   var sQuery = //works
     `
-  select * from posts
+  select posts.postID as postID, title, content, subDate, uzers.username as username,
+  totalLikes, tComments as totalComments
+   from posts
   LEFT JOIN viewers ON
   viewers.posterID = posts.userID
   LEFT JOIN
   (select userid,username,visibility from users) uzers
   on uzers.userID = posts.userID
+  LEFT JOIN (select postID, count(*) as totalLikes from likes group by postID) likes ON likes.postID = posts.postID
+  LEFT JOIN (
+    select postID, count(*) as tComments
+    from comments LEFT JOIN users on users.userID = comments.userID
+    LEFT JOIN (select * from viewers WHERE viewers.viewerID = ?) viewers on viewers.posterID = comments.userID
+    LEFT JOIN (select * from blocked WHERE blockedID = ?) isBlockingMe on isBlockingMe.blockerID = comments.userID
+    LEFT JOIN (select * from blocked WHERE blockerID = ?) amBlockingThem on amBlockingThem.blockedID = comments.userID,
+    (select userID,classification from users WHERE userID = ?) classification
+    WHERE (classification.classification = "admin")
+    OR ((comments.visibility != "hidden" and  users.visibility != "hidden")
+    AND (isBlockingMe.blockedID is null AND amBlockingThem.blockerID is null)
+    AND ((comments.visibility != 'private' AND users.visibility != 'private')
+    OR viewers.viewerID is not null)) GROUP BY postID
+  ) comments ON comments.postID = posts.postID
   WHERE (viewers.viewerID = ? OR posts.userID = ?) AND uzers.visibility != 'hidden' AND posts.visibility != 'hidden'
   ORDER by subDate DESC
   ;
   `;
   return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
-    connection.query(sQuery, [req.query.userID, req.query.userID], function(err, results, fields) {
+    connection.query(sQuery, [req.query.userID, req.query.userID,req.query.userID, req.query.userID,req.query.userID, req.query.userID], function(err, results, fields) {
       if (err) {
         return res.status(200).json({
           status: -1,
@@ -255,6 +271,8 @@ app.get("/myfeed", function(req, res) {
             userID: results[i].userID,
             content: results[i].content,
             subDate: results[i].subDate,
+            totalLikes: results[i].totalLikes,
+            totalComments: results[i].totalComments,
             username: results[i].username
           });
         }
@@ -266,7 +284,7 @@ app.get("/myfeed", function(req, res) {
       }
     })
   })
-}) //toFIX
+})
 app.get("/search", function(req, res) {
   var title = req.query.title;
   var content = req.query.content;
@@ -1369,10 +1387,9 @@ app.route("/user")
       userName as username, users.visibility as userVisibility, ifnull(totalLikes,0) as totalLikes from comments
       LEFT JOIN users ON users.userID = comments.userID
       LEFT JOIN (select commentID,count(*) as totalLikes from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
-
       WHERE users.userID = ?
-      AND users.visibility != 'hidden' AND comments.visibility != 'private'
-      AND comments.visibility != 'hidden' AND users.visibility != 'private'
+      AND users.visibility = 'public'
+      AND comments.visibility = 'public'
       ;
       `;
       var sQuery2 =
@@ -1380,18 +1397,23 @@ app.route("/user")
       select posts.postID as postID,posts.userID as userID, title, content, posts.visibility, posts.subDate, users.userName as username,
       users.visibility as userVisibility,ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments from posts
       LEFT JOIN users ON users.userID = posts.userID
-      LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (
+        select postID, count(*) as totalComments from comments
+        LEFT JOIN users on users.userID = comments.userID
+        WHERE users.visiblity = "public"
+        AND comments.visibility = "public" GROUP BY postID
+                ) totalComments ON totalComments.postID = posts.postID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
        WHERE users.userID = ?
-      AND users.visibility != 'hidden' AND posts.visibility != 'private'
-      AND posts.visibility != 'hidden' AND users.visibility != 'private'
+      AND users.visibility = 'public'
+      AND posts.visibility = 'public'
       ;
       `;
-      var uQuery =
+      var sQuery =
         `
-      SELECT userID,username as username, visibility FROM users WHERE users.userID = ? AND users.visibility != 'hidden' AND users.visibility != 'private';
+      SELECT userID,username as username, visibility FROM users WHERE users.userID = ? AND users.visibility = 'public';
       `;
-      connection.query(uQuery, [profileID], function(err, results, fields) {
+      connection.query(sQuery, [profileID], function(err, results, fields) {
         if (err) {
           return res.status(200).json({
             status: -1,
@@ -1470,7 +1492,19 @@ app.route("/user")
       ifnull(totalLikes,0) as totalLikes, ifnull(totalComments,0) as totalComments, if(isLiked.userID is null,"false","true") as Liked from posts
       LEFT JOIN users ON users.userID = posts.userID
       LEFT JOIN (select * from viewers where viewers.viewerID = ?) viewers ON users.userID = viewers.posterID
-      LEFT JOIN (select postID,count(*) as totalComments from comments group by postID) totalComments ON totalComments.postID = posts.postID
+      LEFT JOIN (
+        select postID, count(*) as totalComments
+        from comments LEFT JOIN users on users.userID = comments.userID
+        LEFT JOIN (select * from viewers WHERE viewers.viewerID = ?) viewers on viewers.posterID = comments.userID
+        LEFT JOIN (select * from blocked WHERE blockedID = ?) isBlockingMe on isBlockingMe.blockerID = comments.userID
+        LEFT JOIN (select * from blocked WHERE blockerID = ?) amBlockingThem on amBlockingThem.blockedID = comments.userID,
+        (select userID,classification from users WHERE userID = ?) classification
+        WHERE (classification.classification = "admin")
+        OR ((comments.visibility != "hidden" and  users.visibility != "hidden")
+        AND (isBlockingMe.blockedID is null AND amBlockingThem.blockerID is null)
+        AND ((comments.visibility != 'private' AND users.visibility != 'private')
+        OR viewers.viewerID is not null)) GROUP BY postID
+                ) totalComments ON totalComments.postID = posts.postID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
       LEFT JOIN (select * from likes WHERE userID = ?) isLiked ON isLiked.postID = posts.postID
       LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = posts.userID
@@ -1480,7 +1514,7 @@ app.route("/user")
       AND ( adminClass.classification = "admin" OR
 	  (meBlockingUser.blockerID is null AND userBlockingMe.blockedID is null AND
       users.visibility != 'hidden' AND posts.visibility != 'hidden'
-      AND (users.visibility != 'private' AND posts.visibility != 'private' OR users.userID = ? or viewers.viewerID is not null)));
+      AND ((users.visibility != 'private' AND posts.visibility != 'private') OR users.userID = ? or viewers.viewerID is not null)));
       `; //getPosts
       var sQuery2 =
         `
@@ -1496,7 +1530,7 @@ app.route("/user")
       , (select * from users WHERE userID = ?) checkAdmin
       WHERE users.userID = ? AND (checkAdmin.classification = 'admin'
       OR (users.visibility != 'hidden' AND comments.visibility != 'hidden'
-      AND (comments.visibility != 'private' or users.visibility != 'private' OR users.userID = ? or viewers.viewerID = ?)))
+      AND ((comments.visibility != 'private' AND users.visibility != 'private') OR users.userID = ? or viewers.viewerID = ?)))
       ;
       `; //getComments
       var sQuery =
@@ -1525,7 +1559,7 @@ app.route("/user")
               message: "No such account."
             })
           } else {
-            connection.query(sQuery1, [userID, userID,userID,userID,userID, profileID, userID], function(err2, results2, fields2) {
+            connection.query(sQuery1, [userID,userID,userID,userID,userID, userID,userID,userID,userID, profileID, userID], function(err2, results2, fields2) {
               if (err2) {
                 return res.status(200).json({
                   status: -1,
@@ -1588,7 +1622,7 @@ app.route("/user")
         })
       })
     }
-  }) //toFIX
+  })
   .patch(function(req, res) { //Edit User Info
     if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) || (!req.body.pswrd)) {
       return res.status(200).json({
@@ -1673,10 +1707,10 @@ app.route("/comment")
           AND comments.visibility = "public" GROUP BY postID
         ) totalPostComments on totalPostComments.postID = posts.postID
         ON posts.userID = ucers.userID
-        WHERE comments.visibility != 'hidden' AND comments.visibility != 'private'
-        AND posts.visibility != 'hidden' AND posts.visibility != 'private'
-        AND ucers.visibility != 'hidden' AND ucers.visibility != 'private'
-        AND uzers.visibility != 'hidden' AND uzers.visibility != 'private'
+        WHERE comments.visibility = 'public'
+        AND posts.visibility = 'public'
+        AND ucers.visibility = 'public'
+        AND uzers.visibility = 'public'
         AND commentID = ?
         `
         connection.query(sQuery, [commentID], function(err, result, fields) {
