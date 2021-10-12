@@ -16,10 +16,12 @@ require('dotenv').config();
   //make things, like like button, home button, etc, icons.
 //Light and dark mode:
   //change navbar
+  /// add liking own content in user profile
   //need to update queries to not find hidden content: indepth post can find hidden comments, and homepage returns totalCOmmetns with hidde ones
 //make better navbar
 //Expired Page DOesnt Show
-//session refreshing - check it works and update cookies when it updates
+//session refreshing - check it works and update cookies when it updates - it most certainly doesnt work
+//need to return new sessionDate from server to update in client
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
@@ -1841,12 +1843,15 @@ function App() {
                       listOfComments.push(
                         <Card key={i}>
                           <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+                          <Card.Subtitle> {"User ID: " + dict.commenterID} </Card.Subtitle>
                           <Card.Body> {dict.comments} </Card.Body>
                           <Card.Subtitle> {dict.commentDate} </Card.Subtitle>
                           <Card.Body>
+                            Likes: {dict.commentLikes}
+                          </Card.Body>
+                          <Card.Body>
                           <br></br>
-                          <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Post </Button>
+                          <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Comment </Button>
                           </Card.Body>
                         </Card>
                       )
@@ -2299,6 +2304,7 @@ function App() {
           }
           function showPosts(username,posts,start,end,comments, variation = ""){
             showOnlyMain();
+            console.log(posts);
             var listOfShownPosts = [];
             var detect = cookies.get('id') && cookies.get('sessionID');
             for (let i = start; i < (Math.min(end,posts.length)); i++){

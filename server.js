@@ -1,8 +1,3 @@
-//Things to Do
-//add an error for if user is blocked
-//Will need to upate delete updating queries
-//make sure visibility is never null
-
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -263,7 +258,6 @@ app.get("/myfeed", function(req, res) {
           message: err
         })
       } else if (results) {
-        // console.log(results);
         var toPrep = [];
         for (let i = 0; i < results.length; i++) {
           toPrep.push({
@@ -392,18 +386,17 @@ app.get("/search", function(req, res) {
     var sQuery = //works
       `
     SELECT  posts.postID as postID, title, posts.userID as userID, content, subDate, uzers.username as username,
-    totalLikes, totalComments
+    ifnull(totalLikes,0) as totalLikes, totalComments
     from posts
     LEFT JOIN
-    (select userid,username,visibility from users) uzers
-    LEFT JOIN (select count(*) as totalLikes, postID from likes GROUP BY postID) likes.postID = posts.postID
+    (select userid,username,visibility from users) uzers ON uzers.userID = posts.userID
+    LEFT JOIN (select count(*) as totalLikes, postID from likes GROUP BY postID) likes ON likes.postID = posts.postID
     LEFT JOIN (
       select postID, count(*) as totalComments from comments
       LEFT JOIN users on users.userID = comments.userID
-      WHERE users.visiblity = "public"
+      WHERE users.visibility = "public"
       AND comments.visibility = "public" GROUP BY postID
-    )
-    on uzers.userID = posts.userID
+    ) comments ON comments.postID = posts.postID
     WHERE posts.visibility = 'public'
     AND uzers.visibility = 'public'
     `;
@@ -1400,7 +1393,7 @@ app.route("/user")
       LEFT JOIN (
         select postID, count(*) as totalComments from comments
         LEFT JOIN users on users.userID = comments.userID
-        WHERE users.visiblity = "public"
+        WHERE users.visibility = "public"
         AND comments.visibility = "public" GROUP BY postID
                 ) totalComments ON totalComments.postID = posts.postID
       LEFT JOIN (select postID,count(*) as totalLikes from likes group by postID) totalLikes ON totalLikes.postID = posts.postID
@@ -2580,6 +2573,7 @@ app.route("/mylikedcomments")
       pusers.visibility as posterVisibility, viewers.viewerID as commentViewerID, viewerz.viewerID as postViewerID,
       if(amBlockingThem.blockerID is null, 'false','true') as amBlockingThem,
       if(isBlockingMe.blockedID is null, 'false', 'true') as isBlockingMe,
+      ifnull(totalLikes,0) as totalLikes,
       classification.classification as classification
       from comments
       left join posts on posts.postID = comments.postID
@@ -2589,7 +2583,8 @@ app.route("/mylikedcomments")
       left join (select * from viewers WHERE viewerID = ?) viewerz on posts.userID = viewers.posterID
       left join commentLikes on commentLikes.commentID = comments.commentID
       left join (select * from blocked WHERE blockerID = ?) amBlockingThem ON amBlockingThem.blockedID = comments.userID
-      left join (select * from blocked WHERE blockedID = ?) isBlockingMe ON isBlockingMe.blockerID = comments.userID,
+      left join (select * from blocked WHERE blockedID = ?) isBlockingMe ON isBlockingMe.blockerID = comments.userID
+      left join (select commentID, count(*) as totalLikes from commentLikes group by commentID) totalCommentLikes on totalCommentLikes.commentID = comments.commentID,
       (select * from users WHERE userID = ?) classification
       WHERE commentLikes.userID = ?
       order by submissionDate desc
@@ -2603,7 +2598,7 @@ app.route("/mylikedcomments")
       )
       `;
       return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
-        connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID,req.query.userID], function(err, results, fields) {
+        connection.query(sQuery, [req.query.userID, req.query.userID, req.query.userID, req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID], function(err, results, fields) {
           if (err) {
             return res.status(200).json({
               status: -1,
@@ -2627,6 +2622,7 @@ app.route("/mylikedcomments")
                 title: results[i].title,
                 userID: results[i].userID,
                 content: results[i].content,
+                commentLikes: results[i].totalLikes,
                 // subDate: results[i].subDate,
                 username: results[i].username,
                 postID: results[i].postID,
