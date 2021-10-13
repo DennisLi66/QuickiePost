@@ -214,6 +214,9 @@ function App() {
         else if (origin === "login"){
           getLoginPage();
         }
+        else if (origin === "likedComments"){
+          showUserProfile(userID,startPos,endPos,origin);
+        }
         else{
           getHome();
         }
@@ -339,6 +342,9 @@ function App() {
                 showInDepthPost(postID,startPos,endPos,"commentDeleted")
               }else if (origin === "userProfile"){
                 showUserProfile(cookies.get("id"),startPos,endPos,"commentDeleted")
+              }
+              else if (origin === "likedComments"){
+                showUserProfile(cookies.get("id"),startPos,endPos,origin);
               }
             })
         }
@@ -537,6 +543,9 @@ function App() {
             }else if (origin === "userProfile"){
               showUserProfile(cookies.get("id"),startPos,endPos,"comments")
             }
+            else if (origin === "likedComments"){
+                showUserProfile(cookies.get("id"),startPos,endPos,origin);
+            }
           })
       }
       //like handlers
@@ -663,6 +672,8 @@ function App() {
                   showInDepthPost(postID,startPos,endPos);
                 }else if (origin === "indepthComment"){
                   showInDepthComment(commentID,"changed");
+                }else if (origin === "likedComments"){
+                  showUserProfile(userID,startPos,endPos,"likedComments")
                 }else{
                   showErrorPage({message: "No Origin Given", postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
                 }
@@ -1840,6 +1851,17 @@ function App() {
                   }else{
                     for (let i = firstPoint;  i < Math.min(secondPoint,data.contents.length); i++){
                       var dict = data.contents[i];
+                      var ownerOptions = (<div></div>);
+                      if (String(dict.commenterID) === String(cookies.get("id"))){
+                        ownerOptions = (
+                          <div>
+                            <Button onClick={()=>{showEditComment(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Edit Comment</Button>
+                            <br></br>
+                            <Button onClick={()=>{showDeleteCommentConfirmation(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Delete Comment</Button>
+                            <br></br>
+                          </div>
+                        )
+                      }
                       listOfComments.push(
                         <Card key={i}>
                           <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
@@ -1847,10 +1869,11 @@ function App() {
                           <Card.Body> {dict.comments} </Card.Body>
                           <Card.Subtitle> {dict.commentDate} </Card.Subtitle>
                           <Card.Body>
-                            Likes: {dict.commentLikes}
-                          </Card.Body>
-                          <Card.Body>
+                          Likes: {dict.commentLikes}
                           <br></br>
+                          <Button onClick={()=>{handleCommentUnlike(data.contents[i].commentID,'likedComments',0,cookies.get("id"),firstPoint,secondPoint)}}> Unlike Comment </Button>
+                          <br></br>
+                          {ownerOptions}
                           <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Comment </Button>
                           </Card.Body>
                         </Card>
@@ -2304,7 +2327,6 @@ function App() {
           }
           function showPosts(username,posts,start,end,comments, variation = ""){
             showOnlyMain();
-            console.log(posts);
             var listOfShownPosts = [];
             var detect = cookies.get('id') && cookies.get('sessionID');
             for (let i = start; i < (Math.min(end,posts.length)); i++){
@@ -2416,7 +2438,7 @@ function App() {
               <div className='centerAlignPaginationBar'> {paginationBar}  </div>
               </div>
             );
-          } //Doesnt Test Session
+          }
           //Privacy Handlers
           function showDeactivationPage(){
             showOnlyMain();
@@ -2569,6 +2591,8 @@ function App() {
                     showPosts(data.username,data.posts,startPos,endPos,data.comments,"Delete");
                   }else if (variation === "commentDeleted"){
                     showPosts(data.username,data.posts,startPos,endPos,data.comments,"commentDeleted");
+                  }else if (variation === "likedComments"){
+                    showLikedComments(data.username,data.posts,data.comments,startPos,endPos)
                   }else{
                     showPosts(data.username,data.posts,startPos,endPos,data.comments);
                   }
