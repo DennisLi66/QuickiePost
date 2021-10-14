@@ -2946,7 +2946,10 @@ function App() {
         var title = document.getElementById("title").value;
         var content = document.getElementById("content").value;
         var username = document.getElementById("username").value;
-        var sDate = document.getElementById("sDate").value;
+        var dateIdentification = document.getElementById('dateIdentification').value;
+        var sDate = document.getElementById('sDate') ? document.getElementById("sDate").value : null;
+        var beforeDate = document.getElementById('beforeDate') ? document.getElementById("beforeDate").value: null;
+        var afterDate = document.getElementById("afterDate") ? document.getElementById("afterDate").value : null;
         var url = serverLocation + "/search?";
         var toJoin = [];
         if (title){
@@ -2961,9 +2964,21 @@ function App() {
           console.log("Username: " + username);
           toJoin.push("username=" + username);
         }
-        if (sDate){
-          console.log("sdate: " + sDate);
-          toJoin.push("sDate=" + sDate);
+        if (dateIdentification){
+          console.log("dateIdentification: " + dateIdentification);
+          toJoin.push("dI="+dateIdentification);
+          if (sDate && (beforeDate || afterDate)){
+            showErrorPage({message: "Something went wrong with the dates.", origin: 'search'})
+          }else if (sDate){
+            console.log("sdate: " + sDate);
+            toJoin.push("sDate=" + sDate);
+          }else if (beforeDate){
+            console.log("beforeDate: " + beforeDate);
+            toJoin.push("bD=" + beforeDate);
+          }else if (afterDate){
+            console.log("afterDate" + afterDate);
+            toJoin.push("aD" + afterDate);
+          }
         }
         if (cookies.get("sessionID")){
           toJoin.push("sessionID=" + cookies.get("sessionID"));
@@ -3479,6 +3494,9 @@ function App() {
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"posts")}}> Return </Button>)
           }else if (origin === "forgotPassword"){
             returnButton = (<Button onClick={()=>{forgotPasswordPage()}}> Return </Button>);
+          }
+          else if (origin === "search"){
+                returnButton = (<Button onClick={()=>{getSearchPage()}}> Return </Button>);
           }
           else{//origin is a common thing, use cancel
             returnButton = (<Button onClick={()=>{cancel(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
