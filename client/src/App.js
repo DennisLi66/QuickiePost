@@ -2892,12 +2892,54 @@ function App() {
           <br></br>
           <label htmlFor='date'>Search By Date:</label>
           <br></br>
-          <input name='date' type='date' id='sDate'></input>
+          <label htmlFor='dateOptions'>Method of Date Measurement:</label>
+          <br></br>
+          <select name='dateOptions' id='dateOptions' form='dateForm' onChange={changeDateOptions}>
+            <option value='oneDay'> Single Day </option>
+            <option value='before'> Posted Before </option>
+            <option value='after'> Posted After</option>
+            <option value='range'> Date Range</option>
+          </select>
+          <br></br>
+          <div id='dateType'>
+            <input type='hidden' id='dateIdentification' value='oneDay'></input>
+            <input name='date' type='date' id='sDate'></input>
+          </div>
           <br></br><br></br>
           <Button variant='dark' type="submit"> Submit </Button>
           </form>
           </div>
         )
+      }
+      function changeDateOptions(event){
+        var dateOption = document.getElementById("dateOptions").value;
+        console.log(dateOption);
+        if (dateOption === "range"){
+          document.getElementById('dateType').innerHTML =
+          `
+          <input type='hidden' id='dateIdentification' value='range'></input>
+          <input name='date' type='date' id='beforeDate'></input>
+          <input name='date' type='date' id='afterDate'></input>
+          `;
+        }else if (dateOption === "before"){
+          document.getElementById('dateType').innerHTML =
+          `
+          <input type='hidden' id='dateIdentification' value='before'></input>
+          <input name='date' type='date' id='sDate'></input>
+          `
+        }else if (dateOption === "oneDay"){
+          document.getElementById('dateType').innerHTML =
+          `
+          <input type='hidden' id='dateIdentification' value='oneDay'></input>
+          <input name='date' type='date' id='sDate'></input>
+          `
+        }else if (dateOption === "after"){
+          document.getElementById('dateType').innerHTML =
+          `
+          <input type='hidden' id='dateIdentification' value='after'></input>
+          <input name='date' type='date' id='sDate'></input>
+          `
+        }
       }
       function handleSearch(event){
         event.preventDefault();
