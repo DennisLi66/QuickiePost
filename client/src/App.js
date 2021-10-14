@@ -217,6 +217,9 @@ function App() {
         else if (origin === "likedComments"){
           showUserProfile(userID,startPos,endPos,origin);
         }
+        else if (origin === "likedPosts"){
+          showUserProfile(userID,startPos,endPos,origin);
+        }
         else{
           getHome();
         }
@@ -284,6 +287,9 @@ function App() {
                 showInDepthPost(postID,startPos,endPos,"Delete");
               }else if (origin === "userProfile"){
                 showUserProfile(cookies.get("id"),startPos,endPos,"posts","postDelete")
+              }
+              else if (origin === "likedPosts"){
+                showUserProfile(cookies.get("id"),startPos,endPos,origin);
               }
             })
         }
@@ -445,6 +451,9 @@ function App() {
               showInDepthPost(postID,startPos,endPos,"Edit");
             }else if (origin === "userProfile"){
               showUserProfile(cookies.get("id"),startPos,endPos,"posts")
+            }
+            else if (origin === "likedPosts"){
+              showUserProfile(cookies.get("id"),startPos,endPos,origin);
             }
             else{
               showInDepthPost(postID,startPos,endPos,"Edit");
@@ -610,6 +619,8 @@ function App() {
                   showInDepthComment(commentID,"changed");
                 }else if (origin === "home"){
                   getHome(startPos,endPos)
+                }else if (origin === "likedPosts"){
+                  showUserProfile()
                 }else{
                   showErrorPage({message: "No Origin Given.", postID: postID, origin: origin, startPos: startPos,endPos:endPos})
                 }
@@ -1765,8 +1776,17 @@ function App() {
                   }
                   else{
                     for (let i = firstPoint; i < Math.min(secondPoint,data.contents.length); i++){
-                      //push a simple post?
                       var dict = data.contents[i];
+                      var ownerOptions = (<div></div>);
+                      if (String(cookies.get("id") === String(dict.userID))){
+                        ownerOptions = (
+                          <div>
+                            <Button onClick={()=>{showEditPost(data.contents[i].postID,origin,firstPoint,secondPoint)}}> Edit Post </Button>
+                            <br></br>
+                            <Button onClick={()=>{showDeletePostConfirmation(data.contents[i].postID,origin,firstPoint,secondPoint)}}> Delete Post</Button>
+                          </div>
+                        )
+                      }
                       listOfPosts.push(
                         <Card key={i}>
                           <Card.Title> {dict.title} </Card.Title>
@@ -1778,6 +1798,9 @@ function App() {
                           Likes: {dict.totalLikes} Comments: {dict.totalComments}
                           <br></br>
                           <Button onClick={()=>{showInDepthPost(data.contents[i].postID)}}> Expand Post </Button>
+                          <br></br>
+                          <Button onClick={() => {handlePostUnlike(data.contents[i].postID,'likedPosts',0,cookies.get("id"),firstPoint,secondPoint)}}> Unlike Post </Button>
+                          {ownerOptions}
                           </Card.Body>
                         </Card>
                       )
@@ -1857,7 +1880,7 @@ function App() {
                           <div>
                             <Button onClick={()=>{showEditComment(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Edit Comment</Button>
                             <br></br>
-                            <Button onClick={()=>{showDeleteCommentConfirmation(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Delete Comment</Button>
+                            <Button type='danger' onClick={()=>{showDeleteCommentConfirmation(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Delete Comment</Button>
                             <br></br>
                           </div>
                         )
@@ -2593,6 +2616,8 @@ function App() {
                     showPosts(data.username,data.posts,startPos,endPos,data.comments,"commentDeleted");
                   }else if (variation === "likedComments"){
                     showLikedComments(data.username,data.posts,data.comments,startPos,endPos)
+                  }else if (variation === "likedPosts"){
+                    showLikedPosts(data.username,data.posts,data.comments,startPos,endPos);
                   }else{
                     showPosts(data.username,data.posts,startPos,endPos,data.comments);
                   }
