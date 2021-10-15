@@ -282,6 +282,9 @@ app.get("/myfeed", function(req, res) {
 app.get("/search", function(req, res) {
   var title = req.query.title;
   var content = req.query.content;
+  var dateIdentification = req.query.dI;
+  var firstDate = req.query.bd;
+  var secondDate = req.query.ad;
   var sdate = req.query.sDate;
   var username = req.query.username;
   var userID = req.query.userID;
@@ -302,9 +305,35 @@ app.get("/search", function(req, res) {
     toJoinQuery.push(" AND content LIKE ?");
     variables.push('%' + content + '%');
   }
-  if (sdate) {
-    toJoinQuery.push(' AND DATE(subDate) = ?');
-    variables.push(sdate);
+  if (dateIdentification){ //FIX THIS: test new date routes
+    if (dateIdentification === "before"){
+      if (sDate){
+        toJoinQuery.push('AND Date(subDate) <= ?')
+        variables.push(sdate);
+      }
+    }else if (dateIdentification === "after"){
+      if (sDate){
+        toJoinQuery.push('AND Date(subDate) >= ?')
+        variables.push(sdate);
+      }
+    }else if (dateIdentification === "oneDay"){
+      if (sdate) {
+        toJoinQuery.push(' AND DATE(subDate) = ?');
+        variables.push(sdate);
+      }
+    }else if (dateIdentification === "range"){
+      if (firstDate && secondDate){
+        toJoinQuery.push(' AND DATE(subDate) <= ? AND Date(subDate) >= ?');
+        variables.push(firstDate);
+        variables.push(secondDate);
+      }else if (firstDate){
+        toJoinQuery.push(' AND DATE(subDate) <= ?');
+        variables.push(firstDate);
+      }else if (secondDate){
+        toJoinQuery.push(' AND DATE(subDate) >= ?');
+        variables.push(secondDate);
+      }
+    }
   }
   if (username) {
     toJoinQuery.push(" AND username = ?");
