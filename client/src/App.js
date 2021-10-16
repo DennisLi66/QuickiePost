@@ -29,13 +29,11 @@ require('dotenv').config();
 //clicking write post from indepth doesnt work - doesnt redirect properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //TEST search more
-  //Allow search page to have more diverse searching options, like before/after/between dates
 //Queries need to be rechecked
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
 //!!!PRIORITY
 //Test Banning Interactions and user to user interactions
-//check all buttons are in () => {} format
 //Notifcation List - what has changed since last sessionID update?
 //test showOptions features on other profiles
 //SHould memoize pagination so its faster, and check that pagination is actually correct
@@ -2911,7 +2909,7 @@ function App() {
           </div>
         )
       }
-      function changeDateOptions(event){
+      function changeDateOptions(){
         var dateOption = document.getElementById("dateOptions").value;
         console.log(dateOption);
         if (dateOption === "range"){
@@ -2977,7 +2975,7 @@ function App() {
             toJoin.push("bD=" + beforeDate);
           }else if (afterDate){
             console.log("afterDate" + afterDate);
-            toJoin.push("aD" + afterDate);
+            toJoin.push("aD=" + afterDate);
           }
         }
         if (cookies.get("sessionID")){
@@ -2998,11 +2996,11 @@ function App() {
           }else if (data.status === -1){
             showErrorPage({message: data.message, origin: "searchPage"})
           }else{
-            paginateSearchPage(data.contents,0,10,title,content,username,sDate)
+            paginateSearchPage(data.contents,0,10,title,content,username,dateIdentification,sDate,beforeDate,afterDate)
           }
         })
       }
-      function paginateSearchPage(contents,start = 0,end = 10,title,content,username,sDate){
+      function paginateSearchPage(contents,start = 0,end = 10,title,content,username,dateIdentification,sDate,beforeDate,afterDate){
         var listOfPosts = [];
         var paginationBar;
         if (!contents|| contents.length === 0){
@@ -3038,19 +3036,30 @@ function App() {
           <form onSubmit={handleSearch}>
           <label htmlFor='title'>Search for Title:</label>
           <br></br>
-          <input name='title' id='title' placeholder={title}></input>
+          <input name='title' id='title'></input>
           <br></br>
           <label htmlFor='content'>Search by Contents:</label>
           <br></br>
-          <input name='content'  id='content' placeholder={content}></input>
+          <input name='content'  id='content'></input>
           <br></br>
           <label htmlFor='username'>Search by Username:</label>
           <br></br>
-          <input name='username' placeholder={username} id='username'></input>
+          <input name='username' id='username'></input>
           <br></br>
-          <label htmlFor='date'>Search By Date:</label>
-          <br></br>
-          <input name='date' placeholder={sDate} type='date' id='sDate'></input>
+
+            <label htmlFor='date'>Search By Date:</label><br></br>
+            <label htmlFor='dateOptions'>Method of Date Measurement:</label><br></br>
+            <select name='dateOptions' id='dateOptions' form='dateForm' onChange={changeDateOptions}>
+              <option value='oneDay'> Single Day </option>
+              <option value='before'> Posted Before </option>
+              <option value='after'> Posted After</option>
+              <option value='range'> Date Range</option>
+            </select><br></br>
+            <div id='dateType'>
+              <input type='hidden' id='dateIdentification' value='oneDay'></input>
+              <input name='date' type='date' id='sDate'></input>
+            </div>
+
           <br></br><br></br>
           <Button variant='dark' type="submit"> Submit </Button>
           </form>
@@ -3059,6 +3068,53 @@ function App() {
           {paginationBar}
           </div>
         )
+        if (title) document.getElementById('title').value = title;
+        if (content) document.getElementById('content').value = content;
+        if (username) document.getElementById('username').value = username;
+        if (dateIdentification){
+          if (dateIdentification === 'before'){
+            document.getElementById('dateOptions').innerHtml =
+            `
+            <option value='oneDay'> Single Day </option>
+            <option value='before' selected> Posted Before </option>
+            <option value='after'> Posted After</option>
+            <option value='range'> Date Range</option>
+            `
+            changeDateOptions();
+            document.getElementById("sDate").value = sDate;
+          }else if (dateIdentification === "after"){
+            document.getElementById('dateOptions').innerHtml =
+            `
+            <option value='oneDay'> Single Day </option>
+            <option value='before'> Posted Before </option>
+            <option value='after' selected> Posted After</option>
+            <option value='range'> Date Range</option>
+            `
+            changeDateOptions();
+            document.getElementById("sDate").value = sDate;
+          }else if (dateIdentification === "oneDay"){
+            document.getElementById('dateOptions').innerHtml =
+            `
+            <option value='oneDay' selected> Single Day </option>
+            <option value='before'> Posted Before </option>
+            <option value='after'> Posted After</option>
+            <option value='range'> Date Range</option>
+            `
+            changeDateOptions();
+            document.getElementById("sDate").value = sDate;
+          }else if (dateIdentification === "range"){
+            document.getElementById('dateOptions').innerHtml =
+            `
+            <option value='oneDay'> Single Day </option>
+            <option value='before' selected> Posted Before </option>
+            <option value='after'> Posted After</option>
+            <option value='range' selected> Date Range</option>
+            `
+            changeDateOptions();
+            if (beforeDate) document.getElementById('beforeDate').value = beforeDate;
+            if (afterDate) document.getElementById('afterDate').value = afterDate;
+          }
+        }
       }
       //Hashtag Functions
       function searchHashtag(hashtag){
@@ -3551,6 +3607,7 @@ function App() {
       }
       //MAIN
       showOnlyMain();
+      //FIX THIS TEST LINE BELOW
       if (cookies.get('id') && (cookies.get('expireTime') === "forever" || Date.now() < cookies.get('expireTime'))){
         console.log("Logged In");
         changeNavToLoggedIn();

@@ -1,3 +1,5 @@
+//Test Search Dates
+
 require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -283,13 +285,14 @@ app.get("/search", function(req, res) {
   var title = req.query.title;
   var content = req.query.content;
   var dateIdentification = req.query.dI;
-  var firstDate = req.query.bd;
-  var secondDate = req.query.ad;
+  var firstDate = req.query.bD;
+  var secondDate = req.query.aD;
   var sdate = req.query.sDate;
   var username = req.query.username;
   var userID = req.query.userID;
   var sessionID = req.query.sessionID;
-  if (!title && !content && !sdate && !username) {
+  if (!title && !content && !sdate && !username && !firstDate && !secondDate) {
+    console.log(req.query);
     return res.status(200).json({
       status: -1,
       message: "No valid search information included."
@@ -307,12 +310,12 @@ app.get("/search", function(req, res) {
   }
   if (dateIdentification){ //FIX THIS: test new date routes
     if (dateIdentification === "before"){
-      if (sDate){
+      if (sdate){
         toJoinQuery.push('AND Date(subDate) <= ?')
         variables.push(sdate);
       }
     }else if (dateIdentification === "after"){
-      if (sDate){
+      if (sdate){
         toJoinQuery.push('AND Date(subDate) >= ?')
         variables.push(sdate);
       }
@@ -327,10 +330,10 @@ app.get("/search", function(req, res) {
         variables.push(firstDate);
         variables.push(secondDate);
       }else if (firstDate){
-        toJoinQuery.push(' AND DATE(subDate) <= ?');
+        toJoinQuery.push(' AND DATE(subDate) >= ?');
         variables.push(firstDate);
       }else if (secondDate){
-        toJoinQuery.push(' AND DATE(subDate) >= ?');
+        toJoinQuery.push(' AND DATE(subDate) <= ?');
         variables.push(secondDate);
       }
     }
