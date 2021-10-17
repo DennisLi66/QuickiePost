@@ -16,9 +16,9 @@ require('dotenv').config();
   //make things, like like button, home button, etc, icons.
 //Light and dark mode:
   //change navbar
-  /// add liking own content in user profile
   //need to update queries to not find hidden content: indepth post can find hidden comments, and homepage returns totalCOmmetns with hidde ones
 //make better navbar
+//Sessions do not work as intended - fix sessions in backend
 //Expired Page DOesnt Show
 //session refreshing - check it works and update cookies when it updates - it most certainly doesnt work
 //need to return new sessionDate from server to update in client
@@ -26,9 +26,7 @@ require('dotenv').config();
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
 //Cancel Button may not work properly - doesnt work to the right places
-//clicking write post from indepth doesnt work - doesnt redirect properly
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
-//TEST search more
 //Queries need to be rechecked
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
@@ -39,7 +37,6 @@ require('dotenv').config();
 //SHould memoize pagination so its faster, and check that pagination is actually correct
 //test account reactivation and make sure the results interacts the way it should
 //add a highlight effect to the pagination bar
-//Add fine tuning to posts after submission
 //change getPosts to SELECT posts where post != private and user != private
 //change color of posts and comments to better differentiate them
 //FIX THIS: ADD pagination and remembering paginatikn
@@ -97,7 +94,8 @@ function App() {
     searchPosts: [],
     postID: 0,
     commentID: 0,
-    userID: 0
+    userID: 0,
+    currentlyShown: "main"
   })
   const [lightDarkMode,changeLighting] = React.useState({
     lightingMode: "light"
@@ -105,6 +103,7 @@ function App() {
   //
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
+      var lastDisplayed = "main";
       //Helper Functions
       function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
         var likePostButton;
@@ -618,7 +617,7 @@ function App() {
                 }else if (origin === "home"){
                   getHome(startPos,endPos)
                 }else if (origin === "likedPosts"){
-                  showUserProfile()
+                  showUserProfile(userID,startPos,endPos,"likedPosts")
                 }else{
                   showErrorPage({message: "No Origin Given.", postID: postID, origin: origin, startPos: startPos,endPos:endPos})
                 }
@@ -1339,9 +1338,9 @@ function App() {
       }
       //Show Main Stuff Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
+          //FIX THIS: Rework this function for viewing a blocked user
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
-          //Block List functions
           //FIX THIS: Expired Page should redirect to userprofule
           //Admin functions
           function confirmUserBan(toDo,username){
@@ -2177,7 +2176,7 @@ function App() {
                       changeCode(
                         <div>
                         <h1> {username}'s Profile </h1>
-                                              {banBanner}
+                        {banBanner}
                         <ul className="nav nav-tabs justify-content-center">
                           <li className="nav-item">
                             <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
@@ -2600,7 +2599,13 @@ function App() {
                     showErrorPage({message: data.message,origin: "showUserProfile", startPos: startPos, endPos: endPos})
                   }
                 }else{
-                  if (variation === "posts"){
+                  if (data.blockingMe === 'true' && data.blockingThem === 'true' && data.classification !== 'admin'){
+                    showOptions(data.username,data.posts,data.comments,"doubleBlock");
+                  }else if (data.blockingMe === 'true' && data.classification !== 'admin'){
+                    showOptions(data.username,data.posts,data.comments,"blocked");
+                  }else if (data.blockingThem === 'true' && data.classification !== 'admin'){
+                    showOptions(data.username,data.posts,data.comments,"blocking");
+                  }else if (variation === "posts"){
                     showPosts(data.username,data.posts,startPos,endPos,data.comments);
                   }else if (variation === "comments"){
                     showComments(data.username,data.comments,startPos,endPos,data.posts)
@@ -3174,6 +3179,10 @@ function App() {
         )
       }
       //SHOWERS AND HIDERS
+      function openPassed(){
+        if (lastDisplayed === "main") showOnlyMain()
+        else if (lastDisplayed === "indepth") openInDepthPost();
+      }
       function showWriteForm(){
         //have something navigate down from the top
         changeInDepthCSS(
@@ -3197,7 +3206,7 @@ function App() {
         changeWriteFormCode(
           <div>
           <br></br>
-          <Button variant='dark' onClick={hideWriteForm} className='exitButton'>Cancel</Button>
+          <Button variant='dark' onClick={openPassed} className='exitButton'>Cancel</Button>
           <h1> Write a Post </h1>
           <form onSubmit={handleWritePost}>
             <label htmlFor='postTitle'>Title:</label>
@@ -3262,6 +3271,14 @@ function App() {
         );
       }
       function openInDepthPost(){
+        lastDisplayed = "indepth";
+        changeWriteFormCSS(
+          {
+            height: '0%',
+            display: 'none',
+            transition: 'height 2s ease-in'
+          }
+        );
         changeInDepthCSS({
           height: 'auto',
           transition: 'height 2s ease-in'
@@ -3279,6 +3296,7 @@ function App() {
         })
       }
       function showOnlyMain(){
+        lastDisplayed = "main";
         changeMainBodyCSS(
           {
             height: 'auto',
@@ -3607,8 +3625,9 @@ function App() {
       }
       //MAIN
       showOnlyMain();
-      //FIX THIS TEST LINE BELOW
-      if (cookies.get('id') && (cookies.get('expireTime') === "forever" || Date.now() < cookies.get('expireTime'))){
+      if (cookies.get('id')
+      //&& (cookies.get('expireTime') === "forever" || Date.now() < cookies.get('expireTime'))
+      ){
         console.log("Logged In");
         changeNavToLoggedIn();
       }

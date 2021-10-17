@@ -1554,13 +1554,18 @@ app.route("/user")
       LEFT JOIN (select * from blocked WHERE blockedID = ?) userBlockingMe ON userBlockingMe.blockerID = comments.userID
       , (select * from users WHERE userID = ?) checkAdmin
       WHERE users.userID = ? AND (checkAdmin.classification = 'admin'
-      OR (users.visibility != 'hidden' AND comments.visibility != 'hidden'
+      OR (meBlockingUser.blockerID is null AND userBlockingMe.blockedID is null AND
+      users.visibility != 'hidden' AND comments.visibility != 'hidden'
       AND ((comments.visibility != 'private' AND users.visibility != 'private') OR users.userID = ? or viewers.viewerID = ?)))
       ;
       `; //getComments
       var sQuery =
         `
-      SELECT users.userID as userID,users.userName as userName, users.visibility as visibility FROM users
+      SELECT users.userID as userID,users.userName as userName, users.visibility as visibility,
+      if(meBlockingUser.blockerID is null, 'false','true') as blockingMe,
+      if(userBlockingMe.blockedID is null, 'false', 'true') as blockingThem,
+      adminClass.classification as classification
+      FROM users
       LEFT JOIN (select * from viewers WHERE viewerID = ?) viewership ON viewership.posterID = users.userID
       LEFT JOIN (select * from blocked WHERE blockedID = ?) userBlockingMe ON userBlockingMe.blockerID = users.userID
       LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = users.userID
@@ -1568,7 +1573,9 @@ app.route("/user")
       WHERE users.userID = ?
       AND (adminClass.classification = "admin"
       OR (users.visibility != 'hidden' AND
-      (userBlockingMe.blockedID is null AND meBlockingUser.blockerID is null) AND
+      ` +
+      // (userBlockingMe.blockedID is null AND meBlockingUser.blockerID is null) AND
+      `
       (users.visibility != 'private' OR users.userID = ? OR viewership.posterID is not null)));
       `; //getUser
       return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
@@ -1637,7 +1644,9 @@ app.route("/user")
                       username: results1[0].userName,
                       userID: results1[0].userID,
                       comments: listOfComments,
-                      posts: listOfPosts
+                      posts: listOfPosts,
+                      blockingUser: results1[0].blockingThem,
+                      blockingMe: results1[0].blockingMe
                     })
                   }
                 })
