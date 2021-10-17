@@ -2173,10 +2173,7 @@ function App() {
                           <br></br>
                         </div>
                       );
-                      changeCode(
-                        <div>
-                        <h1> {username}'s Profile </h1>
-                        {banBanner}
+                      var navigationMenu = (
                         <ul className="nav nav-tabs justify-content-center">
                           <li className="nav-item">
                             <div className="nav-link"  onClick={() => {showPosts(username,posts,0,10,comments)}}>{username}'s Posts</div>
@@ -2188,6 +2185,21 @@ function App() {
                             <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                           </li>
                         </ul>
+                      )
+                      if ((data.blockingThem && data.blockingThem === "true") || (data.blockingMe && data.blockingMe === "true")){
+                        navigationMenu = (
+                          <ul className="nav nav-tabs justify-content-center">
+                            <li className="nav-item">
+                              <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
+                            </li>
+                          </ul>
+                        )
+                      }
+                      changeCode(
+                        <div>
+                        <h1> {username}'s Profile </h1>
+                        {banBanner}
+                        {navigationMenu}
                         {optionsMenu}
                         </div>
                       )
@@ -2600,7 +2612,7 @@ function App() {
                   }
                 }else{
                   if (data.blockingMe === 'true' && data.blockingThem === 'true' && data.classification !== 'admin'){
-                    showOptions(data.username,data.posts,data.comments,"doubleBlock");
+                    showOptions(data.username,data.posts,data.comments);
                   }else if (data.blockingMe === 'true' && data.classification !== 'admin'){
                     showOptions(data.username,data.posts,data.comments,"blocked");
                   }else if (data.blockingThem === 'true' && data.classification !== 'admin'){
