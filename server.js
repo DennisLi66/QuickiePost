@@ -1307,44 +1307,62 @@ app.route("/forgotPassword")
       })
     } else {
       //generate random code and insert
-      //FIX THIS CHECK THAT EMAIL IS ASSOCIATED OR DO NOT SEND
-      var code = randomatic('A0', 6);
-      var iorUQuery =
-        `
-        INSERT INTO forgottenPasswordCodes
-          (email,fpCode,addDate)
-        values
-          (?,?,NOW())
-        ON DUPLICATE KEY UPDATE
-          email = VALUES(email),
-          fpCode = VALUES(fpCode),
-          addDate = VALUES(addDate);
-        SELECT * FROM users WHERE email = ?;
-        `;
-      connection.query(iorUQuery, [req.body.email, code, req.body.email], function(error, results, fields) {
-        if (error) {
+      var sQuery =
+      `
+      SELECT userID FROM users WHERE email = ?;
+      `;
+      connection.query(sQuery,[req.body.email],function(er1,re1,fie1){
+        if (er1){
           return res.status(200).json({
             status: -1,
-            message: error
+            message: er1
           })
-        } else {
-          var mailOptions = {
-            from: process.env.EMAILUSER,
-            to: req.body.email,
-            subject: 'Password Recovery Link',
-            html: 'Your code is ' + code + '.'
-          };
-          transporter.sendMail(mailOptions, function(error, info) {
+        }
+        else if (re1.length === 0){
+          return res.status(200).json({
+            message: "User Email Not Associated",
+            status: -2
+          })
+        }else{
+          var code = randomatic('A0', 6);
+          var iorUQuery =
+            `
+            INSERT INTO forgottenPasswordCodes
+              (email,fpCode,addDate)
+            values
+              (?,?,NOW())
+            ON DUPLICATE KEY UPDATE
+              email = VALUES(email),
+              fpCode = VALUES(fpCode),
+              addDate = VALUES(addDate);
+            SELECT * FROM users WHERE email = ?;
+            `;
+          connection.query(iorUQuery, [req.body.email, code, req.body.email], function(error, results, fields) {
             if (error) {
-              console.log(error)
               return res.status(200).json({
                 status: -1,
                 message: error
               })
             } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Successful Forgotten Password Stored."
+              var mailOptions = {
+                from: process.env.EMAILUSER,
+                to: req.body.email,
+                subject: 'Password Recovery Link',
+                html: 'Your code is ' + code + '.'
+              };
+              transporter.sendMail(mailOptions, function(error, info) {
+                if (error) {
+                  console.log(error)
+                  return res.status(200).json({
+                    status: -1,
+                    message: error
+                  })
+                } else {
+                  return res.status(200).json({
+                    status: 0,
+                    message: "Successful Forgotten Password Stored."
+                  })
+                }
               })
             }
           })

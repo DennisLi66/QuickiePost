@@ -1114,7 +1114,7 @@ function App() {
           <div></div>
         )
         if (msg && msg !== ""){
-          errBanner = (<div className = "errorMsg"> {msg} </div>)
+          errBanner = (<div className = "errMsg"> {msg} </div>)
         }
         changeLoginCode(
           <div>
