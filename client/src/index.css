@@ -129,10 +129,12 @@ input:checked + .slider:before {
 }
 
 .linkText{
-  color: blue
+  color: blue;
+  display: inline-block
 }
 .linkText:hover{
-  color: grey
+  color: grey;
+  display: inline-block
 }
 
 .centerAlignPaginationBar{

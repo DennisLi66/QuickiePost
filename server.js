@@ -193,7 +193,6 @@ app.get("/posts", function(req, res) {
           message: err
         })
       } else if (results) {
-        // console.log(results);
         var toPrep = [];
         for (let i = 0; i < results.length; i++) {
           toPrep.push({
@@ -292,7 +291,6 @@ app.get("/search", function(req, res) {
   var userID = req.query.userID;
   var sessionID = req.query.sessionID;
   if (!title && !content && !sdate && !username && !firstDate && !secondDate) {
-    console.log(req.query);
     return res.status(200).json({
       status: -1,
       message: "No valid search information included."
@@ -433,7 +431,6 @@ app.get("/search", function(req, res) {
     AND uzers.visibility = 'public'
     `;
     sQuery += toJoinQuery.join("") + " ORDER BY posts.subDate desc";
-    console.log(sQuery);
     connection.query(sQuery, variables, function(err, results, fields) {
       if (err) {
         return res.status(200).json({
@@ -534,7 +531,6 @@ app.route("/post")
     return checkSessionQueries(req.query.userID,req.query.sessionID,function(){
       connection.query(sQuery, [req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID, req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID, req.query.userID, req.query.userID, req.query.postID, req.query.userID], function(err, results, fields) {
         if (err) {
-          console.log(err);
           return res.status(200).json({
             status: -1,
             message: err
@@ -547,7 +543,6 @@ app.route("/post")
             })
           } else {
             var toPrep = [];
-            console.log(results);
             for (let i = 0; i < results.length; i++) {
               if (results[i].commentID){
                 toPrep.push({
@@ -604,7 +599,6 @@ app.route("/post")
       `;
       connection.query(sQuery, [req.query.postID], function(err, results, fields) {
         if (err) {
-          console.log(err);
           return res.status(200).json({
             status: -1,
             message: err
@@ -678,7 +672,7 @@ app.route("/post")
           }
           else{
             var adminStatus = (results4.length === 1 && results4[0].classification === "admin" ? true : false);
-            console.log(req.query.postID,req.query.userID,adminStatus)
+            // console.log(req.query.postID,req.query.userID,adminStatus)
             connection.query(uQuery, [req.query.postID,req.query.userID, adminStatus], function(err, results, fields) {
               if (err) {
                 console.log(err);
@@ -1313,6 +1307,7 @@ app.route("/forgotPassword")
       })
     } else {
       //generate random code and insert
+      //FIX THIS CHECK THAT EMAIL IS ASSOCIATED OR DO NOT SEND
       var code = randomatic('A0', 6);
       var iorUQuery =
         `
@@ -1327,7 +1322,7 @@ app.route("/forgotPassword")
         SELECT * FROM users WHERE email = ?;
         `;
       connection.query(iorUQuery, [req.body.email, code, req.body.email], function(error, results, fields) {
-        if (err) {
+        if (error) {
           return res.status(200).json({
             status: -1,
             message: error
@@ -1341,8 +1336,9 @@ app.route("/forgotPassword")
           };
           transporter.sendMail(mailOptions, function(error, info) {
             if (error) {
+              console.log(error)
               return res.status(200).json({
-                status: 1,
+                status: -1,
                 message: error
               })
             } else {
@@ -1711,7 +1707,6 @@ app.route("/comment")
   .get(function(req, res) {
     //REWORK THIS ROUTE
     var commentID = req.query.commentID;
-    console.log(commentID);
     if (!commentID) {
       return res.status(200).json({
         status: -1,
@@ -1759,7 +1754,6 @@ app.route("/comment")
               message: "No such comment exists."
             })
           } else {
-            // console.log(results);
             results = result[0];
             return res.status(200).json({
               status: 0,
@@ -1929,7 +1923,6 @@ app.route("/comment")
       }
       variables.push(commentID);
       variables.push(userID);
-      console.log("UPDATE COMMENTS SET " + updateStrings.join(",") + "WHERE commentID = ? AND userID = ?");
       connection.query("UPDATE COMMENTS SET " + updateStrings.join(",") + "WHERE commentID = ? AND userID = ?", variables, function(err, results, fields) {
         if (err) {
           return res.status(200).json({

@@ -751,7 +751,7 @@ function App() {
             onClick={getRegistrationPage}
             >Register</Nav.Link>
             <Nav.Link
-            onClick={getLoginPage}
+            onClick={() => {getLoginPage()}}
             >Login</Nav.Link>
             <Nav.Link
             onClick={getSearchPage}
@@ -802,7 +802,7 @@ function App() {
             <input name="confPswrd" type="password" id="confPswrd" minLength="8" required></input>
             <br></br>        <br></br>
             <Button variant='dark' type="submit"> Register </Button><br></br>
-            <Button variant='dark' onClick={getLoginPage}> Already Have An Account? </Button>
+            <Button variant='dark' onClick={() => {getLoginPage()}}> Already Have An Account? </Button>
           </form>
           </div>
         )
@@ -1102,24 +1102,32 @@ function App() {
               </label>
               <br></br><br></br>
               <Button variant='dark' type="submit"> Login </Button><br></br>
-              <Button variant='dark' onClick={() => getRegistrationPage(origin)}> Don't Have An Account? </Button><br></br>
-              <Button variant='dark' onClick={() => forgotPasswordPage(origin)}> Forgot Your Password? </Button>
             </form>
+            <Button variant='dark' onClick={() => getRegistrationPage(origin)}> Don't Have An Account? </Button><br></br>
+            <Button variant='dark' onClick={() => forgotPasswordPage(origin)}> Forgot Your Password? </Button>
           </div>
         )
       }
       function forgotPasswordPage(msg = ""){
+        console.log(msg);
+        var errBanner = (
+          <div></div>
+        )
+        if (msg && msg !== ""){
+          errBanner = (<div className = "errorMsg"> {msg} </div>)
+        }
         changeLoginCode(
           <div>
-            <div className = "errorMsg"> {msg} </div>
+            {errBanner}
             <h1> Forgot Your Password? </h1>
-            <div> If you've forgotten your password, you can enter your email below to set a new password. </div>
+            <h4>If you've forgotten your password, you can enter your email below to set a new password.</h4>
             <form onSubmit={handleForgotPassword}>
-              <input id='email' name='email' type='email' required> </input>
+              <label htmlFor='email'>Email</label><br></br>
+              <input id='email' name='email' type='email' required></input><br></br>
               <Button type='submit'> Submit </Button>
             </form>
-            <Button onClick={getRegistrationPage}> I don't have an account. </Button>
-            <Button onClick={getLoginPage}> I remember my password. </Button>
+            <Button onClick={() => {getRegistrationPage()}}> I don't have an account. </Button><br></br>
+            <Button onClick={() => {getLoginPage()}}> I remember my password. </Button>
           </div>
         )
       }
@@ -1134,6 +1142,7 @@ function App() {
         fetch(serverLocation + "/forgotPassword",requestSetup)
           .then(response => response.json())
           .then(data => {
+            console.log(data);
             if (data.status === -1){
               showErrorPage({origin: "forgotPassword", message: data.message})
             }else if (data.status === -2){
@@ -1148,8 +1157,8 @@ function App() {
                   <form onSubmit={(event) => {handleForgotPasswordChances(email)}}>
                     Enter Code Here
                     <br></br>
-                    <input type='hidden' value={email} id='email'> </input>
-                    <input id='code' name='code' required> </input>
+                    <input type='hidden' value={email} id='email'></input>
+                    <input id='code' name='code' required></input><br></br>
                     <Button type='submit'> Submit </Button>
                   </form>
                   <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
@@ -1258,7 +1267,7 @@ function App() {
                     <h1> Password Successfully Changed</h1>
                     You may now use your new password to log in.
                     <br></br>
-                    <Button onClick={getLoginPage}> Login </Button>
+                    <Button onClick={() => {getLoginPage()}}> Login </Button>
                   </div>
                 )
               }
@@ -1338,7 +1347,6 @@ function App() {
       }
       //Show Main Stuff Functions
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
-          //FIX THIS: Rework this function for viewing a blocked user
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
           //FIX THIS: Expired Page should redirect to userprofule
@@ -3271,6 +3279,7 @@ function App() {
         })
       }
       function closeInDepthPost(){
+        lastDisplayed = "main";
         changeMainBodyCSS({
           height: 'auto',
           transition: 'height 2s ease-in'
