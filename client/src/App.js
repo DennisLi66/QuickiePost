@@ -1109,7 +1109,6 @@ function App() {
         )
       }
       function forgotPasswordPage(msg = ""){
-        console.log(msg);
         var errBanner = (
           <div></div>
         )
@@ -1154,11 +1153,12 @@ function App() {
                   <h3> You have been sent a code to the email {email}. Find it and enter it below.</h3>
                   Chances Left: 3
                   <br></br>
-                  <form onSubmit={(event) => {handleForgotPasswordChances(email)}}>
+                  <form onSubmit={handleForgotPasswordChances}>
                     Enter Code Here
                     <br></br>
                     <input type='hidden' value={email} id='email'></input>
-                    <input id='code' name='code' required></input><br></br>
+                    <input id='code' name='code' maxLength='6' required></input><br></br>
+                    <input id='chances' value='3' type='hidden'></input>
                     <Button type='submit'> Submit </Button>
                   </form>
                   <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
@@ -1167,16 +1167,20 @@ function App() {
             }
           })
       }
-      function handleForgotPasswordChances(event,email,chances = 3){
+      function handleForgotPasswordChances(event){
+        event.preventDefault();
+        var chances = parseInt(document.getElementById('chances').value);
+        var email = document.getElementById('email').value;
         var code = document.getElementById('code').value;
         var requestSetup = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({email:email,fpCode:code})
         }
-        fetch(serverLocation + "/checkForgottenPassword" , requestSetup)
+        fetch(serverLocation + "/checkForgottenPassword", requestSetup)
           .then(response=>response.json())
           .then(data=>{
+            console.log(data);
             if (data.status === -1){
               showErrorPage({origin: "forgotPassword", message: data.message});
             }else if (data.status === -2){
@@ -1185,8 +1189,8 @@ function App() {
                   <div>
                   <h1> Password Recovery </h1>
                     <h3> You have run out of tries. </h3>
-                    <input type='hidden' value={email} id='email'> </input>
-                    <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
+                    <input type='hidden' value={email} id='email'></input>
+                    <Button onClick = {handleForgotPassword}> Resend Code </Button>
                   </div>
                 )
               }else{
@@ -1196,11 +1200,12 @@ function App() {
                     <h3> You have been sent a code to the email {email}. Find it and enter it below.</h3>
                     Chances Left: {chances - 1}
                     <br></br>
-                    <form onSubmit={(event) => {handleForgotPasswordChances(email,chances - 1)}}>
+                    <form onSubmit={handleForgotPasswordChances}>
                       Enter Code Here
                       <br></br>
-                      <input id='code' name='code' required> </input>
-                      <input type='hidden' value={email} id='email'> </input>
+                      <input type='hidden' value={email} id='email'></input>
+                      <input id='code' name='code' maxLength='6' required></input><br></br>
+                      <input id='chances' value={chances - 1} type='hidden'></input>
                       <Button type='submit'> Submit </Button>
                     </form>
                     <Button onClick = {() => handleForgotPassword()}> Resend Code </Button>
@@ -1212,14 +1217,15 @@ function App() {
                 <div>
                   <h1> Password Change </h1>
                   <form onSubmit={changePassword}>
-                    <input type='hidden' value={email}> </input>
+                    <input type='hidden' id='email' value={email}></input>
                     <label htmlFor='newPass'> Enter New Password: </label>
                     <br></br>
-                    <input id='newPass' name='newPass' required></input>
+                    <input id='newPass' name='newPass' type='password' required></input>
                     <br></br>
                     <label htmlFor='confPass'>Confirm Password:</label>
                     <br></br>
-                    <input id='confPass' name='confPass' required></input>
+                    <input id='confPass' name='confPass' type='password' required></input>
+                    <br></br>
                     <Button type="submit"> Change Password </Button>
                   </form>
                 </div>
@@ -1235,17 +1241,14 @@ function App() {
         if (password !== confPass){
           changeLoginCode(
             <div>
-              <div className='errorMsg'> Those passwords did not match. </div>
+              <div className='errMsg'> Those passwords did not match. </div>
               <h1> Password Change </h1>
               <form onSubmit={changePassword}>
-                <input type='hidden' value={email}> </input>
-                <label htmlFor='newPass'> Enter New Password: </label>
-                <br></br>
-                <input id='newPass' name='newPass' required></input>
-                <br></br>
-                <label htmlFor='confPass'>Confirm Password:</label>
-                <br></br>
-                <input id='confPass' name='confPass' required></input>
+                <input type='hidden' id='email' value={email}></input>
+                <label htmlFor='newPass'> Enter New Password: </label><br></br>
+                <input id='newPass' name='newPass' type='password' required></input><br></br>
+                <label htmlFor='confPass'>Confirm Password:</label><br></br>
+                <input id='confPass' name='confPass' type='password' required></input><br></br>
                 <Button type="submit"> Change Password </Button>
               </form>
             </div>
@@ -1441,8 +1444,8 @@ function App() {
                     listOfBlockedUsers1.push(
                       <tr key={i}>
                         <td>{data.blockedUsers[i].username}</td>
-                        <td> <Button onClick={()=>{showUserProfile(data.blockedUsers[i].userID)}}> View Profile </Button></td>
-                        <td> <Button onClick={()=>{unblockUser("blockMenu",firstPoint,secondPoint,data.blockedUsers[i].userID)}}> Unblock User </Button></td>
+                        <td><Button onClick={()=>{showUserProfile(data.blockedUsers[i].userID)}}> View Profile </Button></td>
+                        <td><Button onClick={()=>{unblockUser("blockMenu",firstPoint,secondPoint,data.blockedUsers[i].userID)}}> Unblock User </Button></td>
                       </tr>
                     )
                   }
@@ -1557,8 +1560,8 @@ function App() {
                       listOfUsers.push(
                         <tr key={i}>
                           <td>{data.blockedUsers[i].username}</td>
-                          <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
-                          <td> <Button onClick={()=>{removeViewership(data.listOfToView[i].userID,cookies.get('id'),firstPoint,secondPoint,"imviewing")}}> Stop Viewing User</Button></td>
+                          <td><Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
+                          <td><Button onClick={()=>{removeViewership(data.listOfToView[i].userID,cookies.get('id'),firstPoint,secondPoint,"imviewing")}}> Stop Viewing User</Button></td>
                         </tr>
                       )
                     }
@@ -1630,8 +1633,8 @@ function App() {
                     listOfUsers.push(
                       <tr key={i}>
                         <td>{data.blockedUsers[i].username}</td>
-                        <td> <Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
-                        <td> <Button onClick={()=>{removeViewership()(cookies.get('id'),data.listOfToView[i].userID,firstPoint,secondPoint,"viewingme")}}> Stop Viewing User</Button></td>
+                        <td><Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
+                        <td><Button onClick={()=>{removeViewership()(cookies.get('id'),data.listOfToView[i].userID,firstPoint,secondPoint,"viewingme")}}> Stop Viewing User</Button></td>
                       </tr>
                     )
                   }
@@ -2733,8 +2736,8 @@ function App() {
                 <div>
                   <Card>
                   <Card.Title>Comment Information</Card.Title>
-                  <Card.Subtitle> <div className="linkText" onClick={() => {showUserProfile(data.commenterID)}}>{"Username: " + data.commenterUsername}</div> </Card.Subtitle>
-                  <Card.Subtitle> {"User ID: " + data.commenterID} </Card.Subtitle>
+                  <Card.Subtitle><div className="linkText" onClick={() => {showUserProfile(data.commenterID)}}>{"Username: " + data.commenterUsername}</div> </Card.Subtitle>
+                  <Card.Subtitle>{"User ID: " + data.commenterID}</Card.Subtitle>
                   <Card.Body> {data.comment} </Card.Body>
                   {editButton}
                   <Card.Body> {likeCommentButton} </Card.Body>
@@ -2803,7 +2806,7 @@ function App() {
                       <Card>
                       <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
                       <Card.Header> {comment.commentDate} </Card.Header>
-                      <Card.Body> <div className="linkText" onClick={()=>{showInDepthComment(data.comments[key].commentID)}}>{comment.comments}</div> </Card.Body>
+                      <Card.Body><div className="linkText" onClick={()=>{showInDepthComment(data.comments[key].commentID)}}>{comment.comments}</div></Card.Body>
                       <Card.Footer> Likes: {comment.commentLikes}
                       <br></br>
                       {likeButton}
@@ -2872,7 +2875,7 @@ function App() {
                 }
                 changeInDepthCode(
                   <Card>
-                    <Card.Header className='rightAlignHeader'> <Button onClick={closeInDepthPost}>Close</Button> </Card.Header>
+                    <Card.Header className='rightAlignHeader'><Button onClick={closeInDepthPost}>Close</Button></Card.Header>
                     <Card.Header><h1>{data.title}</h1></Card.Header>
                     {confrimation}
                     <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}

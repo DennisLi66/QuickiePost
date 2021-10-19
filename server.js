@@ -1379,6 +1379,7 @@ app.route("/checkForgottenPassword")
         message: "Not enough information."
       })
     } else {
+      console.log(req.body.fpCode);
       var sQuery =
         `
         SELECT * FROM
@@ -1392,11 +1393,12 @@ app.route("/checkForgottenPassword")
             message: err
           })
         } else if (results.length === 0) {
-          return res.status(200).status({
+          return res.status(200).json({
             message: "Invalid Combination.",
             status: -2
           })
         } else {
+          //FIX THIS DELETE THE CODE
           return res.status(200).json({
             status: 0,
             message: "Worked."
@@ -1672,12 +1674,14 @@ app.route("/user")
     }
   })
   .patch(function(req, res) { //Edit User Info
-    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) || (!req.body.pswrd)) {
+    console.log(req.body);
+    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) && (!req.body.pswrd)) {
       return res.status(200).json({
         status: -1,
         message: "Not enough information."
       })
     } else {
+      //need to convert to change only one thing at a time
       var uQueryFragment =
         `
       UPDATE users
@@ -1695,7 +1699,17 @@ app.route("/user")
       }
       if (req.body.pswrd) {
         fragments.push('pswrd = ?');
-        variables.push(req.body.pswrd);
+        //need to hash password here
+        bcrypt.hash(req.body.pswrd,15,function(hashError,hashing){
+          if (hashError){
+            return res.status(200).json({
+              status: -1,
+              message: hashError
+            })
+          }else{
+            variables.push(hashing);
+          }
+        })
       }
       var finalFragment;
       if (req.body.email) {
@@ -1706,6 +1720,7 @@ app.route("/user")
         variables.push(req.body.userID);
       }
       var finalQuery = uQueryFragment + fragments.join(",") + finalFragment;
+      console.log(variables);
       connection.query(finalQuery, variables, function(err, results, fields) {
         if (err) {
           return res.status(200).json({
