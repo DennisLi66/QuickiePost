@@ -1674,66 +1674,90 @@ app.route("/user")
     }
   })
   .patch(function(req, res) { //Edit User Info
-    console.log(req.body);
-    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.userName) && (!req.body.pswrd)) {
+    if ((!req.body.email && !req.body.userID) || (!req.body.visibility) && (!req.body.username) && (!req.body.pswrd)) {
       return res.status(200).json({
         status: -1,
         message: "Not enough information."
       })
     } else {
-      //need to convert to change only one thing at a time
-      var uQueryFragment =
+      var finalFragment = "";
+      var finalVariable = "";
+      if (req.body.email){
+        finalFragment = "WHERE email = ?";
+        finalVariable = req.body.email;
+      }else{
+        finalFragment = "WHERE userID = ?";
+        finalVariable = req.body.userID;
+      }
+      if (req.body.visibility){
+        var uVisQuery =
         `
-      UPDATE users
-      SET
-      `
-      var fragments = [];
-      var variables = [];
-      if (req.body.visibility) {
-        fragments.push('visibility = ?');
-        variables.push(req.body.visibility);
-      }
-      if (req.body.userName) {
-        fragments.push('userName = ?');
-        variables.push(req.body.userName);
-      }
-      if (req.body.pswrd) {
-        fragments.push('pswrd = ?');
-        //need to hash password here
-        bcrypt.hash(req.body.pswrd,15,function(hashError,hashing){
-          if (hashError){
+        UPDATE users
+        SET visibility = ?
+        `
+        connection.query(uVisQuery + finalFragment,[req.body.visibility,finalVariable], function(error,results,fields){
+          if (error){
             return res.status(200).json({
               status: -1,
-              message: hashError
+              message: error
             })
           }else{
-            variables.push(hashing);
+            return res.status(200).json({
+              message: "Visibility updated.",
+              status: 0
+            })
+          }
+        })
+      }else if (req.body.username){
+        var uUsernameQuery =
+        `
+        UPDATE users
+        SET username = ?
+        `
+        connection.query(uUsernameQuery + finalFragment,[req.body.username,finalVariable],function(error,results,fields){
+            if (error){
+              return res.status(200).json({
+                message: error,
+                status: -1
+              })
+            }else{
+              return res.status(200).json({
+                message: "Username Updated.",
+                status: 0
+              })
+            }
+        })
+      }else if (req.body.pswrd){
+        const uPswrdQuery =
+        `
+        UPDATE users
+        SET pswrd = ?
+        `;
+        bcrypt.hash(req.body.pswrd,15,function(error,hash){
+          if (error){
+            return res.status(200).json({
+              message: error,
+              status: -1
+            })
+          }
+          else{
+            connection.query(uPswrdQuery + finalFragment,[hash,finalVariable],function(errr,results,fields){
+              if (errr){
+                return res.status(200).json({
+                  message: -1,
+                  massage: errr
+                })
+              }
+              else{
+                return res.status(200).json({
+                  message: "Password Updated.",
+                  status: 0
+                })
+              }
+            })
           }
         })
       }
-      var finalFragment;
-      if (req.body.email) {
-        finalFragment = " WHERE email = ?;"
-        variables.push(req.body.email);
-      } else {
-        finalFragment = " WHERE userID = ?;"
-        variables.push(req.body.userID);
-      }
-      var finalQuery = uQueryFragment + fragments.join(",") + finalFragment;
-      console.log(variables);
-      connection.query(finalQuery, variables, function(err, results, fields) {
-        if (err) {
-          return res.status(200).json({
-            message: err,
-            status: -1
-          })
-        } else {
-          return res.status(200).json({
-            status: 0,
-            message: "Update Successful."
-          })
-        }
-      })
     }
   })
 app.route("/comment")
