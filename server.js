@@ -1514,6 +1514,7 @@ app.route("/user")
                   return res.status(200).json({
                     status: 0,
                     message: "Profile Returned.",
+                    userVisibility: results[o].visibility,
                     username: results[0].username,
                     userID: results[0].userID,
                     comments: commentsList,
@@ -1659,6 +1660,7 @@ app.route("/user")
                       message: "Profile Returned.",
                       username: results1[0].userName,
                       userID: results1[0].userID,
+                      userVisibility: results1[0].visibility,
                       comments: listOfComments,
                       posts: listOfPosts,
                       blockingUser: results1[0].blockingThem,
@@ -2537,14 +2539,14 @@ app.route("/changeVisibility")
               message: "Not Valid Username/Passcode Combo"
             })
           } else {
-            bcrypt.compare(pswrd, resPass, function(err3, rresult) {
+            bcrypt.compare(req.body.password, results2[0].pswrd, function(err3, rresult) {
               if (err3) {
                 return res.status(200).json({
                   status: -1,
                   message: err3
                 })
               } else if (rresult) {
-                connection.query(uQuery, [req.body.visibility, req.qbody.email], function(err3, results3, fields3) {
+                connection.query(uQuery, [req.body.visibility, req.body.email], function(err3, results3, fields3) {
                   if (err3) {
                     return res.status(200).json({
                       status: -1,

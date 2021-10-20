@@ -11,6 +11,7 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
+//may want to make sure no illegal characters are used in data creation or acccount alteration
 ////////////////////////UTMOST
   //Cancelling a conferred viewership request does not appear to work
   //make things, like like button, home button, etc, icons.
@@ -25,7 +26,7 @@ require('dotenv').config();
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
-//Cancel Button may not work properly - doesnt work to the right places
+//Cancel Button may not work properly - doesnt work to the right places, may need to just change display at times
 //if you have blocked or been blocked by user, display a message that says youve been blocked or onlythe  unblock buyyon
 //Queries need to be rechecked
 //light and dark modes
@@ -2491,10 +2492,10 @@ function App() {
                 <h4>WARNING: Hiding your account will prevent you from accessing it until it has been reactivated.</h4>
                 <h5> This command will require you to retype your username and password.</h5>
                 <form onSubmit={handleAccountPrivacyChange}>
-                  <input type="hidden" name="privacy" value="hidden"></input>
+                  <input type="hidden" name="privacy" id='privacy' value="hidden"></input>
                   <label htmlFor='userEmail'>Email</label>
                   <br></br>
-                  <input type="email" name="userEmail" id="userEmail" required></input>
+                  <input type="email" name="userEmail" id="email" required></input>
                   <br></br>
                   <label htmlFor="pswrd" >Password</label>
                   <br></br>
@@ -2515,7 +2516,7 @@ function App() {
             const requestSetup = {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({email: email, password:pswrd, sessionID: sessionID, userID: id, visbility:visibility})
+              body: JSON.stringify({email: email, password:pswrd, sessionID: sessionID, userID: id, visibility:visibility})
             };
             fetch(serverLocation + "/changeVisibility",requestSetup)
               .then(response=>response.json())
@@ -2548,7 +2549,7 @@ function App() {
           }
           function showPrivacyTogglePage(){
             //fetch visibility
-            fetch(serverLocation + "/user!?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID"))
+            fetch(serverLocation + "/user?userID=" + cookies.get('id') + "&sessionID=" + cookies.get("sessionID") + "&profileID=" + cookies.get("id"))
               .then(response => response.json())
               .then(data=>{
                 if (data.status === -11){
@@ -2556,6 +2557,7 @@ function App() {
                 }else if (data.status === -1){
                   showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
                 }else{
+                  console.log(data);
                   var privacyText;
                   var hiddenInput;
                   if (!data.userVisibility || data.userVisibility === "public"){
@@ -2579,7 +2581,7 @@ function App() {
                       <br></br>
                       <label htmlFor='userEmail'>Email</label>
                       <br></br>
-                      <input type="email" name="userEmail" id="userEmail" required></input>
+                      <input type="email" name="userEmail" id="email" required></input>
                       <br></br>
                       <label htmlFor="pswrd" >Password</label>
                       <br></br>
@@ -3412,7 +3414,7 @@ function App() {
             }
           })
       }
-      function getProfile(){ //be able to delete account, change visiblity, identify if admin, post count
+      function getProfile(){ //be able to delete account, change visibility, identify if admin, post count
         showOnlyMain();
         showUserProfile(cookies.get("id"));
       }
