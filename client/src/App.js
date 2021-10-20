@@ -11,6 +11,7 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
+//Confirmations for deactivating account and changing privacys should take longer.
 //may want to make sure no illegal characters are used in data creation or acccount alteration
 ////////////////////////UTMOST
   //Cancelling a conferred viewership request does not appear to work
@@ -36,7 +37,6 @@ require('dotenv').config();
 //Notifcation List - what has changed since last sessionID update?
 //test showOptions features on other profiles
 //SHould memoize pagination so its faster, and check that pagination is actually correct
-//test account reactivation and make sure the results interacts the way it should
 //add a highlight effect to the pagination bar
 //change getPosts to SELECT posts where post != private and user != private
 //change color of posts and comments to better differentiate them
@@ -923,7 +923,6 @@ function App() {
           fetch(serverLocation+"/login",requestSetup)
             .then(response => response.json())
             .then(data => {
-              console.log(data);
               if (data.status === -2){ //Invalid Combination
                 getLoginPage(origin,"badCombo");
               }else if (data.status === -1){///Other Error
@@ -946,7 +945,7 @@ function App() {
                 }
               }
               else if (data.status === -3){//Account Was Hidden
-                changeCode(
+                changeLoginCode(
                   <div>
                     <h1> Account Not Active </h1>
                     <div>
@@ -954,8 +953,9 @@ function App() {
                       but your public posts and comments will once again be publicly viewable, and users who are allowed to view
                       you will be able to see your private posts and comments.
                       <br></br>
-                      If you would like to reactivate your account, you can receive an email to do so.
-                      <Button onClick={() => {getHome()}}> Cancel Logging In </Button> <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin)}> Reactivate Account </Button>
+                      If you would like to reactivate your account, you can receive an email to do so.<br></br>
+                      <Button onClick={() => {getHome()}}> Cancel Logging In </Button><br></br>
+                      <Button onClick={() => sendActivationAccountMessage(data.userID,data.username,data.rememberMe,origin)}> Reactivate Account </Button>
                     </div>
                   </div>
                 )
@@ -978,7 +978,7 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({userID:userID})
         };
-        fetch("reactivationCode",requestSetup)
+        fetch(serverLocation + "/reactivationCode",requestSetup)
           .then(response => response.json())
           .then(data => {
             changeLoginCode(
@@ -989,11 +989,16 @@ function App() {
                   <br></br>
                   Please check your email and type the code in below to reactivate your account.
                   <br></br>
-                  <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin,chances)}}> Resend Code </Button>
+                  <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin)}}> Resend Code </Button>
                   <br></br>
                   Remaining Chances: {chances}
-                  <form onSubmit={(event) => handleReactivationCodeSubmission(event,userID,username,rememberMe,origin,3)}>
-                    <input id="reactivationCode" name="reactivationCode" required>  </input>
+                  <form onSubmit={handleReactivationCodeSubmission}>
+                    <input id="reactivationCode" name="reactivationCode" maxLength='6' required></input>
+                    <input type='hidden' id='chances' value={chances}></input>
+                    <input type='hidden' id='username' value={username}></input>
+                    <input type='hidden' id='userID' value={userID}></input>
+                    <input type='hidden' id='rememberMe' value={rememberMe}></input>
+                    <input type='hidden' id='origin' value={origin}></input>
                     <br></br>
                     <Button type='submit'> Reactivate Account </Button>
                   </form>
@@ -1002,21 +1007,26 @@ function App() {
             )
           })
       }
-      function handleReactivationCodeSubmission(event,userID,username,rememberMe,origin,chances){
+      function handleReactivationCodeSubmission(event){
         event.preventDefault();
+        var rememberM = document.getElementById('rememberMe').value;
+        var userI = document.getElementById('userID').value;
+        var chances = document.getElementById('chances').value;
+        var username = document.getElementById('username').value;
+        var origin = document.getElementById('origin').value;
         const requestSetup = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({rememberMe:rememberMe,userID:userID,reactivationCode:document.getElementById("reactivationCode")})
+          body: JSON.stringify({rememberMe:rememberM,userID:userI,reactivationCode:document.getElementById("reactivationCode").value})
         }
         fetch(serverLocation + "/checkReactivationCode",requestSetup)
           .then(response => response.json())
           .then(data => {
+            console.log(data);
             if (data.status === -1){
               //throw error
               showErrorPage({message: data.message,origin: "login"})
             }else if (data.status === -2){
-              //deduct chances
               if (chances <= 1){
                 changeLoginCode(
                   <div>
@@ -1024,19 +1034,42 @@ function App() {
                     <div>
                       You have run out of chances to use your code.
                       <br></br>
-                      <Button onClick={() => {sendActivationAccountMessage(userID,username,rememberMe,origin)}}> Resend Code </Button>
+                      <Button onClick={() => {sendActivationAccountMessage(userI,username,rememberM,origin)}}> Resend Code </Button>
                     </div>
                   </div>
                 )
               }else{
-                sendActivationAccountMessage(userID,username,rememberMe,origin,chances - 1)
+                changeLoginCode(
+                  <div>
+                    <h1> Reactivating Your Account </h1>
+                    <div>
+                      You have now been sent a six-character code to the email associated with your account.
+                      <br></br>
+                      Please check your email and type the code in below to reactivate your account.
+                      <br></br>
+                      <Button onClick={() => {sendActivationAccountMessage(userI,username,rememberM,origin)}}> Resend Code </Button>
+                      <br></br>
+                      Remaining Chances: {chances - 1}
+                      <form onSubmit={handleReactivationCodeSubmission}>
+                        <input id="reactivationCode" name="reactivationCode" maxLength='6' required></input>
+                        <input type='hidden' id='chances' value={chances - 1}></input>
+                        <input type='hidden' id='username' value={username}></input>
+                        <input type='hidden' id='userID' value={userI}></input>
+                        <input type='hidden' id='rememberMe' value={rememberM}></input>
+                        <input type='hidden' id='origin' value={origin}></input>
+                        <br></br>
+                        <Button type='submit'> Reactivate Account </Button>
+                      </form>
+                    </div>
+                  </div>
+                )
               }
             }else if (data.status === 0){
               // reactivate account
               cookies.set('name',username,{path:'/'});
-              cookies.set('id',userID,{path:'/'});
+              cookies.set('id',userI,{path:'/'});
               cookies.set('sessionID',data.sessionID,{path:'/'})
-              cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
+              cookies.set('expireTime',rememberM === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"})
               cookies.set('lightingMode',data.preference,{path:"/"});
               if (data.isAdmin && data.isAdmin === "admin"){
                 cookies.set("adminStatus",data.isAdmin,{path:"/"})

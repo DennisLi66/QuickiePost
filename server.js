@@ -1254,21 +1254,21 @@ app.route("/checkReactivationCode")
       reactivationCodes
       WHERE userID = ? AND reactivationCode = ?;
       `;
-      connection.query(sQuery, [req.body.userID, req.body.reactivationCOde], function(err, results, fields) {
+      connection.query(sQuery, [req.body.userID, req.body.reactivationCode], function(err, results, fields) {
         if (err) {
           return res.status(200).json({
             status: -1,
             message: err
           })
         } else if (results.length === 0) {
-          return res.status(200).status({
+          return res.status(200).json({
             message: "Invalid Combination.",
             status: -2
           })
         } else {
           //create and insert session and update user visibility
           var sessionID = randomatic('Aa0', 20);
-          var remembered = rememberMe === "hour" ? "HOUR" : "FOREVER";
+          var remembered = req.body.rememberMe === "hour" ? "HOUR" : "FOREVER";
           var megasQuery =
           `
           INSERT INTO sessions (sessionID,userID,sessionDate,timeDuration) VALUES (?,?,NOW(),?);
@@ -1276,9 +1276,9 @@ app.route("/checkReactivationCode")
           SELECT users.userID as userID,userName,email,pswrd,visibility,
           classification, ifnull(preference,"light") as preference
           FROM users left join darkModePrefs ON darkModePrefs.userID = users.userID
-          WHERE userID = ?;
+          WHERE users.userID = ?;
           `
-          connection.query(megasQuery,[sessionID,userID,remembered,userID,userID],function(err,results,fields){
+          connection.query(megasQuery,[sessionID,req.body.userID,remembered,req.body.userID,req.body.userID],function(err,results,fields){
             if (err){
               return res.status(200).json({
                 status: -1,
@@ -1289,8 +1289,8 @@ app.route("/checkReactivationCode")
                 status: 0,
                 message: "Worked...",
                 sessionID: sessionID,
-                isAdmin: results[0].classification,
-                preference: results[-1].preference
+                isAdmin: results[2].classification,
+                preference: results[2].preference
               })
             }
           })
