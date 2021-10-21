@@ -11,6 +11,7 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
+//Look over all exitButton classes
 //Confirmations for deactivating account and changing privacys should take longer.
 //may want to make sure no illegal characters are used in data creation or acccount alteration
 ////////////////////////UTMOST
@@ -109,13 +110,14 @@ function App() {
       function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
         var likePostButton;
         var commentButton;
+        var isOwnerButtons = (<div><Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button></div>);
         if (cookies.get('sessionID') && cookies.get('id')){
           if (hasLiked || dict.Liked === "true"){
             likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
           }else{
             likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
           }
-          var isOwnerButtons = (<div><Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button></div>);
+          isOwnerButtons = (<div><Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button></div>);
           if (String(cookies.get('id')) === String(dict.userID)){
             isOwnerButtons = (
               <div>
@@ -851,7 +853,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === 0){
-                getLoginPage("");
+                getLoginPage("","conf");
               }
               else if (data.status === -1){//Various Error
                 changeCode(
@@ -2012,14 +2014,11 @@ function App() {
                 optionsMenu = (
                   <div>
                     {banner}
-                    <Button onClick={() => {showBlockedList()}}> View Blocked List </Button>
-                    <br></br>
-                    <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button>
-                    <br></br>
-                    <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Are Viewing You</Button>
-                    <br></br>
-                    <Button onClick={()=>{showPrivacyTogglePage()}}> Change Your Visibility </Button>
-                    <br></br>
+                    <Button onClick={() => {showBlockedList()}}> View Blocked List </Button><br></br>
+                    <Button onClick={() => {showPeopleImViewing()}}>View List Of People You're Viewing</Button><br></br>
+                    <Button onClick={()=>{showPeopleViewingMe()}}>View List Of People Who Are Viewing You</Button><br></br>
+                    <Button onClick={()=>{showPrivacyTogglePage()}}> Change Your Visibility </Button><br></br>
+                    <Button onClick={()=>{showPasswordChangeScreen()}}>Change Your Password</Button><br></br>
                     <Button onClick={() => {showDeactivationPage()}}>Deactivate Account</Button>
                   </div>
                 );
@@ -2289,6 +2288,30 @@ function App() {
                 })
             }
           }
+          //Changing PASSWORD
+          function showPasswordChangeScreen(){
+            showOnlyMain();
+            changeCode(
+              <div>
+                <Button variant='dark' onClick={()=>{showUserProfile(userID,0,10,"options")}} className='exitButton'>Cancel</Button>
+                <h1>Change Password</h1>
+                <h5> To change your password, you must reenter your old password as well. </h5>
+                <form onSubmit={handleChangePassword}>
+                  <label htmlFor='oldPassword'>Enter Old Password:</label><br></br>
+                  <input id='oldPassword' name='oldPassword' type='password'></input><br></br>
+                  <label htmlFor='newPassword'>Enter New Password:</label><br></br>
+                  <input id='newPassword' name='newPassword' type='password' minLength='8'></input><br></br>
+                  <label htmlFor='confPassword'>Reenter New Password:</label><br></br>
+                  <input id='confPassword' name='confPassword' minLength='8'></input><br></br><br></br>
+                  <Button type='submit'>Change Password</Button>
+                </form>
+              </div>
+            )
+          }
+          function handleChangePassword(event){
+            event.preventDefault();
+          }
+          //General Showers
           function showComments(username,comments,start,end,posts){ ///Doesnt test session
             showOnlyMain();
             var listOfShownComments = [];
@@ -2305,8 +2328,7 @@ function App() {
               if (String(cookies.get('id')) === String(userID)){
                 ownerAbilities = (
                   <Card.Body>
-                  <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button>
-                  <br></br>
+                  <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button><br></br>
                   <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}> Delete Comment </Button>
                   </Card.Body>
                 )
@@ -2318,8 +2340,7 @@ function App() {
                   <Card.Subtitle> {dict.submissionDate} </Card.Subtitle>
                   <Card.Body>
                   <Button onClick={() => {showInDepthComment(comments[i].commentID,0,10)}}> View Comment </Button><br></br>
-                  Likes: {dict.totalLikes}
-                  <br></br>
+                  Likes: {dict.totalLikes}<br></br>
                   {likeText}
                   </Card.Body>
                   {ownerAbilities}
@@ -2419,8 +2440,7 @@ function App() {
               if (String(userID) === String(cookies.get("id"))){
                 ownerAbilities = (
                   <Card.Body>
-                    <Button onClick={() => {showEditPost(posts[i].postID,"userProfile",startPos,endPos)}}> Edit Post </Button>
-                    <br></br>
+                    <Button onClick={() => {showEditPost(posts[i].postID,"userProfile",startPos,endPos)}}> Edit Post </Button><br></br>
                     <Button variant='danger' onClick={() => {showDeletePostConfirmation(posts[i].postID,"indepthPost",startPos,endPos)}}> Delete Post </Button>
                   </Card.Body>
                 )
@@ -2521,19 +2541,16 @@ function App() {
             showOnlyMain();
             changeCode(
               <div>
-                <Button variant='dark' onClick={cancel} className='exitButton'>Cancel</Button>
+                <Button variant='dark' onClick={()=>{showUserProfile(userID,0,10,"options")}} className='exitButton'>Cancel</Button>
+                <h1>Account Deactivation</h1>
                 <h4>WARNING: Hiding your account will prevent you from accessing it until it has been reactivated.</h4>
                 <h5> This command will require you to retype your username and password.</h5>
                 <form onSubmit={handleAccountPrivacyChange}>
                   <input type="hidden" name="privacy" id='privacy' value="hidden"></input>
-                  <label htmlFor='userEmail'>Email</label>
-                  <br></br>
-                  <input type="email" name="userEmail" id="email" required></input>
-                  <br></br>
-                  <label htmlFor="pswrd" >Password</label>
-                  <br></br>
-                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input>
-                  <br></br><br></br>
+                  <label htmlFor='userEmail'>Email</label><br></br>
+                  <input type="email" name="userEmail" id="email" required></input><br></br>
+                  <label htmlFor="pswrd" >Password</label><br></br>
+                  <input name="pswrd" type="password" id="pswrd" minLength="8" required></input><br></br><br></br>
                   <Button type="submit">Deactivate Account</Button>
                 </form>
               </div>
