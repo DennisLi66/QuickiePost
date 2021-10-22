@@ -2010,6 +2010,8 @@ function App() {
                 var banner;
                 if (variation === "privacyChanged"){
                   banner = (<div className='confMsg'>Your visibility settings have successfully been changed.</div>)
+                }else if (variation === "passwordChanged"){
+                  banner = (<div className='confMsg'>Your password has been successfully changed.</div>)
                 }
                 optionsMenu = (
                   <div>
@@ -2353,8 +2355,37 @@ function App() {
               const requestSetup = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({userID: , sessionID: , oldPass: , newPass:})
+                body: JSON.stringify({userID: cookies.get('id'), sessionID: cookies.get("sessionID"), oldPass: oldPass, newPass: newPass})
               }
+              fetch(serverLocation + "/changePassword",requestSetup)
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === -1){
+                    showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
+                  }else if (data.status === -69){
+                    showExpiredPage({origin: "userProfileOptions", userID: userID})
+                  }else if (data.status === -87){
+                    changeCode(
+                      <div>
+                        <Button variant='dark' onClick={()=>{showUserProfile(userID,0,10,"options")}} className='exitButton'>Cancel</Button>
+                        <div className='errMsg'>Your password was incorrect.</div>
+                        <h1>Change Password</h1>
+                        <h5> To change your password, you must reenter your old password as well. </h5>
+                        <form onSubmit={handleChangePassword}>
+                          <label htmlFor='oldPassword'>Enter Old Password:</label><br></br>
+                          <input id='oldPassword' name='oldPassword' type='password'></input><br></br>
+                          <label htmlFor='newPassword'>Enter New Password:</label><br></br>
+                          <input id='newPassword' name='newPassword' type='password' minLength='8'></input><br></br>
+                          <label htmlFor='confPassword'>Reenter New Password:</label><br></br>
+                          <input id='confPassword' name='confPassword' minLength='8'></input><br></br><br></br>
+                          <Button type='submit'>Change Password</Button>
+                        </form>
+                      </div>
+                    )
+                  }else if (data.status === 0){
+                    showUserProfile(userID,0,10,"changedPassword")
+                  }
+                })
             }
           }
           //General Showers
@@ -2742,6 +2773,8 @@ function App() {
                     showLikedComments(data.username,data.posts,data.comments,startPos,endPos)
                   }else if (variation === "likedPosts"){
                     showLikedPosts(data.username,data.posts,data.comments,startPos,endPos);
+                  }else if (variation === "changedPassword"){
+                    showOptions(data.username,data.posts,data.comments,"passwordChanged");
                   }else{
                     showPosts(data.username,data.posts,startPos,endPos,data.comments);
                   }

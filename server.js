@@ -1770,7 +1770,7 @@ app.route("/user")
       }
     }
   })
-app.route("changePassword")
+app.route("/changePassword")
   .post(function(req, res) {
     const oldPass = req.body.oldPass;
     const sessionID = req.body.sessionID;
@@ -1806,7 +1806,7 @@ app.route("changePassword")
                   message: err1
                 })
               } else if (res1) {
-                bcrypt.hash(pswrd, 15, function(err2, hash) {
+                bcrypt.hash(newPass, 15, function(err2, hash) {
                   if (err2) {
                     return res.status(200).jsonR({
                       status: -1,
