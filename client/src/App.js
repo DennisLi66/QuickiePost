@@ -2310,6 +2310,52 @@ function App() {
           }
           function handleChangePassword(event){
             event.preventDefault();
+            const oldPass = document.getElementById('oldPassword').value;
+            const newPass = document.getElementById('newPassword').value;
+            const confPass = document.getElementById('confPassword').value;
+            if (oldPass === newPass){
+              changeCode(
+                <div>
+                  <Button variant='dark' onClick={()=>{showUserProfile(userID,0,10,"options")}} className='exitButton'>Cancel</Button>
+                  <div className='errMsg'>Your old password and your new password must be different.</div>
+                  <h1>Change Password</h1>
+                  <h5> To change your password, you must reenter your old password as well. </h5>
+                  <form onSubmit={handleChangePassword}>
+                    <label htmlFor='oldPassword'>Enter Old Password:</label><br></br>
+                    <input id='oldPassword' name='oldPassword' type='password'></input><br></br>
+                    <label htmlFor='newPassword'>Enter New Password:</label><br></br>
+                    <input id='newPassword' name='newPassword' type='password' minLength='8'></input><br></br>
+                    <label htmlFor='confPassword'>Reenter New Password:</label><br></br>
+                    <input id='confPassword' name='confPassword' minLength='8'></input><br></br><br></br>
+                    <Button type='submit'>Change Password</Button>
+                  </form>
+                </div>
+              )
+            }else if (newPass !== confPass){
+              changeCode(
+                <div>
+                  <Button variant='dark' onClick={()=>{showUserProfile(userID,0,10,"options")}} className='exitButton'>Cancel</Button>
+                  <div className='errMsg'>Your new passwords must match.</div>
+                  <h1>Change Password</h1>
+                  <h5> To change your password, you must reenter your old password as well. </h5>
+                  <form onSubmit={handleChangePassword}>
+                    <label htmlFor='oldPassword'>Enter Old Password:</label><br></br>
+                    <input id='oldPassword' name='oldPassword' type='password'></input><br></br>
+                    <label htmlFor='newPassword'>Enter New Password:</label><br></br>
+                    <input id='newPassword' name='newPassword' type='password' minLength='8'></input><br></br>
+                    <label htmlFor='confPassword'>Reenter New Password:</label><br></br>
+                    <input id='confPassword' name='confPassword' minLength='8'></input><br></br><br></br>
+                    <Button type='submit'>Change Password</Button>
+                  </form>
+                </div>
+              )
+            }else{
+              const requestSetup = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({userID: , sessionID: , oldPass: , newPass:})
+              }
+            }
           }
           //General Showers
           function showComments(username,comments,start,end,posts){ ///Doesnt test session

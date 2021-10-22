@@ -72,6 +72,7 @@ WHERE sessionID = ?
 `;
 
 function checkSessionQueries(userID, sessionID, followUpFunction) {
+  //FIX THIS: MAY NEED TO BE REWRITTEN
   connection.query(cQuery + updateSessionQuery, [userID, sessionID, sessionID], function(err1, results1, fields1) {
     if (err1) {
       return res.status(200).json({
@@ -79,6 +80,7 @@ function checkSessionQueries(userID, sessionID, followUpFunction) {
         message: err1
       })
     } else if (results1.length === 0) {
+      console.log("Invalid Session.");
       return res.status(200).json({
         status: -11,
         message: "Not Valid Session."
@@ -89,6 +91,7 @@ function checkSessionQueries(userID, sessionID, followUpFunction) {
         message: "User is Banned."
       })
     } else {
+      console.log("Valid Session.");
       followUpFunction();
     }
   })
@@ -1765,6 +1768,77 @@ app.route("/user")
           }
         })
       }
+    }
+  })
+app.route("changePassword")
+  .post(function(req, res) {
+    const oldPass = req.body.oldPass;
+    const sessionID = req.body.sessionID;
+    const userID = req.body.userID;
+    const newPass = req.body.newPass;
+    if (!oldPass || !sessionID || !userID || !newPass) {
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    } else {
+      return checkSessionQueries(userID, sessionID, function() {
+        const cPasswordQuery =
+          `
+        SELECT * FROM users WHERE userID = ?;
+        `
+        connection.query(cPasswordQuery, userID, function(err, results, fields) {
+          if (err) {
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          } else if (results.length !== 1) {
+            return res.status(200).json({
+              message: "No results",
+              status: -1
+            })
+          } else {
+            bcrypt.compare(results[0].pswrd, oldPass, function(err1, res1) {
+              if (err1) {
+                return res.status(200).json({
+                  status: -1,
+                  message: err1
+                })
+              } else if (res1) {
+                bcrypt.hash(pswrd, 15, function(err2, hash) {
+                  if (err2) {
+                    return res.status(200).jsonR({
+                      status: -1,
+                      message: err2
+                    })
+                  } else {
+                    var updatePasswordQuery = `UPDATE users SET pswrd = ? WHERE userID = ?;`;
+                    connection.query(updatePasswordQuery, [hash, userID], function(err4, results4, fields4) {
+                      if (err4) {
+                        return res.status(200).json({
+                          status: -1,
+                          message: err4
+                        })
+                      } else {
+                        return res.status(200).json({
+                          message: "Password Changed.",
+                          status: 0
+                        })
+                      }
+                    })
+                  }
+                })
+              } else {
+                return res.status(200).json({
+                  status: -87,
+                  message: "Incorrect Combination"
+                })
+              }
+            })
+          }
+        })
+      })
     }
   })
 app.route("/comment")
