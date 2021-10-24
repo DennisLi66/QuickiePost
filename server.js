@@ -1858,14 +1858,14 @@ app.route("/comment")
           `
         select commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
         , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
-        ifnull(totalCommentLikes,0) as totalCommentLikes
-        ifnull(tComments,0) as totalComments
+        ifnull(totalCommentLikes,0) as totalCommentLikes,
+        ifnull(tComments,0) as totalComments,
         ifnull(totalPostLikes,0) as totalPostLikes
         from comments LEFT JOIN (select userID,username,visibility from users) uzers
         on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
         LEFT JOIN (select userID, username,visibility from users) ucers
         LEFT JOIN (select commentID, count(*) as totalCommentLikes from commentLikes GROUP BY commentID) totalCommentLikes on totalCommentLikes
-        LEFT JOIN (select count(*),postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
+        LEFT JOIN (select count(*) as totalPostLikes,postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
         LEFT JOIN (
           select postID, count(*) as tComments from comments
           LEFT JOIN users on users.userID = comments.userID
@@ -1924,12 +1924,12 @@ app.route("/comment")
             , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
             ,if (isLiked.userID is null, "false","true") as postLiked
             ,if (commentLiked.userID is null,"false","true") as commentLiked,
-            ifnull(totalCommentLikes,0) as totalCommentLikes
-            ifnull(tComments,0) as totalComments
+            ifnull(totalCommentLikes,0) as totalCommentLikes,
+            ifnull(tComments,0) as totalComments,
             ifnull(totalPostLikes,0) as totalPostLikes
             from comments LEFT JOIN (select userID,username,visibility from users) uzers -- commentUsers
             on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
-            LEFT JOIN (select count(*),postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
+            LEFT JOIN (select count(*) as totalPostLikes,postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
             LEFT JOIN (
               select postID, count(*) as tComments
               from comments LEFT JOIN users on users.userID = comments.userID

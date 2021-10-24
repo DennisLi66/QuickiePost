@@ -35,6 +35,10 @@ require('dotenv').config();
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
 //!!!PRIORITY
+//Instead of just reshowing the page, reload it
+//Popular Hashtags Page
+//Show last time a post was editted
+//Editing a post then canceling from indepth redirects to writeform
 //Test Banning Interactions
 //Notifcation List - what has changed since last sessionID update?
 //SHould memoize pagination so its faster, and check that pagination is actually correct
@@ -48,6 +52,7 @@ require('dotenv').config();
 //rewrite post pages to include pagination
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //MAke sure to test everything
+//INDEPTH CPOST DOES NOT WORK PROPERLY  - Liking causes comments to disappear froma  post
 function App() {
   //Variables
   const serverLocation = "http://localhost:3001";
@@ -83,7 +88,7 @@ function App() {
         display: 'none'
     }
   );
-  const [pageVariables,changePageVariables] = React.useState({
+  const [currentPageVariables,changePageVariables] = React.useState({
     origin: "", //if origin is not the same as the page set start and end to defaults
     startPos: 0,
     endPos: 10,
@@ -386,7 +391,8 @@ function App() {
               </div>
             )
           }
-          changeCode(
+          showWriteForm();
+          changeWriteFormCode(
             <div>
               <Button variant='dark' onClick={() => {cancel(origin,postID,commentID,cookies.get("id"),startPos,endPos)}} className='exitButton'>Cancel</Button>
               <form onSubmit={(event) => {handleEditPost(event,postID,origin,startPos,endPos)}}>
@@ -445,16 +451,19 @@ function App() {
                 showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
-            }else if (origin === "indepthPost"){
-              showInDepthPost(postID,startPos,endPos,"Edit");
-            }else if (origin === "userProfile"){
-              showUserProfile(cookies.get("id"),startPos,endPos,"posts")
-            }
-            else if (origin === "likedPosts"){
-              showUserProfile(cookies.get("id"),startPos,endPos,origin);
-            }
-            else{
-              showInDepthPost(postID,startPos,endPos,"Edit");
+            }else{
+              hideWriteForm();
+              if (origin === "indepthPost"){
+                showInDepthPost(postID,startPos,endPos,"Edit");
+              }else if (origin === "userProfile"){
+                showUserProfile(cookies.get("id"),startPos,endPos,"posts")
+              }
+              else if (origin === "likedPosts"){
+                showUserProfile(cookies.get("id"),startPos,endPos,origin);
+              }
+              else{
+                showInDepthPost(postID,startPos,endPos,"Edit");
+              }
             }
           })
       }
@@ -505,7 +514,9 @@ function App() {
               </form>
             </div>
           )
-          document.getElementById("commentContent").innerText = comments;
+          console.log(comments);
+          document.getElementById("commentContent").value = comments;
+          console.log(document.getElementById("commentContent").value)
         }
         if (!cookies.get("sessionID") || !cookies.get("id")){
           cancel(origin,postID,commentID,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -1311,11 +1322,10 @@ function App() {
       }
       //Writing Comments
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10){
-        //FIX THIS: COuld maybe change writeFormCode instead
-        openInDepthPost();
-        changeInDepthCode(
+        showWriteForm();
+        changeWriteFormCode(
           <div>
-          <Button variant='dark' className='exitButton' onClick={closeInDepthPost}>Close</Button>
+          <Button variant='dark' className='exitButton' onClick={openPassed}>Close</Button>
           <form onSubmit={(event) => handleWritingComment(event,postID,origin,startPos,endPos)}>
           <h1>Add a Comment</h1>
           <label htmlFor='commentContent'>Content:</label>
@@ -2990,7 +3000,9 @@ function App() {
                     confrimation = (<div className='confMsg'> Your comment was deleted. </div>)
               }
                 else if (pact && pact === "EditComment"){
-                        confrimation = (<div className='confMsg'> Your comment was edited. </div>)
+                  confrimation = (<div className='confMsg'> Your comment was edited. </div>)
+                }else if (pact && pact === "commentDeleted"){
+                  confrimation = (<div className='confMsg'> Your comment was deleted. </div>)
                 }
                 var ownerAbilities;
                 if (data.authorID === cookies.get("id")){
@@ -3004,10 +3016,12 @@ function App() {
                 }
                 changeInDepthCode(
                   <Card>
-                    <Card.Header className='rightAlignHeader'><Button onClick={closeInDepthPost}>Close</Button></Card.Header>
+                    <Card.Header className='rightAlignHeader'><Button onClick={showOnlyMain}>Close</Button></Card.Header>
                     <Card.Header><h1>{data.title}</h1></Card.Header>
                     {confrimation}
-                    <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>Author: {data.authorName}</div> Date Written: {data.postDate}
+                    <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>
+                    Author: {data.authorName}</div><br></br>
+                    Date Written: {data.postDate}
                     <br></br>
                     Likes: {data.totalLikes}
                     <br></br>
@@ -3770,6 +3784,7 @@ function App() {
         cookies.remove("lightingMode",{path:'/'});
         cookies.remove("adminStatus",{path:'/'});
         changeNavToLoggedOut();
+        //FIX THIS: reload current page if possible
         fetch(serverLocation + "/posts")
           .then(response=>response.json())
           .then(data => {
