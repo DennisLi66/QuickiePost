@@ -231,8 +231,7 @@ app.get("/myfeed", function(req, res) {
   var sQuery = //works
     `
   select posts.postID as postID, title, content, subDate, uzers.username as username,
-  totalLikes, tComments as totalComments
-   from posts
+  totalLikes, tComments as totalComments, uzers.userID as userID from posts
   LEFT JOIN viewers ON
   viewers.posterID = posts.userID
   LEFT JOIN
@@ -1462,7 +1461,7 @@ app.route("/user")
       `;
       var sQuery =
         `
-      SELECT userID,username as username, visibility FROM users WHERE users.userID = ? AND users.visibility = 'public';
+      SELECT userID,username as username, visibility FROM users WHERE users.userID = ? AND users.visibility != 'hidden';
       `;
       connection.query(sQuery, [profileID], function(err, results, fields) {
         if (err) {
@@ -1524,7 +1523,7 @@ app.route("/user")
                   return res.status(200).json({
                     status: 0,
                     message: "Profile Returned.",
-                    userVisibility: results[o].visibility,
+                    userVisibility: results[0].visibility,
                     username: results[0].username,
                     userID: results[0].userID,
                     comments: commentsList,
@@ -1598,13 +1597,13 @@ app.route("/user")
       LEFT JOIN (select * from blocked WHERE blockerID = ?) meBlockingUser ON meBlockingUser.blockedID = users.userID
       , (select * from users WHERE userID = ?) adminClass
       WHERE users.userID = ?
-      AND (adminClass.classification = "admin"
-      OR (users.visibility != 'hidden' AND
-      ` +
+      AND ((adminClass.classification = "admin")
+      OR (users.visibility != 'hidden'))
+      `
+        // AND
         // (userBlockingMe.blockedID is null AND meBlockingUser.blockerID is null) AND
-        `
-      (users.visibility != 'private' OR users.userID = ? OR viewership.posterID is not null)));
-      `; //getUser
+        //      (users.visibility != 'private' OR users.userID = ? OR viewership.posterID is not null)));
+; //getUser
       return checkSessionQueries(req.query.userID, req.query.sessionID, function() {
         connection.query(sQuery, [userID, userID, userID, userID, profileID, userID], function(err1, results1, fields1) {
           if (err1) {

@@ -16,6 +16,7 @@ require('dotenv').config();
 //may want to make sure no illegal characters are used in data creation or acccount alteration
 ////////////////////////UTMOST
   //Cancelling a conferred viewership request does not appear to work
+    //cancel button should refresh the page it goes back to.
   //make things, like like button, home button, etc, icons.
 //Light and dark mode:
   //change navbar
@@ -34,9 +35,8 @@ require('dotenv').config();
 //light and dark modes
 //Have error message if post or comment is restricted to private when you redirect to it
 //!!!PRIORITY
-//Test Banning Interactions and user to user interactions
+//Test Banning Interactions
 //Notifcation List - what has changed since last sessionID update?
-//test showOptions features on other profiles
 //SHould memoize pagination so its faster, and check that pagination is actually correct
 //add a highlight effect to the pagination bar
 //change getPosts to SELECT posts where post != private and user != private
@@ -46,9 +46,7 @@ require('dotenv').config();
 //have loading symbol https://www.google.com/search?q=while+fetch+is+working+show+symbol&rlz=1C1CHBF_enUS824US824&oq=while+fetch+is+working+show+symbol&aqs=chrome..69i57j33i160l2.11112j0j1&sourceid=chrome&ie=UTF-8
 //REDO QUERIES - SOME NEED TO BE FIXED
 //rewrite post pages to include pagination
-//VIEWERSHIP ENABLEMENT Check if it works
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
-//test forgotten password
 //MAke sure to test everything
 function App() {
   //Variables
@@ -777,10 +775,6 @@ function App() {
             cancelButton = (<Button variant='dark' onClick={() => {
               showInDepthPost();
             }} className='exitButton'>Cancel</Button>);
-          }else{
-            cancelButton = (<Button variant='dark' onClick={() => {
-              showOnlyMain();
-            }} className='exitButton'>Cancel</Button>);
           }
         }
         changeLoginCode(
@@ -934,7 +928,9 @@ function App() {
                 cookies.set('id',data.userID,{path:'/'});
                 cookies.set('sessionID',data.sessionID,{path:'/'});
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"});
-                cookies.set('lightingMode',data.preference,{path:"/"});
+                console.log(data.lightingMode);
+                cookies.set('lightingMode',data.lightingMode,{path:"/"});
+                changeLighting({lightingMode: data.lightingMode}); //Use a more useful function for this FIX THIS
                 if (data.isAdmin && data.isAdmin === "admin"){
                   cookies.set("adminStatus",data.isAdmin,{path:"/"})
                 }
@@ -1524,7 +1520,7 @@ function App() {
                   }
                   changeCode(
                     <div>
-                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                    <Button variant='dark' onClick={() => {showUserProfile(userID,0,10,'options')}} className='exitButton'>Cancel</Button>
                     <h1> Users You've Blocked </h1>
                     {paginationBar}
                     {listOfBlockedUsers}
@@ -1595,7 +1591,7 @@ function App() {
                     for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
                       listOfUsers.push(
                         <tr key={i}>
-                          <td>{data.blockedUsers[i].username}</td>
+                          <td>{data.listOfToView[i].username}</td>
                           <td><Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
                           <td><Button onClick={()=>{removeViewership(data.listOfToView[i].userID,cookies.get('id'),firstPoint,secondPoint,"imviewing")}}> Stop Viewing User</Button></td>
                         </tr>
@@ -1641,7 +1637,7 @@ function App() {
                     }
                     changeCode(
                       <div>
-                      <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                      <Button variant='dark' onClick={() => {showUserProfile(userID,0,10,'options')}} className='exitButton'>Cancel</Button>
                       <h1> Users You're Viewing </h1>
                       {paginationBar}
                       {tableOfUsers}
@@ -1668,7 +1664,7 @@ function App() {
                   for (let i = firstPoint; i < Math.min(secondPoint,data.listOfToView.length); i++){
                     listOfUsers.push(
                       <tr key={i}>
-                        <td>{data.blockedUsers[i].username}</td>
+                        <td>{data.listOfToView[i].username}</td>
                         <td><Button onClick={()=>{showUserProfile(data.listOfToView[i].userID)}}> View Profile </Button></td>
                         <td><Button onClick={()=>{removeViewership()(cookies.get('id'),data.listOfToView[i].userID,firstPoint,secondPoint,"viewingme")}}> Stop Viewing User</Button></td>
                       </tr>
@@ -1714,7 +1710,7 @@ function App() {
                   }
                   changeCode(
                     <div>
-                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                    <Button variant='dark' onClick={() => {showUserProfile(userID,0,10,'options')}} className='exitButton'>Cancel</Button>
                     <h1> Users Viewing You </h1>
                     {paginationBar}
                     {tableOfUsers}
@@ -1775,6 +1771,7 @@ function App() {
                 }
               })
           }
+          //FIX THIS BELOW
           function removeViewership(posterID,viewerID,first,second,variation){
             var sessionID = cookies.get('sessionID');
             var id = cookies.get('id');
@@ -2700,7 +2697,7 @@ function App() {
                   }
                   changeCode(
                     <div>
-                    <Button variant='dark' onClick={() => {cancel(0,10,'options')}} className='exitButton'>Cancel</Button>
+                    <Button variant='dark' onClick={() => {showUserProfile(userID,0,10,"options")}} className='exitButton'>Cancel</Button>
                     {privacyText}
                     <form onSubmit={handleAccountPrivacyChange}>
                       In order to change your visibility settings, you will need to enter your login details.
@@ -2724,6 +2721,7 @@ function App() {
           }
           //Main
           showOnlyMain();
+          console.log(userID);
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
           if (sessionID && id){
@@ -3770,7 +3768,7 @@ function App() {
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
         cookies.remove("lightingMode",{path:'/'});
-                            cookies.remove("adminStatus",{path:'/'});
+        cookies.remove("adminStatus",{path:'/'});
         changeNavToLoggedOut();
         fetch(serverLocation + "/posts")
           .then(response=>response.json())
