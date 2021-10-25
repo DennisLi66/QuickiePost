@@ -18,13 +18,6 @@ create table posts(
     visibility varchar(255) NOT NULL, -- public , hidden, private
     subDate datetime
 );
-create table editHistory(
-	postID int,
-    title varchar(255),
-    content text,
-    visibility varchar(255) NOT NULL,
-    editDate datetime
-);
 create table likes (
 	postID int NOT NULL,
     userID int NOT NULL,

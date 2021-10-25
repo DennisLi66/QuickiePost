@@ -802,18 +802,12 @@ app.route("/post")
             variables.push(visibility);
           }
           variables.push(postID)
-          var uOrIQuery =
+          var iEditQuery =
           `
           INSERT INTO editPostHistory (postID,previousText,previousTitle,previousVisibility,editDate) VALUES (?,?,?,?,NOW())
-          ON DUPLICATE KEY UPDATE
-          postID = VALUES(postID),
-          previousText = VALUES(previousText),
-          previousTitle = VALUES(previousTitle),
-          previousVisibility = Values(previousVisibility),
-          editDate = VALUES(editDate)
           `
           variables.push(...[results2[0].postID,results2[0].content,results2[0].title,results2[0].visibility);
-          connection.query("UPDATE posts SET " + setPositions.join(",") + " WHERE postID = ?;" + uOrIQuery, variables, function(err, results, fields) {
+          connection.query("UPDATE posts SET " + setPositions.join(",") + " WHERE postID = ?;" + iEditQuery, variables, function(err, results, fields) {
             if (err) {
               return res.status(200).json({
                 status: -1,
@@ -2053,35 +2047,55 @@ app.route("/comment")
         message: "No search terms."
       })
     }
+    var iEditQuery =
+    `
+    INSERT INTO editCommentHistory
+    (commentID,previousText,previousVisibility,editDate) VALUES (?,?,?,NOW());
+    `;
+    var searchQuery =
+    `
+    SELECT * FROM comments WHERE commentID = ? AND userID = ?;
+    `
     return checkSessionQueries(req.query.userID, req.query.sessionID, function() {
-      var updateQuery =
-        `
-      UPDATE COMMENTS
-      SET
-      WHERE postID = ? AND userID = ?;
-      `
-      var updateStrings = [];
-      var variables = [];
-      if (comments) {
-        updateStrings.push(" COMMENTS = ? ");
-        variables.push(comments);
-      }
-      if (visibility) {
-        updateStrings.push(" VISIBILITY = ? ");
-        variables.push(visibility);
-      }
-      variables.push(commentID);
-      variables.push(userID);
-      connection.query("UPDATE COMMENTS SET " + updateStrings.join(",") + "WHERE commentID = ? AND userID = ?", variables, function(err, results, fields) {
-        if (err) {
+      connection.query(searchQuery,[commentID,userID],function(err1,results1,fields1){
+        if (err1){
           return res.status(200).json({
             status: -1,
-            message: err
+            message: err1
           })
-        } else {
+        }
+        else if (results1.length === 0){
           return res.status(200).json({
-            status: 0,
-            message: "Update Occured."
+            message: "Comment did not exist.",
+            status: -1
+          })
+        }
+        else{
+          var updateStrings = [];
+          var variables = [];
+          if (comments) {
+            updateStrings.push(" COMMENTS = ? ");
+            variables.push(comments);
+          }
+          if (visibility) {
+            updateStrings.push(" VISIBILITY = ? ");
+            variables.push(visibility);
+          }
+          variables.push(commentID);
+          variables.push(userID);
+          variables.push(...[commentID,results1[0].comments,results1[0].visibility,NOW()])
+          connection.query("UPDATE COMMENTS SET " + updateStrings.join(",") + "WHERE commentID = ? AND userID = ?;" + iEditQuery, variables, function(err, results, fields) {
+            if (err) {
+              return res.status(200).json({
+                status: -1,
+                message: err
+              })
+            } else {
+              return res.status(200).json({
+                status: 0,
+                message: "Update Occured."
+              })
+            }
           })
         }
       })
