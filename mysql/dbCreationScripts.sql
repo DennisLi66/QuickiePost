@@ -91,16 +91,18 @@ create table forgottenPasswordCodes(
 create table bans(
 	bannedID int NOT NULL primary key
 );
-
 create table editPostHistory(
 	editID int NOT NULL primary key auto_increment,
     postID int NOT NULL,
+    previousTitle varchar(255),
     previousText varchar(255),
+    previousVisibility varchar(255),
     editDate datetime NOT NULL
 );
 create table editCommentHistory(
 	editID int NOT NULL primary key auto_increment,
     commentID int NOT NULL,
     previousText varchar(255),
+	previousVisibility varchar(255),
     editDate datetime NOT NULL
 )

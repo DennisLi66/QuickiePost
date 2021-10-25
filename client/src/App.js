@@ -3424,19 +3424,6 @@ function App() {
           transition: 'height 2s ease-in'
         })
       }
-      function closeInDepthPost(){
-        lastDisplayed = "main";
-        changeMainBodyCSS({
-          height: 'auto',
-          transition: 'height 2s ease-in'
-        });
-        changeInDepthCSS(
-          {
-            display: 'none',
-            transition: 'height 2s ease-in'
-          }
-        );
-      }
       function openInDepthPost(){
         lastDisplayed = "indepth";
         changeWriteFormCSS(

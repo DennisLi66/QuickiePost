@@ -802,7 +802,18 @@ app.route("/post")
             variables.push(visibility);
           }
           variables.push(postID)
-          connection.query("UPDATE posts SET " + setPositions.join(",") + " WHERE postID = ?", variables, function(err, results, fields) {
+          var uOrIQuery =
+          `
+          INSERT INTO editPostHistory (postID,previousText,previousTitle,previousVisibility,editDate) VALUES (?,?,?,?,NOW())
+          ON DUPLICATE KEY UPDATE
+          postID = VALUES(postID),
+          previousText = VALUES(previousText),
+          previousTitle = VALUES(previousTitle),
+          previousVisibility = Values(previousVisibility),
+          editDate = VALUES(editDate)
+          `
+          variables.push(...[results2[0].postID,results2[0].content,results2[0].title,results2[0].visibility);
+          connection.query("UPDATE posts SET " + setPositions.join(",") + " WHERE postID = ?;" + uOrIQuery, variables, function(err, results, fields) {
             if (err) {
               return res.status(200).json({
                 status: -1,
@@ -2075,7 +2086,7 @@ app.route("/comment")
         }
       })
     })
-  })
+  }) //FIX THIS EDIT HISTORY
   .put(function(req, res) {
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content) {
       return res.status(200).json({
