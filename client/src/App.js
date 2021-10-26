@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
 //Look over all exitButton classes
+//add last edit date
 //Confirmations for deactivating account and changing privacys should take longer.
 //may want to make sure no illegal characters are used in data creation or acccount alteration
 ////////////////////////UTMOST
