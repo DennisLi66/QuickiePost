@@ -70,9 +70,7 @@ SET sessionDate = NOW()
 WHERE sessionID = ?
 ;
 `;
-//TEST THIS FIX THIS
 function checkSessionQueries(res, userID, sessionID, followUpFunction) {
-  //seperate these queries - the second triggers even if the first one doesnt work - app 3808
   connection.query(cQuery,[userID, sessionID], function(err1, results1, fields1) {
     console.log(results1)
     if (err1) {
@@ -80,13 +78,13 @@ function checkSessionQueries(res, userID, sessionID, followUpFunction) {
         status: -1,
         message: err1
       })
-    } else if (results1[0].length === 0) {
+    } else if (results1.length === 0) {
       console.log("Invalid Session.");
       return res.status(200).json({
         status: -11,
         message: "Not Valid Session."
       })
-    } else if (results1[0][0].isBanned === "true") {
+    } else if (results1[0].isBanned === "true") {
       return res.status(200).json({
         status: -69,
         message: "User is Banned."

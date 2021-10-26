@@ -11,6 +11,8 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need
+//on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
+      // do a fetch with the same details but with no userID and sessionID
 //Look over all exitButton classes
 //add last edit date
 //Confirmations for deactivating account and changing privacys should take longer.
@@ -3804,40 +3806,47 @@ function App() {
       }
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
-          .then(data => {
-            for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
-              listOfPosts.push(simplePost(key,data.contents[key],data.Liked,"home",beginPosition,endPosition))
-            }
-            if (listOfPosts.length === 0){
-              listOfPosts = (<div> There are no posts to show.</div>)
-            }
-            var paginationBar;
-            if (data.contents.length > 10){
-              var paginationSlots = [];
-              for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
-                paginationSlots.push(
-
-                  <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
-                )
+          .then(data => { //FIX THIS: expect error or epiry page
+            console.log(data);
+            if (data.status === -1){
+              showErrorPage({startPos: beginPosition, endPos: endPosition, message: data.message, origin: "home"});
+            }else if (data.status === -11){
+              showExpiredPage({startPos: beginPosition,endPos:endPosition, origin: "home"});
+            }else{
+              for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
+                listOfPosts.push(simplePost(key,data.contents[key],data.Liked,"home",beginPosition,endPosition))
               }
-              paginationBar = (
-               <ul className="nav nav-tabs">
-                <li className="nav-item dropdown">
-                  <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
-                  <ul className="dropdown-menu">
-                    {paginationSlots}
-                  </ul>
-                </li>
-              </ul>)
+              if (listOfPosts.length === 0){
+                listOfPosts = (<div> There are no posts to show.</div>)
+              }
+              var paginationBar;
+              if (data.contents.length > 10){
+                var paginationSlots = [];
+                for (let i = 0; i < Math.ceil(data.contents.length / 10); i++){
+                  paginationSlots.push(
+
+                    <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.contents.length)}</div></li>
+                  )
+                }
+                paginationBar = (
+                 <ul className="nav nav-tabs">
+                  <li className="nav-item dropdown">
+                    <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                    <ul className="dropdown-menu">
+                      {paginationSlots}
+                    </ul>
+                  </li>
+                </ul>)
+              }
+              changeCode(
+                <div>
+               <h1> QuickiePost </h1>
+               {paginationBar}
+                {listOfPosts}
+                {paginationBar}
+                </div>
+              )
             }
-            changeCode(
-              <div>
-             <h1> QuickiePost </h1>
-             {paginationBar}
-              {listOfPosts}
-              {paginationBar}
-              </div>
-            )
           })
     },[serverLocation,cookies,changeCode, lightDarkMode])
 
