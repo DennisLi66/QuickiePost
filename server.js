@@ -91,7 +91,7 @@ function checkSessionQueries(res, userID, sessionID, followUpFunction) {
       })
     } else {
       console.log("Valid Session.");
-      connection.query(updateSessionQuery,[],function(err2,results2,fields2){
+      connection.query(updateSessionQuery,[sessionID],function(err2,results2,fields2){
         if (err2){
           return res.status(200).json({
             status: -1,

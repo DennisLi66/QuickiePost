@@ -55,6 +55,7 @@ require('dotenv').config();
 //rewrite post pages to include pagination
 //FIX THIS: CHECK QUERIES THAT INVOLVE COMMENT VISIBILITY
 //MAke sure to test everything
+//Have delete show the element a user is deleting
 //INDEPTH CPOST DOES NOT WORK PROPERLY  - Liking causes comments to disappear froma  post
 function App() {
   //Variables
@@ -116,25 +117,40 @@ function App() {
       function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
         var likePostButton;
         var commentButton;
-        var isOwnerButtons = (<div><Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button></div>);
+        var isOwnerButtons;
         if (cookies.get('sessionID') && cookies.get('id')){
           if (hasLiked || dict.Liked === "true"){
             likePostButton = (<Button onClick={() => {handlePostUnlike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Unlike </Button>);
           }else{
             likePostButton = (<Button onClick={() => {handlePostLike(dict.postID,origin,0,0,startPos,endPos,"",searchPosts)}}> Like </Button>);
           }
-          isOwnerButtons = (<div><Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button></div>);
           if (String(cookies.get('id')) === String(dict.userID)){
-            isOwnerButtons = (
-              <div>
-                <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
-                <Button onClick={() => {showEditPost(dict.postID,origin,startPos,endPos)}}> Edit Post</Button>
-                <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
-              </div>
-            )
+            if (origin !== 'indepthPost'){
+              isOwnerButtons = (
+                <div>
+                  <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+                  <Button onClick={() => {showEditPost(dict.postID,origin,startPos,endPos)}}> Edit Post</Button>
+                  <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
+                </div>
+              )
+            }else{
+              isOwnerButtons = (
+                <div>
+                  <Button onClick={() => {showEditPost(dict.postID,origin,startPos,endPos)}}> Edit Post</Button>
+                  <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
+                </div>
+              )
+            }
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
+          if (origin !== "indepthPost"){
+            isOwnerButtons = (
+              <div>
+                <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+              </div>
+            )
+          }
           likePostButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
           commentButton = (<Button onClick ={() => {getLoginPage(origin)}}> Comment </Button>);
         }
@@ -146,20 +162,63 @@ function App() {
           <Card.Body> {parseMessage(dict.content)} </Card.Body>
           <Card.Subtitle> {dict.subDate} </Card.Subtitle>
           <Card.Body>
-          Likes: {dict.totalLikes}
-          <br></br>
-          {likePostButton}
-          <br></br>
-          Comments: {dict.totalComments}
-          <br></br>
-          {commentButton}
-          <br></br>
+          Likes: {dict.totalLikes}<br></br>
+          {likePostButton}<br></br>
+          Comments: {dict.totalComments}<br></br>
+          {commentButton}<br></br>
           {isOwnerButtons}
           </Card.Body>
         </Card>
         )
       }
-      function parseMessage(message){ //use in both posts and comments
+      function simpleComment(key,dict,hasLiked=false,origin="",postID,startPos = 0, endPos = 10, searchComments = []){
+        var likeCommentButton;
+        var isOwnerButtons;
+        if (cookies.get('sessionID') && cookies.get('id')){
+          if (hasLiked || dict.commentLiked){
+            likeCommentButton = (<Button onClick={()=>{handleCommentUnlike(dict.commentID,origin,postID,cookies.get("id"),startPos,endPos)}}>Unlike</Button>)
+          }else{
+            likeCommentButton = (<Button onClick={()=>{handleCommentLike(dict.commentID,origin,postID,cookies.get("id"),startPos,endPos)}}>Like</Button>)
+          }
+          if (String(cookies.get('id')) === String(dict.commenterID)){
+            if (origin !== "indepthComment"){
+              isOwnerButtons = (
+                <div>
+                  <Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button>
+                  <Button onClick={()=>{showEditComment(dict.commentID,origin,postID,startPos,endPos)}}>Edit Comment</Button>
+                  <Button onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
+                </div>
+              )
+            }else{
+              isOwnerButtons = (
+                <div>
+                  <Button onClick={()=>{showEditComment(dict.commentID,origin,postID,startPos,endPos)}}>Edit Comment</Button>
+                  <Button onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
+                </div>
+              )
+            }
+          }
+        }else{
+          if (origin !== "indepthPost"){
+            isOwnerButtons = (<Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button>)
+          }
+          likeCommentButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
+        }
+        return (
+          <Card key={key}>
+            <Card.Subtitle> <div className='linkText' onClick={() => {showUserProfile(dict.userID)}}>{"Username: " + dict.username}</div> </Card.Subtitle>
+            <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
+            <Card.Body>{parseMessage(dict.comments)}</Card.Body>
+            <Card.Subtitle>{dict.commentDate}</Card.Subtitle>
+            <Card.Body>
+              Likes: <br></br>
+              {likeCommentButton}<br></br>
+              {isOwnerButtons}<br>></br>
+            </Card.Body>
+          </Card>
+        )
+      }
+      function parseMessage(message){
         var toReturn = [];
         var currentMessage = "";
         for (let c = 0; c < message.length; c++){
@@ -182,7 +241,7 @@ function App() {
               onClick={()=>{searchHashtag(sliced)}}
               key={c}>{message.slice(c,x+c+1)}</span>);
             }
-            c += x;
+            c += x - 1;
           }else if (c + 1 >= message.length){
             currentMessage += message[c];
             toReturn.push(<span key={c}>{currentMessage}</span>);
@@ -191,7 +250,7 @@ function App() {
           }
         }
         return toReturn;
-      }
+      } //FIX THIS: Use this to supplement a mysql popular hashtags table
       function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         if (origin === ""){
           getHome();
@@ -652,7 +711,6 @@ function App() {
           fetch(serverLocation + "/likeComment?commentID=" + commentID + "&sessionID=" + sessionID + "&userID=" + id,requestSetup)
             .then(response =>response.json())
             .then(data=>{
-              console.log(data)
               if (data.status === -11){
                 showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
