@@ -67,3 +67,8 @@ AND comments.visibility = "public" GROUP BY postID
       AND userVisibility != "hidden" AND postVisibility != "hidden"
       AND ((isViewer = "true") OR (userVisibility != "private" OR postVisibility != "private" or userID = 3))
       )) ORDER BY commentDate DESC;
+-- 	select * from bans;
+-- 	DELETE FROM bans WHERE bannedID = 15;
+-- 	INSERT INTO bans
+-- 	SELECT userID FROM users
+-- 	WHERE userID = 15 AND classification != "admin";

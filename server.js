@@ -72,7 +72,7 @@ WHERE sessionID = ?
 `;
 function checkSessionQueries(res, userID, sessionID, followUpFunction) {
   connection.query(cQuery,[userID, sessionID], function(err1, results1, fields1) {
-    console.log(results1)
+    //console.log(results1)
     if (err1) {
       return res.status(200).json({
         status: -1,
@@ -1135,7 +1135,7 @@ app.post("/login", function(req, res) {
                         userID: results[0].userID,
                         username: results[0].userName,
                         sessionID: sessionID,
-                        isAdmin: results[0].banStatus,
+                        isAdmin: results[0].classification,
                         lightingMode: results[0].preference
                       })
                     }
@@ -2520,7 +2520,7 @@ app.route("/relationship")
     `;
     var u = req.query.userID;
     var p = req.query.profileID;
-    var variables = [u, u, p, p, u, u, p, u, p, u, p, p, u, p, u, p, u, u, p, u, p];
+    var variables = [p, u, p, p, u, u, p, u, p, u, p, p, u, p, u, p, u, u, p, u, p];
     return checkSessionQueries(res,req.query.userID, req.query.sessionID, function() {
       connection.query(sQuery, variables, function(err2, results2, fields) {
         if (err2) {
@@ -2923,34 +2923,48 @@ app.route("/banUser")
       })
     } else {
       return checkSessionQueries(res,req.body.userID, req.body.sessionID, function() {
-        if (results1[0].classification === "admin") {
-          var iQuery =
+        var checkUserisAdminQuery =
+        `
+        SELECT * FROM users WHERE userID = ? AND classification = 'admin';
+        `;
+        connection.query(checkUserisAdminQuery,[req.body.userID],function(err1,results1,fields1){
+          if (err1){
+            return res.status(200).json({
+              message: -1,
+              status: err1
+            })
+          }
+          else if (results1.length > 0) {
+            var iBanQuery =
             `INSERT INTO bans
-          SELECT userID FROM users
-          WHERE userID = ? AND classification != "admin"`;
-          connection.query(iQuery, [req.query.profileID], function(err, results, fields) {
-            if (err) {
-              return res.status(200).json({
-                status: 0,
-                message: "User Banned."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "User Banned."
-              })
-            }
-          })
-        } else {
-          return res.status(200).json({
-            status: -1,
-            message: "Not Enough Permissions."
-          })
-        }
+            SELECT userID FROM users
+            WHERE userID = ? AND classification != "admin"`;
+            connection.query(iBanQuery, [req.body.profileID], function(err, results, fields) {
+              console.log(results);
+              if (err) {
+                return res.status(200).json({
+                  status: -1,
+                  message: err
+                })
+              } else {
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Banned."
+                })
+              }
+            })
+          } else {
+            return res.status(200).json({
+              status: -1,
+              message: "Not Enough Permissions."
+            })
+          }
+        })
       })
     }
   })
   .delete(function(req, res) {
+    console.log(req.body);
     if (!req.body.userID || !req.body.sessionID || !req.body.profileID) {
       return res.status(200).json({
         status: -1,

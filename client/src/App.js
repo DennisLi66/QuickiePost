@@ -10,7 +10,10 @@ import './App.css';
 import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
-//things ill Need
+//things ill Need to FIx
+      //expand post doesn't show up while logged in - fix bug
+      //Admins looking at non users has an additional options page
+
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
       // do a fetch with the same details but with no userID and sessionID
 //Look over all exitButton classes
@@ -1030,7 +1033,7 @@ function App() {
                   </div>
                 )
               }
-              else if (data.status === -13){
+              else if (data.status === -13){//Account Banned
                 changeCode(
                   <div>
                     <h1> Account Banned </h1>
@@ -1464,7 +1467,7 @@ function App() {
                   <h1> Banning {username} </h1>
                   You are about to ban the user {username}. Are you sure you want to do this?<br></br>
                   <Button onClick={() => {cancel("userProfileOptions",0,0,userID)}}> Cancel </Button>
-                  <Button onClick={handleUserBan(toDo,username)}> Confirm </Button>
+                  <Button onClick={() => {handleUserBan(toDo,username)}}> Confirm </Button>
                 </div>
               )
             }else if (toDo === "unban"){
@@ -1479,6 +1482,7 @@ function App() {
             }
           }
           function handleUserBan(toDo,username){
+            // console.log(toDo);
             if (toDo === "ban"){
               const requestSetup = {
                 method: 'POST',
@@ -1489,7 +1493,7 @@ function App() {
                 .then(response => response.json())
                 .then(data => {
                   if (data.status === -1){
-                    showErrorPage({origin: "userProfileOptions", userID: userID});
+                    showErrorPage({message: data.message,origin: "userProfileOptions", userID: userID});
                   }else if (data.status === -11){
                     showExpiredPage({origin: "userProfileOptions", userID: userID});
                   }else{
@@ -2120,7 +2124,7 @@ function App() {
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
-                    console.log(data);
+                    // console.log(data);
                     if (data.status === -11){
                       showExpiredPage({origin: 'userProfileOptions', userID:userID});
                     }
@@ -2135,7 +2139,7 @@ function App() {
                       if (data.blockingThem && data.blockingThem === 'true'){
                         blockButton = (<Button variant='danger' onClick={() => unblockUser()}> Unblock User </Button>)
                       }
-                      var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"poster")}}> Confer Viewership </Button>);
+                      var conferViewershipButton = (<Button variant='info' onClick={()=>{viewershipRequest(cookies.get('id'),userID,"viewer")}}> Confer Viewership </Button>);
                       if (data.viewingMe && data.viewingMe === "true"){
                         conferViewershipButton = (<Button variant='info' onClick={()=>{removeViewership(cookies.get("id"),userID,0,10,"stopViewingMe")}}>Remove User's Viewership Of You</Button>);
                       }
@@ -2162,7 +2166,7 @@ function App() {
                       }
                       var banButton = (<div></div>);
                       if (data.classification !== 'admin' && data.isBanned === "false"){
-                        banButton = (<Button onClick={confirmUserBan("ban",username)}> Ban User </Button>);
+                        banButton = (<Button onClick={() => {confirmUserBan("ban",username)}}> Ban User </Button>);
                       }else if (data.classification !== 'admin' && data.isBanned === "true"){
                         banButton = (<Button onClick={confirmUserBan("unban",username)}> Unban User </Button>);
                       }
@@ -3807,6 +3811,7 @@ function App() {
       }
       //Visibility modes
       function toggleLightAndDarkMode(){
+        //FIX THIS: Sends you to home page?
         if (cookies.get("id") && cookies.get("sessionID")){
           if (lightDarkMode.lightingMode === "light"){
             changeLighting({lightingMode: "dark"})
