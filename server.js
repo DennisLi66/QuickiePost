@@ -2940,7 +2940,6 @@ app.route("/banUser")
             SELECT userID FROM users
             WHERE userID = ? AND classification != "admin"`;
             connection.query(iBanQuery, [req.body.profileID], function(err, results, fields) {
-              console.log(results);
               if (err) {
                 return res.status(200).json({
                   status: -1,
@@ -2964,7 +2963,6 @@ app.route("/banUser")
     }
   })
   .delete(function(req, res) {
-    console.log(req.body);
     if (!req.body.userID || !req.body.sessionID || !req.body.profileID) {
       return res.status(200).json({
         status: -1,
@@ -2972,28 +2970,40 @@ app.route("/banUser")
       })
     } else {
       return checkSessionQueries(res,req.body.userID, req.body.sessionID, function() {
-        if (results1[0].classification === "admin") {
-          var dQuery =
-            `DELETE FROM bans WHERE bannedID = ?`;
-          connection.query(dQuery, [req.query.profileID], function(err, results, fields) {
-            if (err) {
-              return res.status(200).json({
-                status: 0,
-                message: "User Unbanned."
-              })
-            } else {
-              return res.status(200).json({
-                status: 0,
-                message: "User Unbanned."
-              })
-            }
-          })
-        } else {
-          return res.status(200).json({
-            status: -1,
-            message: "Not Enough Permissions."
-          })
-        }
+        var checkUserisAdminQuery =
+        `
+        SELECT * FROM users WHERE userID = ? AND classification = 'admin';
+        `;
+        connection.query(checkUserisAdminQuery,[req.body.userID],function(err1,results1,fields1){
+          if (err1){
+            return res.status(200).json({
+              status: -1,
+              message: err1
+            })
+          }
+          else if (results1.length > 0) {
+            var dQuery =
+              `DELETE FROM bans WHERE bannedID = ?`;
+            connection.query(dQuery, [req.body.profileID], function(err, results, fields) {
+              if (err) {
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Unbanned."
+                })
+              } else {
+                return res.status(200).json({
+                  status: 0,
+                  message: "User Unbanned."
+                })
+              }
+            })
+          } else {
+            return res.status(200).json({
+              status: -1,
+              message: "Not Enough Permissions."
+            })
+          }
+        })
       })
     }
   })
