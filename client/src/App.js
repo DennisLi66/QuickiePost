@@ -11,9 +11,7 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need to FIx
-      //expand post doesn't show up while logged in - fix bug
-      //Admins looking at non users has an additional options page
-
+  //Setting cookies reloads the page
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
       // do a fetch with the same details but with no userID and sessionID
 //Look over all exitButton classes
@@ -131,7 +129,7 @@ function App() {
             if (origin !== 'indepthPost'){
               isOwnerButtons = (
                 <div>
-                  <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button>
+                  <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button><br></br>
                   <Button onClick={() => {showEditPost(dict.postID,origin,startPos,endPos)}}> Edit Post</Button>
                   <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
                 </div>
@@ -144,6 +142,11 @@ function App() {
                 </div>
               )
             }
+          }
+          else if (origin !== 'indepthPost'){
+            isOwnerButtons = (
+              <Button onClick={()=>{showInDepthPost(dict.postID)}}>Expand Post</Button>
+            )
           }
           commentButton = (<Button onClick={() => {displayCommentWriter(dict.postID,origin,startPos,endPos)}}> Comment </Button>);
         }else{
@@ -888,7 +891,7 @@ function App() {
         if (!(pswrd === confPswrd)){
           changeCode(
             <div>
-            <div className="errorMsg">Your passwords did not match.</div>
+            <div className="errMsg">Your passwords did not match.</div>
             <form onSubmit={handleRegistration}>
               <h1> Registration Page</h1>
               <label htmlFor='userEmail'>Email</label>
@@ -1003,7 +1006,6 @@ function App() {
                 cookies.set('id',data.userID,{path:'/'});
                 cookies.set('sessionID',data.sessionID,{path:'/'});
                 cookies.set('expireTime',rememberMe === 'hour' ? Date.now() + 3600000 : "forever",{path:"/"});
-                console.log(data.lightingMode);
                 cookies.set('lightingMode',data.lightingMode,{path:"/"});
                 changeLighting({lightingMode: data.lightingMode}); //Use a more useful function for this FIX THIS
                 if (data.isAdmin && data.isAdmin === "admin"){
@@ -2133,7 +2135,7 @@ function App() {
                     }else{
                       var banBanner = (<div></div>);
                       if (data.isBanned && data.isBanned === "true"){
-                        banBanner = <div className='errorMsg'>This user is currently banned.</div>
+                        banBanner = <div className='errMsg'>This user is currently banned.</div>
                       }
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
                       if (data.blockingThem && data.blockingThem === 'true'){
@@ -2192,9 +2194,6 @@ function App() {
                             <div className="nav-link" onClick={()=>{showComments(username,comments,0,10,posts)}}>{username}'s Comments</div>
                           </li>
                           <li className="nav-item">
-                            <div className="nav-link active" aria-current="page" onClick={() => {showLikedPosts(username,posts,comments)}}> Options </div>
-                          </li>
-                          <li className="nav-item">
                             <div className="nav-link active" aria-current="page" onClick={() => {showOptions(username,posts,comments)}}> Options </div>
                           </li>
                         </ul>
@@ -2218,7 +2217,7 @@ function App() {
                     }else{
                       var banBanner = (<div></div>);
                       if (data.isBanned === "true"){
-                        banBanner = <div className='errorMsg'>This user is currently banned.</div>
+                        banBanner = <div className='errMsg'>This user is currently banned.</div>
                       }
                       var blockButton = (<Button variant='danger' onClick={() => blockUser()}> Block User </Button>);
                       if (data.classification === "admin"){
@@ -2337,7 +2336,7 @@ function App() {
                 .then(data => {
                   var bannedBanner;
                   if (data.status === 0){
-                    bannedBanner = (<div className="errorMsg"> This user is currently banned. </div>)
+                    bannedBanner = (<div className="errMsg"> This user is currently banned. </div>)
                   }else if (data.status === -1){
                     console.log(data.message);
                   }
@@ -2796,7 +2795,6 @@ function App() {
           }
           //Main
           showOnlyMain();
-          console.log(userID);
           var sessionID = cookies.get("sessionID");
           var id = cookies.get("id");
           if (sessionID && id){
@@ -3820,11 +3818,29 @@ function App() {
             changeLighting({lightingMode: "light"})
             cookies.set('lightingMode',"light",{path:'/'})
           }
+          const requestSetup = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({userID: cookies.get("id"), sessionID: cookies.get("sessionID"),lighting: lightDarkMode.lightingMode})
+          };
+          fetch(serverLocation + "/",requestSetup)
+            .then(response => response.json())
+            .then(data => {
+              if (data.status === -1){
+                showErrorPage({message: data.message})
+              }else if (data.status === -11){
+                showExpiredPage()
+              }else{
+                //do nothing
+              }
+            })
         }else{
           if (lightDarkMode.lightingMode === "light"){
             changeLighting({lightingMode: "dark"})
+            cookies.set('lightingMode',"dark",{path:'/'})
           }else{
-            changeLighting({lightingMode: "light"})
+            changeLighting({lightingMode: "light"});
+            cookies.set('lightingMode',"light",{path:'/'})
           }
         }
       }
@@ -3846,9 +3862,7 @@ function App() {
       }
       //MAIN
       showOnlyMain();
-      if (cookies.get('id')
-      //&& (cookies.get('expireTime') === "forever" || Date.now() < cookies.get('expireTime'))
-      ){
+      if (cookies.get('id')){
         console.log("Logged In");
         changeNavToLoggedIn();
       }
@@ -3859,7 +3873,7 @@ function App() {
         cookies.remove("name",{path:'/'});
         cookies.remove("id",{path:'/'});
         cookies.remove("lightingMode",{path:'/'});
-                            cookies.remove("adminStatus",{path:'/'});
+        cookies.remove("adminStatus",{path:'/'});
         changeNavToLoggedOut();
       }
       var listOfPosts = [];
@@ -3869,7 +3883,7 @@ function App() {
       }
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
-          .then(data => { //FIX THIS: expect error or epiry page
+          .then(data => {
             console.log(data);
             if (data.status === -1){
               showErrorPage({startPos: beginPosition, endPos: endPosition, message: data.message, origin: "home"});
