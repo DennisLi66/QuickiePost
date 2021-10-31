@@ -2913,6 +2913,31 @@ app.route("/isthisuserbanned")
       })
     }
   })
+app.route("/endSession")
+  .delete(function(req,res){
+    if (!req.body.userID || !req.body.sessionID){
+      return res.status(200).json({
+        status: -1,
+        message: "Not Enough Information."
+      })
+    }
+    var updateQuery =
+    `
+    UPDATE sessions SET timeDuration = 'END' WHERE sessionID = ? AND userID = ?;
+    `
+    connection.query(updateQuery,[req.body.sessionID,req.body.userID],function(err,results,fields){
+      if (err){
+        return res.status(200).json({
+          status: -1,
+          message: err
+        })
+      }
+      return res.status(200).json({
+        status: 0,
+        message: "Query Activated."
+      })
+    })
+  })
 //ADMIN: Ban User
 app.route("/banUser")
   .post(function(req, res) {

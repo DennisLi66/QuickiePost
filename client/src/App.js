@@ -3846,18 +3846,27 @@ function App() {
       }
       //log out
       function logOut(){
-        cookies.remove("sessionID",{path: '/'});
-        cookies.remove("expireTime",{path:"/"})
-        cookies.remove("name",{path:'/'});
-        cookies.remove("id",{path:'/'});
-        cookies.remove("lightingMode",{path:'/'});
-        cookies.remove("adminStatus",{path:'/'});
-        changeNavToLoggedOut();
-        //FIX THIS: reload current page if possible
-        fetch(serverLocation + "/posts")
-          .then(response=>response.json())
+        const requestSetup = {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({userID:cookies.get("id"),sessionID: cookies.get("sessionID")})
+        }
+        fetch(serverLocation + "/endSession",requestSetup)
+          .then(response => response.json())
           .then(data => {
+            if (data.status === -1){
+              showErrorPage({message: data.message})
+            }else{
+              cookies.remove("sessionID",{path: '/'});
+              cookies.remove("expireTime",{path:"/"})
+              cookies.remove("name",{path:'/'});
+              cookies.remove("id",{path:'/'});
+              cookies.remove("lightingMode",{path:'/'});
+              cookies.remove("adminStatus",{path:'/'});
+              changeNavToLoggedOut();
+              //FIX THIS: RELOAD CURRENT PAGE INSTEAD OF GOING HOME
               getHome();
+            }
           })
       }
       //MAIN
