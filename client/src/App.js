@@ -11,7 +11,10 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need to FIx
+  //likes from a simplecomment from indepthcomments and from user profile seem different
   //reformat for simpleposts and comments
+    //comments:
+    //posts: indepthpost,search feed, home feed, profile posts, indepth comment, delete and edit post, liked posts
   //Setting cookies reloads the page
     //will need to set origin / current page cookie to send users back
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
@@ -238,14 +241,15 @@ function App() {
             <Card.Body>{parseMessage(dict.comments)}</Card.Body>
             <Card.Subtitle>{dict.commentDate}</Card.Subtitle>
             <Card.Body>
-              Likes: <br></br>
+              Likes: {dict.totalLikes}<br></br>
               {likeCommentButton}<br></br>
-              {isOwnerButtons}<br>></br>
+              {isOwnerButtons}<br></br>
             </Card.Body>
           </Card>
         )
       }
       function parseMessage(message){
+        //FIX THIS: Use this to supplement a mysql popular hashtags table
         var toReturn = [];
         var currentMessage = "";
         for (let c = 0; c < message.length; c++){
@@ -277,7 +281,7 @@ function App() {
           }
         }
         return toReturn;
-      } //FIX THIS: Use this to supplement a mysql popular hashtags table
+      }
       function cancel(origin = "",postID=0,commentID=0,userID=0,startPos=0,endPos=0){
         if (origin === ""){
           getHome();
@@ -2903,85 +2907,16 @@ function App() {
             }else{
               console.log(data);
               openInDepthPost();
-              var editButton;
-              var likePostButton = (
-                <Button onClick={() => {getLoginPage("indepthComment")}}> Like </Button>
-              );
-              if (data.postLiked && data.postLiked === "true"){
-                likePostButton = (
-                  <Button onClick={() => {handlePostUnlike(data.postID,"indepthComment",commentID)}}> Unlike </Button>
-                )
-              }else if (data.postLiked && data.postLiked === "false"){
-                likePostButton = (
-                  <Button onClick={() => {handlePostLike(data.postID,"indepthComment",commentID)}}> Like </Button>
-                )
-              }
-              var likeCommentButton = (
-                <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
-              );
-              if (data.commentLiked && data.commentLiked === "true"){
-                likeCommentButton = (
-                  <Button onClick={() => {handleCommentUnlike(data.commentID,"indepthComment")}}> Unlike </Button>
-                )
-              }else if (data.commentLiked && data.commentLiked === "false"){
-                likeCommentButton = (
-                  <Button onClick={() => {handleCommentLike(data.commentID,"indepthComment")}}> Like </Button>
-                )
-              }
-              var ownerAbilities;
-              if (designation === "changed"){
-                <div className='confMsg'> Your comment has changed successfully. </div>
-              }
-              if (String(data.commenterID) === String(cookies.get("id"))){
-                ownerAbilities = (
-                  <div>
-                    <Button onClick={()=>{showEditComment(data.commentID,"indepthComment",data.postID,0,0)}}>Edit Comment</Button>
-                    <br></br>
-                    <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.commentID,"indepthComment",data.postID,0,0)}}> Delete Comment </Button>
-                  </div>
-                )
-              }
-              var posterAbilities;
-              if (String(data.posterID) === String(cookies.get("id"))){
-                posterAbilities = (
-                  <div>
-                  <Button onClick={() => {showEditPost(data.postID,"indepthComment",0,0,"","","",data.commentID)}}>
-                  Edit Post
-                  </Button>
-                  <br></br>
-                  <Button variant='danger' onClick={()=>{showDeletePostConfirmation(data.postID,"indepthComment",0,0,data.commentID)}}>
-                  Delete Post
-                  </Button>
-                  </div>
-                )
-              }
               changeInDepthCode(
                 <div>
-                  <Card>
-                  <Card.Title>Comment Information</Card.Title>
-                  <Card.Subtitle><div className="linkText" onClick={() => {showUserProfile(data.commenterID)}}>{"Username: " + data.commenterUsername}</div> </Card.Subtitle>
-                  <Card.Subtitle>{"User ID: " + data.commenterID}</Card.Subtitle>
-                  <Card.Body> {data.comment} </Card.Body>
-                  {editButton}
-                  <Card.Body> {likeCommentButton} </Card.Body>
-                  <Card.Subtitle> {data.commentDate} </Card.Subtitle>
-                  </Card>
-                  <Card>
-                  <Card.Title>Post Information</Card.Title>
-                  <Card.Title>{data.title}</Card.Title>
-                  <Card.Subtitle> {"Username: " + data.posterUsername} </Card.Subtitle>
-                  <Card.Subtitle> {"User ID: " + data.posterID} </Card.Subtitle>
-                  <Card.Body> {data.content} </Card.Body>
-                  <Card.Body> {likePostButton} </Card.Body>
-                  <Card.Subtitle> {data.postDate} </Card.Subtitle>
-                  </Card>
-                  {ownerAbilities}
-                  {posterAbilities}
+                  Comment Information
+                  {simpleComment('simpleComment',Object.assign({},data,{totalLikes: data.totalCommentLikes,userID: data.commenterID,username:data.commenterUsername}),data.commentLiked,'indepthComment')}
+                  Associated Post Information
+                  {simplePost('simplePost',Object.assign({},data,{totalLikes: data.totalPostLikes,userID: data.posterID, username: data.posterUsername}),data.postLiked,'indepthComment')}
                 </div>
               )
             }
             ///FIX THIS: May need more details or beautification
-            //FIX THIS: Maybe Include the like button above?
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
           var detect = cookies.get("sessionID") && cookies.get("id");

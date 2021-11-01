@@ -1869,14 +1869,15 @@ app.route("/comment")
         //can pull not friendly private comments //FIX QUERY - NEEDS LIKE AMOUNT
         var sQuery =
           `
-        select commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
-        , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility
+        select comments.commentID as commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
+        , uzers.visibility as commenterVisibility, ucers.userID as authorID, title, content, posts.visibility as postVisibility, subDate as postDate, ucers.username as posterUsername, ucers.visibility as posterVisibility,
         ifnull(totalCommentLikes,0) as totalCommentLikes,
         ifnull(tComments,0) as totalComments,
         ifnull(totalPostLikes,0) as totalPostLikes
-        from comments LEFT JOIN (select userID,username,visibility from users) uzers
-        on uzers.userID = comments.userID LEFT JOIN posts ON comments.postID = posts.postID
-        LEFT JOIN (select userID, username,visibility from users) ucers
+        from comments
+        LEFT JOIN (select userID,username,visibility from users) uzers on uzers.userID = comments.userID
+        LEFT JOIN posts ON comments.postID = posts.postID
+        LEFT JOIN (select userID, username,visibility from users) ucers ON posts.userID = ucers.userID
         LEFT JOIN (select commentID, count(*) as totalCommentLikes from commentLikes GROUP BY commentID) totalCommentLikes on totalCommentLikes
         LEFT JOIN (select count(*) as totalPostLikes,postID from likes group by postID) totalPostLikes on totalPostLikes.postID = posts.postID
         LEFT JOIN (
@@ -1885,12 +1886,11 @@ app.route("/comment")
           WHERE users.visibility = "public"
           AND comments.visibility = "public" GROUP BY postID
         ) totalPostComments on totalPostComments.postID = posts.postID
-        ON posts.userID = ucers.userID
         WHERE comments.visibility = 'public'
         AND posts.visibility = 'public'
         AND ucers.visibility = 'public'
         AND uzers.visibility = 'public'
-        AND commentID = ?
+        AND comments.commentID = ?
         `
         connection.query(sQuery, [commentID], function(err, result, fields) {
           if (err) {
@@ -1908,7 +1908,7 @@ app.route("/comment")
             return res.status(200).json({
               status: 0,
               message: "Here's your comment.",
-              comment: results.comments,
+              comments: results.comments,
               commentID: results.commentID,
               commenterID: results.commenterID,
               totalCommentLikes: results.totalCommentLikes,
@@ -2008,7 +2008,7 @@ app.route("/comment")
               return res.status(200).json({
                 status: 0,
                 message: "Here's your comment.",
-                comment: results.comments,
+                comments: results.comments,
                 commentID: results.commentID,
                 commenterID: results.commenterID,
                 commentVisibility: results.commentVisibility,
