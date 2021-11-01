@@ -11,7 +11,9 @@ import React from "react";
 import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need to FIx
+  //reformat for simpleposts and comments
   //Setting cookies reloads the page
+    //will need to set origin / current page cookie to send users back
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
       // do a fetch with the same details but with no userID and sessionID
 //Look over all exitButton classes
@@ -63,7 +65,6 @@ function App() {
   const serverLocation = "http://localhost:3001";
   // const serverLocation = process.env.SERVERLOCATION;
   const cookies = React.useMemo(() => {return new Cookies()},[])
-  //Important Variables
   const [mainCode,changeCode] = React.useState(
     <div>
     <h1> QuickiePost </h1>
@@ -93,20 +94,6 @@ function App() {
         display: 'none'
     }
   );
-  const [currentPageVariables,changePageVariables] = React.useState({
-    origin: "", //if origin is not the same as the page set start and end to defaults
-    startPos: 0,
-    endPos: 10,
-    title: "",
-    content: "",
-    visibility: "",
-    comments: "",
-    searchPosts: [],
-    postID: 0,
-    commentID: 0,
-    userID: 0,
-    currentlyShown: "main"
-  })
   const [lightDarkMode,changeLighting] = React.useState({
     lightingMode: "light"
   })
@@ -114,6 +101,7 @@ function App() {
   const getHome = React.useCallback(
     (beginPosition = 0,endPosition = 10) => {
       var lastDisplayed = "main";
+      var pageVariables = {};
       //Helper Functions
       function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
         var likePostButton;
@@ -138,6 +126,20 @@ function App() {
               isOwnerButtons = (
                 <div>
                   <Button onClick={() => {showEditPost(dict.postID,origin,startPos,endPos)}}> Edit Post</Button>
+                  <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
+                </div>
+              )
+            }
+          }
+          else if (cookies.get("adminStatus") === "admin"){
+            if (origin === 'indepthPost'){
+              isOwnerButtons = (
+                <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
+              )
+            }else{
+              isOwnerButtons = (
+                <div>
+                  <Button onClick={()=>{showInDepthPost(dict.postID)}}> Expand Post </Button><br></br>
                   <Button variant='danger' onClick={() => {showDeletePostConfirmation(dict.postID,origin,startPos,endPos)}}> Delete Post </Button>
                 </div>
               )
@@ -190,7 +192,7 @@ function App() {
             if (origin !== "indepthComment"){
               isOwnerButtons = (
                 <div>
-                  <Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button>
+                  <Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button><br></br>
                   <Button onClick={()=>{showEditComment(dict.commentID,origin,postID,startPos,endPos)}}>Edit Comment</Button>
                   <Button onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
                 </div>
@@ -199,10 +201,29 @@ function App() {
               isOwnerButtons = (
                 <div>
                   <Button onClick={()=>{showEditComment(dict.commentID,origin,postID,startPos,endPos)}}>Edit Comment</Button>
-                  <Button onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
+                  <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
                 </div>
               )
             }
+          }
+          else if (cookies.get("adminStatus") === "admin"){
+            if (origin === "indepthComment"){
+              isOwnerButtons = (
+                <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
+              )
+            }else{
+              isOwnerButtons = (
+                <div>
+                  <Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button><br></br>
+                  <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(dict.commentID,origin,postID,startPos,endPos)}}>Delete Comment</Button>
+                </div>
+              )
+            }
+          }
+          else if (origin !== "indepthComment"){
+            isOwnerButtons = (
+              <Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button>
+            )
           }
         }else{
           if (origin !== "indepthPost"){
@@ -3865,12 +3886,16 @@ function App() {
               cookies.remove("adminStatus",{path:'/'});
               changeNavToLoggedOut();
               //FIX THIS: RELOAD CURRENT PAGE INSTEAD OF GOING HOME
+              console.log("Logged Out.")
               getHome();
             }
           })
       }
       //MAIN
       showOnlyMain();
+      if (cookies.get('redirectTo')){
+
+      }
       if (cookies.get('id')){
         console.log("Logged In");
         changeNavToLoggedIn();
