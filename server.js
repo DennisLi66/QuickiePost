@@ -557,6 +557,7 @@ app.route("/post")
               var toPrep = [];
               for (let i = 0; i < results.length; i++) {
                 if (results[i].commentID) {
+                  //FIX THIS: REINSTATE THE BLANK LINES
                   toPrep.push({
                     commentID: results[i].commentID,
                     commenterID: results[i].commenterID,

@@ -229,7 +229,7 @@ function App() {
             )
           }
         }else{
-          if (origin !== "indepthPost"){
+          if (origin !== "indepthComment"){
             isOwnerButtons = (<Button onClick={()=>{showInDepthComment(dict.commentID)}}>Expand Comment</Button>)
           }
           likeCommentButton = (<Button onClick={() => {getLoginPage(origin)}}> Like </Button>);
@@ -1242,7 +1242,7 @@ function App() {
           </div>
         )
       }
-      function forgotPasswordPage(msg = ""){
+      function forgotPasswordPage(origin,msg = ""){
         var errBanner = (
           <div></div>
         )
@@ -1279,7 +1279,7 @@ function App() {
             if (data.status === -1){
               showErrorPage({origin: "forgotPassword", message: data.message})
             }else if (data.status === -2){
-              forgotPasswordPage("That email was not found.")
+              forgotPasswordPage(origin,"That email was not found.")
             }else{
               changeLoginCode(
                 <div>
@@ -2939,38 +2939,11 @@ function App() {
               else{
                 openInDepthPost();
                 var listOfComments = [];
-                console.log(data.comments)
                 for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
                   var comment = data.comments[key];
-                  var likeButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);
-                  if (detect){
-                    likeButton = (<Button onClick={() => handleCommentLike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Like</Button>);
-                    if (comment.commentLiked && comment.commentLiked === "true"){
-                      likeButton = (<Button onClick={() => handleCommentUnlike(data.comments[key].commentID,"indepthPost",postID,0,commentStart,commentEnd)}>Unlike</Button>)
-                    }
-                  }
-                  var commentownerAbilities;
-                  if (String(cookies.get("id")) === String(comment.commenterID)){
-                    commentownerAbilities = (
-                      <Card.Body>
-                        <Button onClick={()=>{showEditComment(data.comments[key].commentID,"indepthPost",postID,commentStart,commentEnd)}}>Edit Comment</Button>
-                        <br></br>
-                        <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(data.comments[key].commentID,"indepthPost",postID,commentStart,commentEnd)}}> Delete Comment </Button>
-                      </Card.Body>
-                    )
-                  }
                   listOfComments.push(
                     <ListGroup.Item key={key}>
-                      <Card>
-                      <Card.Header><div className='linkText' onClick={() => {showUserProfile(data.comments[key].commenterID)}}>{comment.commenterName}</div></Card.Header>
-                      <Card.Header> {comment.commentDate} </Card.Header>
-                      <Card.Body><div className="linkText" onClick={()=>{showInDepthComment(data.comments[key].commentID)}}>{comment.comments}</div></Card.Body>
-                      <Card.Footer> Likes: {comment.commentLikes}
-                      <br></br>
-                      {likeButton}
-                      </Card.Footer>
-                      {commentownerAbilities}
-                      </Card>
+                      {simpleComment(key,Object.assign({},comment,{totalLikes: comment.commentLikes,username: comment.commenterName,userID: comment.commenterID}),comment.commentLiked,'indepthPost')}
                     </ListGroup.Item>
                   )
                 }
@@ -3038,15 +3011,7 @@ function App() {
                     <Card.Header className='rightAlignHeader'><Button onClick={showOnlyMain}>Close</Button></Card.Header>
                     <Card.Header><h1>{data.title}</h1></Card.Header>
                     {confrimation}
-                    <Card.Header> <div className='linkText' onClick={() => {showUserProfile(data.authorID)}}>
-                    Author: {data.authorName}</div><br></br>
-                    Date Written: {data.postDate}
-                    <br></br>
-                    Likes: {data.totalLikes}
-                    <br></br>
-                    {postLikedText}
-                    </Card.Header>
-                    <Card.Body> {data.content} </Card.Body>
+                    {simplePost(postID,Object.assign({},data,{username:data.authorName,userID: data.authorID, totalComments: data.comments.length}),data.likedPost,"indepthPost")}
                     <ListGroup>
                     <h2> Comments </h2>
                     <div>{writeCommentButton}</div>
@@ -3740,7 +3705,7 @@ function App() {
           }else if (origin === "userProfilePosts"){
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"posts")}}> Return </Button>)
           }else if (origin === "forgotPassword"){
-            returnButton = (<Button onClick={()=>{forgotPasswordPage()}}> Return </Button>);
+            returnButton = (<Button onClick={()=>{forgotPasswordPage(origin)}}> Return </Button>);
           }
           else if (origin === "search"){
                 returnButton = (<Button onClick={()=>{getSearchPage()}}> Return </Button>);
