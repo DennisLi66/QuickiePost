@@ -13,8 +13,8 @@ require('dotenv').config();
 //things ill Need to FIx
   //likes from a simplecomment from indepthcomments and from user profile seem different
   //reformat for simpleposts and comments
-    //comments:
-    //posts: indepthpost,search feed, home feed, profile posts, indepth comment, delete and edit post, liked posts
+    //comments: profile comments, liked comments, edit/delete comments
+    //posts:  delete and edit post, liked posts
   //Setting cookies reloads the page
     //will need to set origin / current page cookie to send users back
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
@@ -2599,39 +2599,10 @@ function App() {
           function showPosts(username,posts,start,end,comments, variation = ""){
             showOnlyMain();
             var listOfShownPosts = [];
-            var detect = cookies.get('id') && cookies.get('sessionID');
             for (let i = start; i < (Math.min(end,posts.length)); i++){
               var dict = posts[i];
-              var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfilePosts")}}>Like</Button>);
-              if (detect){
-                likeText = (<Button className='likeText' onClick={() => {handlePostLike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Like</Button>);
-                if (dict.Liked === "true"){
-                  likeText = (<Button className='likeText'onClick={() => {handlePostUnlike(posts[i].postID,"userProfile",0,userID,startPos,endPos)}}>Unlike </Button>);
-                }
-              }
-              var ownerAbilities;
-              if (String(userID) === String(cookies.get("id"))){
-                ownerAbilities = (
-                  <Card.Body>
-                    <Button onClick={() => {showEditPost(posts[i].postID,"userProfile",startPos,endPos)}}> Edit Post </Button><br></br>
-                    <Button variant='danger' onClick={() => {showDeletePostConfirmation(posts[i].postID,"indepthPost",startPos,endPos)}}> Delete Post </Button>
-                  </Card.Body>
-                )
-              }
               listOfShownPosts.push(
-                <Card key={i}>
-                  <Card.Title> {dict.title} </Card.Title>
-                  <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                  <Card.Body> {dict.content} </Card.Body>
-                  <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-                  <Card.Body>
-                  Likes: {dict.totalLikes} Comments: {dict.totalComments}
-                  <br></br>
-                  {likeText}
-                  </Card.Body>
-                  <div><Button onClick={() => {showInDepthPost(posts[i].postID,0,10)}}>View Post</Button></div>
-                  {ownerAbilities}
-                </Card>
+                simplePost(i,dict,dict.Liked,"profilePosts")
               )
             }
             var paginationBar;
@@ -2968,13 +2939,6 @@ function App() {
                       </ul>
                     </li>
                   </ul>)
-                }
-                var postLikedText = (<Button onClick={() => {getLoginPage("indepthPost")}}>Like</Button>);;
-                if (detect){
-                  postLikedText = (<Button onClick={() => {handlePostLike(data.postID,"indepthPost")}}>Like</Button>);
-                  if (data.likedPost && data.likedPost === "true"){
-                    postLikedText = (<Button onClick={() => {handlePostUnlike(data.postID,"indepthPost")}}>Unlike</Button>)
-                  }
                 }
                 var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Add Comment</Button>);
                 if (detect){
