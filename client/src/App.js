@@ -12,6 +12,7 @@ import Cookies from 'universal-cookie';
 require('dotenv').config();
 //things ill Need to FIx
   //likes from a simplecomment from indepthcomments and from user profile seem different
+  //hashtag search not working for Molderas post
   //reformat for simpleposts and comments
     //comments: profile comments, liked comments, edit/delete comments
     //posts:  delete and edit post, liked posts
@@ -2488,37 +2489,9 @@ function App() {
           function showComments(username,comments,start,end,posts){ ///Doesnt test session
             showOnlyMain();
             var listOfShownComments = [];
-            var likeText = (<Button className='likeText' onClick={() => {getLoginPage("userProfileComments")}}>Like</Button>);
             for (let i = start; i < (Math.min(end,comments.length)); i++){
               var dict = comments[i];
-              if (cookies.get('sessionID') && cookies.get('id')){
-                likeText = (<Button className='likeText' onClick={() => {handleCommentLike(comments[i].commentID,"userProfile",0,userID,start,end)}}>Like</Button>);
-                if (dict.Liked === "true"){
-                  likeText = (<Button className='likeText'onClick={() => {handleCommentUnlike(comments[i].commentID,"userProfile",0,userID,start,end)}}>Unlike </Button>);
-                }
-              }
-              var ownerAbilities;
-              if (String(cookies.get('id')) === String(userID)){
-                ownerAbilities = (
-                  <Card.Body>
-                  <Button onClick={()=>{showEditComment(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}>Edit Comment</Button><br></br>
-                  <Button variant='danger' onClick={()=>{showDeleteCommentConfirmation(comments[i].commentID,"indepthComment",comments[i].postID,start,end)}}> Delete Comment </Button>
-                  </Card.Body>
-                )
-              }
-              listOfShownComments.push(
-                <Card key={i}>
-                  <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                  <Card.Body> {dict.comments} </Card.Body>
-                  <Card.Subtitle> {dict.submissionDate} </Card.Subtitle>
-                  <Card.Body>
-                  <Button onClick={() => {showInDepthComment(comments[i].commentID,0,10)}}> View Comment </Button><br></br>
-                  Likes: {dict.totalLikes}<br></br>
-                  {likeText}
-                  </Card.Body>
-                  {ownerAbilities}
-                </Card>
-              )
+              listOfShownComments.push(simpleComment(i,Object.assign({},dict,{commentDate: dict.submissionDate}),dict.Liked,'profileComments'))
             }
             var paginationBar;
             if (comments.length > 10){
@@ -2883,7 +2856,7 @@ function App() {
                   Comment Information
                   {simpleComment('simpleComment',Object.assign({},data,{totalLikes: data.totalCommentLikes,userID: data.commenterID,username:data.commenterUsername}),data.commentLiked,'indepthComment')}
                   Associated Post Information
-                  {simplePost('simplePost',Object.assign({},data,{totalLikes: data.totalPostLikes,userID: data.posterID, username: data.posterUsername}),data.postLiked,'indepthComment')}
+                  {simplePost('simplePost',Object.assign({},data,{subDate: data.postDate,totalLikes: data.totalPostLikes,userID: data.posterID, username: data.posterUsername}),data.postLiked,'indepthComment')}
                 </div>
               )
             }
@@ -2975,7 +2948,7 @@ function App() {
                     <Card.Header className='rightAlignHeader'><Button onClick={showOnlyMain}>Close</Button></Card.Header>
                     <Card.Header><h1>{data.title}</h1></Card.Header>
                     {confrimation}
-                    {simplePost(postID,Object.assign({},data,{username:data.authorName,userID: data.authorID, totalComments: data.comments.length}),data.likedPost,"indepthPost")}
+                    {simplePost(postID,Object.assign({},data,{subDate: data.postDate,username:data.authorName,userID: data.authorID, totalComments: data.comments.length}),data.likedPost,"indepthPost")}
                     <ListGroup>
                     <h2> Comments </h2>
                     <div>{writeCommentButton}</div>
