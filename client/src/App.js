@@ -14,8 +14,10 @@ require('dotenv').config();
   //likes from a simplecomment from indepthcomments and from user profile seem different
   //hashtag search not working for Molderas post
   //reformat for simpleposts and comments
-    //comments: profile comments, liked comments, edit/delete comments
-    //posts:  delete and edit post, liked posts
+    //comments: liked comments, edit/delete comments
+    //posts:  delete and edit post
+    //update handling post liking and unliking, most notably from profile
+      //also make sure it redirects properly
   //Setting cookies reloads the page
     //will need to set origin / current page cookie to send users back
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
@@ -107,7 +109,7 @@ function App() {
       var lastDisplayed = "main";
       var pageVariables = {};
       //Helper Functions
-      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, searchPosts = []){
+      function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, userID = 0, searchPosts = []){
         var likePostButton;
         var commentButton;
         var isOwnerButtons;
@@ -183,7 +185,7 @@ function App() {
         </Card>
         )
       }
-      function simpleComment(key,dict,hasLiked=false,origin="",postID,startPos = 0, endPos = 10, searchComments = []){
+      function simpleComment(key,dict,hasLiked=false,origin="",postID,startPos = 0, endPos = 10, userID = 0, searchComments = []){
         var likeCommentButton;
         var isOwnerButtons;
         if (cookies.get('sessionID') && cookies.get('id')){
@@ -665,6 +667,7 @@ function App() {
         if (!cookies.get("sessionID") || !cookies.get("id")){
           getLoginPage(origin);
         }else{
+          console.log(origin);
           const requestSetup = {
               method: 'PUT',
           }
@@ -1487,6 +1490,7 @@ function App() {
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
           //FIX THIS: Expired Page should redirect to userprofule
+          //FIX THIS: Update simplePosts and Comments to handle liking, editing, and deleting
           //Admin functions
           function confirmUserBan(toDo,username){
             if (toDo === "ban"){
@@ -1921,33 +1925,7 @@ function App() {
                   else{
                     for (let i = firstPoint; i < Math.min(secondPoint,data.contents.length); i++){
                       var dict = data.contents[i];
-                      var ownerOptions = (<div></div>);
-                      if (String(cookies.get("id") === String(dict.userID))){
-                        ownerOptions = (
-                          <div>
-                            <Button onClick={()=>{showEditPost(data.contents[i].postID,origin,firstPoint,secondPoint)}}> Edit Post </Button>
-                            <br></br>
-                            <Button onClick={()=>{showDeletePostConfirmation(data.contents[i].postID,origin,firstPoint,secondPoint)}}> Delete Post</Button>
-                          </div>
-                        )
-                      }
-                      listOfPosts.push(
-                        <Card key={i}>
-                          <Card.Title> {dict.title} </Card.Title>
-                          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                          <Card.Subtitle> {"User ID: " + dict.userID} </Card.Subtitle>
-                          <Card.Body> {dict.content} </Card.Body>
-                          <Card.Subtitle> {dict.subDate} </Card.Subtitle>
-                          <Card.Body>
-                          Likes: {dict.totalLikes} Comments: {dict.totalComments}
-                          <br></br>
-                          <Button onClick={()=>{showInDepthPost(data.contents[i].postID)}}> Expand Post </Button>
-                          <br></br>
-                          <Button onClick={() => {handlePostUnlike(data.contents[i].postID,'likedPosts',0,cookies.get("id"),firstPoint,secondPoint)}}> Unlike Post </Button>
-                          {ownerOptions}
-                          </Card.Body>
-                        </Card>
-                      )
+                      listOfPosts.push(simplePost(i,Object.assign({},dict,{totalComments:dict.totalComments}),true,"likedPost"))
                     }
                   }
                   var paginationBar;
@@ -2491,7 +2469,7 @@ function App() {
             var listOfShownComments = [];
             for (let i = start; i < (Math.min(end,comments.length)); i++){
               var dict = comments[i];
-              listOfShownComments.push(simpleComment(i,Object.assign({},dict,{commentDate: dict.submissionDate}),dict.Liked,'profileComments'))
+              listOfShownComments.push(simpleComment(i,Object.assign({},dict,{commentDate: dict.submissionDate}),dict.Liked === "true",'profileComments'))
             }
             var paginationBar;
             if (comments.length > 10){
@@ -2575,7 +2553,7 @@ function App() {
             for (let i = start; i < (Math.min(end,posts.length)); i++){
               var dict = posts[i];
               listOfShownPosts.push(
-                simplePost(i,dict,dict.Liked,"profilePosts")
+                simplePost(i,dict,dict.Liked === 'true',"userProfile")
               )
             }
             var paginationBar;
