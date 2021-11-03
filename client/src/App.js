@@ -2007,21 +2007,7 @@ function App() {
                           </div>
                         )
                       }
-                      listOfComments.push(
-                        <Card key={i}>
-                          <Card.Subtitle> {"Username: " + dict.username} </Card.Subtitle>
-                          <Card.Subtitle> {"User ID: " + dict.commenterID} </Card.Subtitle>
-                          <Card.Body> {dict.comments} </Card.Body>
-                          <Card.Subtitle> {dict.commentDate} </Card.Subtitle>
-                          <Card.Body>
-                          Likes: {dict.commentLikes}
-                          <br></br>
-                          <Button onClick={()=>{handleCommentUnlike(data.contents[i].commentID,'likedComments',0,cookies.get("id"),firstPoint,secondPoint)}}> Unlike Comment </Button>
-                          <br></br>
-                          {ownerOptions}
-                          <Button onClick={()=>{showInDepthComment(data.contents[i].commentID)}}> Expand Comment </Button>
-                          </Card.Body>
-                        </Card>
+                      listOfComments.push(simpleComment(i,Object.assign({},dict,{userID:dict.commenterID}),true,"likedComments")
                       )
                     }
                     listOfCommentsCode = (

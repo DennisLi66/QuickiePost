@@ -2827,7 +2827,7 @@ app.route("/mylikedcomments")
                 title: results[i].title,
                 userID: results[i].userID,
                 content: results[i].content,
-                commentLikes: results[i].totalLikes,
+                totalLikes: results[i].totalLikes,
                 // subDate: results[i].subDate,
                 username: results[i].username,
                 postID: results[i].postID,
