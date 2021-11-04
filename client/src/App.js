@@ -3679,6 +3679,15 @@ function App() {
             }
           })
       }
+      function removeCredentials(){
+        cookies.remove("sessionID",{path: '/'});
+        cookies.remove("expireTime",{path:"/"})
+        cookies.remove("name",{path:'/'});
+        cookies.remove("id",{path:'/'});
+        cookies.remove("lightingMode",{path:'/'});
+        cookies.remove("adminStatus",{path:'/'});
+        changeNavToLoggedOut();
+      }
       //MAIN
       showOnlyMain();
       if (cookies.get('redirectTo')){
@@ -3699,24 +3708,34 @@ function App() {
         changeNavToLoggedOut();
       }
       var listOfPosts = [];
+      if (paginationPosts.length > 0){
+        for (let key = beginPosition; key < Math.min(paginationPosts.length,endPosition); key++){
+          listOfPosts.push(simplePost(key,paginationPosts[key],paginationPosts[key].Liked === 'true',"home",beginPosition,endPosition))
+        }
+      }
+      else{
       var extensionString = "";
+      console.log(cookies.get("id"))
       if (cookies.get("id") && cookies.get("sessionID")){
         extensionString = "?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id");
       }
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
+            console.log(data);
             if (data.status === -1){
               showErrorPage({startPos: beginPosition, endPos: endPosition, message: data.message, origin: "home"});
             }else if (data.status === -11){
+              removeCredentials();
               fetch(serverLocation + "/posts")
                 .then(response => response.json())
                 .then(data1 => {
+                  console.log(data1);
                   if (data1.status === -1){
                     showErrorPage({startPos: beginPosition, endPos: endPosition, message: data1.message, origin: "home"});
                   }else{
                     for (let key = beginPosition; key < Math.min(data1.contents.length,endPosition); key++){
-                      listOfPosts.push(simplePost(key,data1.contents[key],data1.Liked,"home",beginPosition,endPosition))
+                      listOfPosts.push(simplePost(key,data1.contents[key],data1.contents[key].Liked  === "true","home",beginPosition,endPosition))
                     }
                     if (listOfPosts.length === 0){
                       listOfPosts = (<div> There are no posts to show.</div>)
@@ -3726,7 +3745,7 @@ function App() {
                       var paginationSlots = [];
                       for (let i = 0; i < Math.ceil(data1.contents.length / 10); i++){
                         paginationSlots.push(
-                          <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data1.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data1.contents.length)}</div></li>
+                          <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data1.contents.length),data1.contents)}}>{10 * i + 1} through {Math.min(10*i+10,data1.contents.length)}</div></li>
                         )
                       }
                       paginationBar = (
@@ -3752,7 +3771,7 @@ function App() {
                 })
             }else{
               for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
-                listOfPosts.push(simplePost(key,data.contents[key],data.Liked,"home",beginPosition,endPosition))
+                listOfPosts.push(simplePost(key,data.contents[key],data.contents[key].Liked === "true","home",beginPosition,endPosition))
               }
               if (listOfPosts.length === 0){
                 listOfPosts = (<div> There are no posts to show.</div>)
@@ -3786,6 +3805,7 @@ function App() {
               )
             }
           })
+    }
     },[serverLocation,cookies,changeCode, lightDarkMode])
 
   React.useEffect(() => {
