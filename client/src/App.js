@@ -32,10 +32,6 @@ require('dotenv').config();
   //change navbar
   //need to update queries to not find hidden content: indepth post can find hidden comments, and homepage returns totalCOmmetns with hidde ones
 //make better navbar
-//Sessions do not work as intended - fix sessions in backend
-//Expired Page DOesnt Show
-//session refreshing - check it works and update cookies when it updates - it most certainly doesnt work
-//need to return new sessionDate from server to update in client
 //////////////////////////////Client: Make use of client variables
 ///will need to set lighting based on cookie recieved from login
 ///css as it is doesnt currently refresh the page for new likes, incorporate new variables
@@ -3373,9 +3369,13 @@ function App() {
         fetch(serverLocation + "/myfeed?userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
           .then(response=>response.json())
           .then(data =>{
-            console.log(data);
             if (data.status === -11){
-              showExpiredPage([{}]);
+              changeCode(
+                <div>
+                  <div className='errMsg'>Your session has expired, so you have been logged out.</div>
+                  <Button onClick={getHome()}> Return to Homepage </Button>
+                </div>
+              )
             }else if (data.status === -1){
               showErrorPage({message: data.message})
             }else{
@@ -3698,13 +3698,7 @@ function App() {
         changeNavToLoggedIn();
       }
       else{
-        console.log("Not Logged In.");
-        cookies.remove("sessionID",{path: '/'});
-        cookies.remove("expireTime",{path:"/"})
-        cookies.remove("name",{path:'/'});
-        cookies.remove("id",{path:'/'});
-        cookies.remove("lightingMode",{path:'/'});
-        cookies.remove("adminStatus",{path:'/'});
+        removeCredentials()
         changeNavToLoggedOut();
       }
       var listOfPosts = [];
@@ -3715,14 +3709,12 @@ function App() {
       }
       else{
       var extensionString = "";
-      console.log(cookies.get("id"))
       if (cookies.get("id") && cookies.get("sessionID")){
         extensionString = "?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id");
       }
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
-            console.log(data);
             if (data.status === -1){
               showErrorPage({startPos: beginPosition, endPos: endPosition, message: data.message, origin: "home"});
             }else if (data.status === -11){
