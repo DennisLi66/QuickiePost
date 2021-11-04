@@ -135,39 +135,6 @@ app.get("/posts", function(req, res) {
   `
   var variables = [];
   if (req.query.userID && req.query.sessionID) {
-    sQuery =
-      `
-      SELECT * FROM (
-      SELECT posts.postID as postID, posts.userID as userID, posts.title as title, posts.content as content, posts.visibility as postVisibility, posts.subDate as postDate,
-      users.userName as username, users.email as email, users.visibility as userVisibility, ifnull(tLikes,0) as totalLikes, if(isLiked.postID is null,"false","true") as Liked,
-      ifnull(tComments,0) as totalComments, if(blockingThem.blockerID is null, "false","true") as amBlockingThem, if(blockingMe.blockedID is null,"false","true") as isBlockingMe,
-      if(viewers.viewerID is null, "false","true") as isViewer, checkAdmin.classification as viewerClassification
-      FROM posts LEFT JOIN users ON posts.userID = users.userID
-      LEFT JOIN (select postID,count(*) as tLikes from likes GROUP BY postID) totalLikes ON totalLikes.postID = posts.postID -- totalLikes
-      LEFT JOIN (select * FROM likes as Liked WHERE userID = ?) isLiked ON isLiked.postID = posts.postID -- isLiked
-      LEFT JOIN (
-        select postID, count(*) as tComments
-        from comments LEFT JOIN users on users.userID = comments.userID
-        LEFT JOIN (select * from viewers WHERE viewers.viewerID = ?) viewers on viewers.posterID = comments.userID
-        LEFT JOIN (select * from blocked WHERE blockedID = ?) isBlockingMe on isBlockingMe.blockerID = comments.userID
-        LEFT JOIN (select * from blocked WHERE blockerID = ?) amBlockingThem on amBlockingThem.blockedID = comments.userID,
-        (select userID,classification from users WHERE userID = ?) classification
-        WHERE (classification.classification = "admin")
-        OR ((comments.visibility != "hidden" and  users.visibility != "hidden")
-        AND (isBlockingMe.blockedID is null AND amBlockingThem.blockerID is null)
-        AND ((comments.visibility != 'private' AND users.visibility != 'private')
-        OR viewers.viewerID is not null)) GROUP BY postID
-      ) comments ON comments.postID = posts.postID -- totalComments
-      LEFT JOIN (select * from blocked WHERE blockerID = ?) blockingThem ON blockingThem.blockedID = posts.userID --  meblockingthem
-      LEFT JOIN (select * from blocked where blockedID = ?) blockingMe on blockingMe.blockerID = posts.userID  -- themblockingme
-      LEFT JOIN (select * from viewers WHERE viewerID = ?) viewers on viewers.posterID = posts.userID -- viewingThem
-      , (select * from users WHERE userID = ?) checkAdmin) posts
-      WHERE viewerClassification = "admin" OR ((amBlockingThem = "false" AND isBlockingMe = "false")
-      AND userVisibility != "hidden" AND postVisibility != "hidden" AND (
-        (isViewer = "true") OR ((userVisibility != "private" AND postVisibility != "private") OR userID = ?)))
-      Order BY postDate DESC
-      `;
-    variables.push(req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.userID, req.query.userID);
     return checkSessionQueries(res,req.query.userID, req.query.sessionID, function() {
       connection.query(sQuery, variables, function(err, results, fields) {
         if (err) {

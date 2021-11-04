@@ -13,11 +13,9 @@ require('dotenv').config();
 //things ill Need to FIx
   //likes from a simplecomment from indepthcomments and from user profile seem different
   //hashtag search not working for Molderas post
-  //reformat for simpleposts and comments
-    //comments: liked comments, edit/delete comments
-    //posts:  delete and edit post
     //update handling post liking and unliking, most notably from profile
       //also make sure it redirects properly
+      //make use of page variables for this case
   //Setting cookies reloads the page
     //will need to set origin / current page cookie to send users back
 //on expiration, either redo the route, dont redo it, or send json to checksessionqueries so it can add it to its response
@@ -105,7 +103,7 @@ function App() {
   })
   //
   const getHome = React.useCallback(
-    (beginPosition = 0,endPosition = 10) => {
+    (beginPosition = 0,endPosition = 10, paginationPosts = []) => {
       var lastDisplayed = "main";
       var pageVariables = {};
       //Helper Functions
@@ -1996,17 +1994,6 @@ function App() {
                   }else{
                     for (let i = firstPoint;  i < Math.min(secondPoint,data.contents.length); i++){
                       var dict = data.contents[i];
-                      var ownerOptions = (<div></div>);
-                      if (String(dict.commenterID) === String(cookies.get("id"))){
-                        ownerOptions = (
-                          <div>
-                            <Button onClick={()=>{showEditComment(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Edit Comment</Button>
-                            <br></br>
-                            <Button type='danger' onClick={()=>{showDeleteCommentConfirmation(data.contents[i].commentID,'likedComments',0,firstPoint,secondPoint)}}>Delete Comment</Button>
-                            <br></br>
-                          </div>
-                        )
-                      }
                       listOfComments.push(simpleComment(i,Object.assign({},dict,{userID:dict.commenterID}),true,"likedComments")
                       )
                     }
@@ -3719,11 +3706,50 @@ function App() {
         fetch(serverLocation + "/posts" + extensionString)
           .then(response=>response.json())
           .then(data => {
-            console.log(data);
             if (data.status === -1){
               showErrorPage({startPos: beginPosition, endPos: endPosition, message: data.message, origin: "home"});
             }else if (data.status === -11){
-              showExpiredPage({startPos: beginPosition,endPos:endPosition, origin: "home"});
+              fetch(serverLocation + "/posts")
+                .then(response => response.json())
+                .then(data1 => {
+                  if (data1.status === -1){
+                    showErrorPage({startPos: beginPosition, endPos: endPosition, message: data1.message, origin: "home"});
+                  }else{
+                    for (let key = beginPosition; key < Math.min(data1.contents.length,endPosition); key++){
+                      listOfPosts.push(simplePost(key,data1.contents[key],data1.Liked,"home",beginPosition,endPosition))
+                    }
+                    if (listOfPosts.length === 0){
+                      listOfPosts = (<div> There are no posts to show.</div>)
+                    }
+                    var paginationBar;
+                    if (data1.contents.length > 10){
+                      var paginationSlots = [];
+                      for (let i = 0; i < Math.ceil(data1.contents.length / 10); i++){
+                        paginationSlots.push(
+                          <li key={i}><div className="dropdown-item" onClick={() => {getHome(10 * i,Math.min(10*i+10,data1.contents.length))}}>{10 * i + 1} through {Math.min(10*i+10,data1.contents.length)}</div></li>
+                        )
+                      }
+                      paginationBar = (
+                       <ul className="nav nav-tabs">
+                        <li className="nav-item dropdown">
+                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Posts Range</div>
+                          <ul className="dropdown-menu">
+                            {paginationSlots}
+                          </ul>
+                        </li>
+                      </ul>)
+                    }
+                    changeCode(
+                      <div>
+                        <h1> QuickiePost </h1>
+                        <div className='errMsg'>Your session has expired, so you have been logged out.</div>
+                        {paginationBar}
+                        {listOfPosts}
+                        {paginationBar}
+                      </div>
+                    )
+                  }
+                })
             }else{
               for (let key = beginPosition; key < Math.min(data.contents.length,endPosition); key++){
                 listOfPosts.push(simplePost(key,data.contents[key],data.Liked,"home",beginPosition,endPosition))
