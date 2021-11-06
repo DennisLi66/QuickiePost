@@ -3157,23 +3157,32 @@ function App() {
       }
       //Hashtag Functions
       function searchHashtag(hashtag){
-        // console.log(hashtag.slice(1,hashtag.length + 1));
         var fetchString = serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag.slice(1,hashtag.length + 1);
         if (cookies.get("id") && cookies.get("sessionID")){
           fetchString += "&userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID");
         }
-        // console.log(fetchString);
         fetch(fetchString)
           .then(response => response.json())
           .then(data => {
             if (data.status === -1){
               showErrorPage({message:data.message})
+            }else if (data.status === -11){
+              removeCredentials();
+              fetch(serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag.slice(1,hashtag.length + 1))
+                .then(response => response.json())
+                .then(data => {
+                  if (data.status === -1){
+                    showErrorPage({message:data.message})
+                  }else{
+                    paginateHashtagSearch(hashtag,data.contents,0,10,true)
+                  }
+                })
             }else{
               paginateHashtagSearch(hashtag,data.contents)
             }
           })
       }
-      function paginateHashtagSearch(hashtag, contents, start = 0, end = 10){
+      function paginateHashtagSearch(hashtag, contents, start = 0, end = 10,expired = false){
         var listOfPosts = [];
         var paginationBar;
         if (!contents|| contents.length === 0){
@@ -3203,8 +3212,10 @@ function App() {
             </ul>)
           }
         }
+        var banner = expired ? (<div className='errMsg'></div>) : (<div></div>)
         changeCode(
           <div>
+          {banner}
           <h1> Posts Associated With {hashtag} </h1>
           {paginationBar}
           {listOfPosts}
