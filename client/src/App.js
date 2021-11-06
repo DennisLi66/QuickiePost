@@ -102,7 +102,7 @@ function App() {
     (beginPosition = 0,endPosition = 10, paginationPosts = []) => {
       var lastDisplayed = "main";
       var pageVariables = {};
-      //Helper Functions
+      //Helper Functions -- revise
       function simplePost(key,dict,hasLiked = false, origin = "", startPos = 0, endPos = 10, userID = 0, searchPosts = []){
         var likePostButton;
         var commentButton;
@@ -325,7 +325,7 @@ function App() {
         document.getElementById(toDisplay).hidden = false;
         document.getElementById(toDisplay).innerHTML = "Remaining Characters: " + String(baseAmount - document.getElementById(affectedBy).value.length);
       }
-      //Deleting Handlers --ADMINS EDIT
+      //Deleting Handlers --ADMINS EDIT -- revise
       function showDeletePostConfirmation(postID,origin,startPos,endPos, commentID = 0){
         if (!cookies.get("id") || (!cookies.get("sessionID"))){ //should replace with check sessionID FIX THIS
           cancel(origin,postID,0,(cookies.get("id") ? cookies.get("id") : 0),startPos,endPos);
@@ -448,7 +448,7 @@ function App() {
             })
         }
       }
-      //Edit Handlers
+      //Edit Handlers  -- revise
       function showEditPost(postID,origin,startPos,endPos,title = "",content = "", visibility = "", commentID = 0){
         function displayChangedCode(title,content,visibility){
           var visibilityToggle;
@@ -656,7 +656,7 @@ function App() {
             }
           })
       }
-      //like handlers
+      //like handlers -- revise
       function handlePostLike(postID,origin,commentID = 0,userID = 0, startPos = 0, endPos = 0, searchPosts = []){
         if (!cookies.get("sessionID") || !cookies.get("id")){
           getLoginPage(origin);
@@ -1409,7 +1409,7 @@ function App() {
             })
         }
       }
-      //Writing Comments
+      //Writing Comments -- revise
       function displayCommentWriter(postID, origin = "", startPos = 0, endPos = 10){
         showWriteForm();
         changeWriteFormCode(
@@ -1479,7 +1479,7 @@ function App() {
           document.getElementById('whoCanSee').innerText = "Only your viewers will see this comment."
         }
       }
-      //Show Main Stuff Functions
+      //Show Main Stuff Functions -- revise
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
@@ -3023,15 +3023,21 @@ function App() {
         if (cookies.get("id")){
           toJoin.push("userID=" + cookies.get("id"));
         }
-        url += toJoin.join('&')
-        url = encodeURI(url);
         //fetch and changecode to a new screen that displays all the posts
-        fetch(url)
+        fetch(encodeURI(url + toJoin.join('&')))
         .then(response=>response.json())
         .then(data => {
-          console.log(data);
           if (data.status === -11){
-            showExpiredPage({origin: "searchPage"})
+            removeCredentials();
+            fetch(encodeURI(url + toJoin.slice(0,-2).join('&')))
+              .then(response=>response.json())
+              .then(data => {
+                if (data.status === -1){
+                    showErrorPage({message: data.message, origin: "searchPage"})
+                }else{
+                  paginateSearchPage(data.contents,0,10,title,content,username,dateIdentification,sDate,beforeDate,afterDate,true);
+                }
+              })
           }else if (data.status === -1){
             showErrorPage({message: data.message, origin: "searchPage"})
           }else{
@@ -3039,7 +3045,7 @@ function App() {
           }
         })
       }
-      function paginateSearchPage(contents,start = 0,end = 10,title,content,username,dateIdentification,sDate,beforeDate,afterDate){
+      function paginateSearchPage(contents,start = 0,end = 10,title,content,username,dateIdentification,sDate,beforeDate,afterDate,expired = false){
         var listOfPosts = [];
         var paginationBar;
         if (!contents|| contents.length === 0){
@@ -3069,8 +3075,10 @@ function App() {
             </ul>)
           }
         }
+        var banner = expired ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div></div>);
         changeCode(
           <div>
+          {banner}
           <h1> Search for a Post </h1>
           <form onSubmit={handleSearch}>
           <label htmlFor='title'>Search for Title:</label>
