@@ -2818,9 +2818,60 @@ function App() {
           fetch(serverString)
             .then(response=>response.json())
             .then(data => {
-              console.log(data);
               if (data.status === -11){
-                showExpiredPage({origin: "indepthPost", postID: postID, startPos: commentStart, endPos: commentEnd})
+                removeCredentials();
+                fetch(serverLocation + "/post?postID=" + postID)
+                  .then(response => response.json())
+                  .then(data => {
+                    openInDepthPost();
+                    var listOfComments = [];
+                    for (let key = commentStart; key < Math.min(data.comments.length,commentEnd); key++){
+                      var comment = data.comments[key];
+                      listOfComments.push(
+                        <ListGroup.Item key={key}>
+                          {simpleComment(key,Object.assign({},comment,{totalLikes: comment.commentLikes,username: comment.commenterName,userID: comment.commenterID}),comment.commentLiked,'indepthPost')}
+                        </ListGroup.Item>
+                      )
+                    }
+                    if (listOfComments.length === 0){
+                      listOfComments = (<div> This post has no visible comments. </div>)
+                    }
+                    var paginationBar;
+                    if (data.comments.length > 10){
+                      var paginationSlots = [];
+                      for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
+                        paginationSlots.push(
+
+                          <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
+                        )
+                      }
+                      paginationBar = (
+                       <ul className="nav nav-tabs">
+                        <li className="nav-item dropdown">
+                          <div className="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Comments Range</div>
+                          <ul className="dropdown-menu">
+                            {paginationSlots}
+                          </ul>
+                        </li>
+                      </ul>)
+                    }
+                    changeInDepthCode(
+                      <Card>
+                        <div className='errMsg'>Your session has expired, so you have been logged out.</div>
+                        <Card.Header className='rightAlignHeader'><Button onClick={showOnlyMain}>Close</Button></Card.Header>
+                        <Card.Header><h1>{data.title}</h1></Card.Header>
+                        {confrimation}
+                        {simplePost(postID,Object.assign({},data,{subDate: data.postDate,username:data.authorName,userID: data.authorID, totalComments: data.comments.length}),data.likedPost,"indepthPost")}
+                        <ListGroup>
+                        <h2> Comments </h2>
+                        <Button onClick={() => {getLoginPage("indepthPost")}}>Add Comment</Button>
+                        <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+                        {listOfComments}
+                        <div className='centerAlignPaginationBar'> {paginationBar}  </div>
+                        </ListGroup>
+                      </Card>
+                    );
+                  })
               }else if (data.status === -2){
                 showErrorPage({message: "That post doesn't exist."})
               }
