@@ -1483,8 +1483,6 @@ function App() {
       function showUserProfile(userID,startPos = 0, endPos = 10, variation = ""){
           //FIX THIS: Could memoize posts and comments for quick actions?
           //FIX THIS: check if changingcss is really needed?
-          //FIX THIS: Expired Page should redirect to userprofule
-          //FIX THIS: Update simplePosts and Comments to handle liking, editing, and deleting
           //Admin functions
           function confirmUserBan(toDo,username){
             if (toDo === "ban"){
@@ -1521,7 +1519,7 @@ function App() {
                   if (data.status === -1){
                     showErrorPage({message: data.message,origin: "userProfileOptions", userID: userID});
                   }else if (data.status === -11){
-                    showExpiredPage({origin: "userProfileOptions", userID: userID});
+                    showUserProfile(userID,0,10,"options");
                   }else{
                     changeCode(
                       <div>
@@ -1544,7 +1542,7 @@ function App() {
                   if (data.status === -1){
                     showErrorPage({origin: "userProfileOptions", userID: userID});
                   }else if (data.status === -11){
-                    showExpiredPage({origin: "userProfileOptions", userID: userID});
+                    showUserProfile(userID,0,10,"options");
                   }else{
                     changeCode(
                       <div>
@@ -1567,7 +1565,7 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                showExpiredPage({origin: 'userProfileOptions', startPos: firstPoint, endPos: secondPoint,userID:userID});
+                    showUserProfile(userID,0,10,"options");
                 }else if (data.status === -1){
                   showErrorPage({message: data.message, origin: 'userProfileBlockList', startPos: firstPoint, endPos: secondPoint,userID:userID});
                 }else{
@@ -1642,7 +1640,7 @@ function App() {
               .then(data => {
                 console.log(data);
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfileOptions', userID: userID});
+                    showUserProfile(userID,0,10,"options");
                 }else if (data.status === -1){
                   showErrorPage({message: data.message, origin: 'userProfile', userID: userID});
                 }else{
@@ -1661,7 +1659,7 @@ function App() {
               .then(data => {
                 console.log(data);
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfileOptions', userID: userID});
+                    showUserProfile(userID,0,10,"options");
                 }
                 else if (data.status === -1){
                   showErrorPage({message: data.message, origin: 'userProfileUnblock', userID: userID,startUser:0,endUser:10,profileID:userID})
@@ -1683,7 +1681,7 @@ function App() {
                 .then(response=>response.json())
                 .then(data=>{
                   if (data.status === -11){
-                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                    showUserProfile(userID,0,10,"options");
                   }else if (data.status === -1){
                     showErrorPage({message: data.message, origin: "userProfileImViewingList", userID: userID,firstPoint:firstPoint, secondPoint: secondPoint})
                   }else{
@@ -1756,7 +1754,7 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                    showUserProfile(userID,0,10,"options");
                 }else if (data.status === -1){
                   showErrorPage({message: data.message, origin: "userProfileViewingMeList", userID: userID,firstPoint:firstPoint, secondPoint: secondPoint})
                 }else{
@@ -1832,7 +1830,7 @@ function App() {
             .then(response => response.json())
             .then(data =>{
               if (data.status === -11){
-                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                showUserProfile(userID,0,10,"options");
               }
               else if (data.status === -1){
                 showErrorPage({message: data.message, origin: "userProfileOptions", userID: userID})
@@ -1859,7 +1857,7 @@ function App() {
               .then(response => response.json())
               .then(data=>{
                 if (data.status === -11){
-                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                  showUserProfile(userID,0,10,"options");
                 }
                 if (data.status === -1){
                 showErrorPage({message: data.message, origin: "userProfileOptions", userID: userID})
@@ -1883,7 +1881,7 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                  showUserProfile(userID,0,10,"options");
                 }else if (data.status === -1){
                   showErrorPage({message: data.message, origin: "userProfileOptions", userID: userID})
                 }else{
@@ -1908,7 +1906,7 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                    showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                    showUserProfile(userID,0,10,"options");
                 }else if (data.status === -1){
                     showErrorPage({message: data.message,origin: 'userProfileLikedPosts', userID:userID, firstPoint: firstPoint,secondPoint: secondPoint});
                 }else{
@@ -1979,7 +1977,7 @@ function App() {
               .then(response => response.json())
               .then(data => {
                 if (data.status === -11){
-                  showExpiredPage({origin: 'userProfile', userID:userID});
+                  showUserProfile(userID,0,10,"options");
                 }else if (data.status === -1){
                   showErrorPage({message: data.message,origin: 'userProfileLikedPosts', userID:userID, firstPoint: firstPoint,secondPoint: secondPoint});
                 }else{
@@ -2181,9 +2179,8 @@ function App() {
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
-                    console.log(data);
                     if (data.status === -11){
-                      showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                      showUserProfile(userID);
                     }
                     else if (data.status === -1){
                       showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
@@ -2429,11 +2426,14 @@ function App() {
                   }else if (data.status === 0){
                     showUserProfile(userID,0,10,"changedPassword")
                   }
+                  else if (data.status === -11){
+                    showUserProfile(userID);
+                  }
                 })
             }
           }
           //General Showers
-          function showComments(username,comments,start,end,posts){ ///Doesnt test session
+          function showComments(username,comments,start,end,posts, variation = ""){ ///Doesnt test session
             showOnlyMain();
             var listOfShownComments = [];
             for (let i = start; i < (Math.min(end,comments.length)); i++){
@@ -2503,6 +2503,9 @@ function App() {
             if (variation === "commentDeleted"){
               msg = (<div className='confMsg'> Your comment was deleted. </div>)
             }
+            else if (variation === "expired"){
+              msg = (<div className='errMsg'>Your session has expired, so you have been logged out.</div>)
+            }
             changeCode(
               <div>
               {msg}
@@ -2550,6 +2553,9 @@ function App() {
             var msg;
             if (variation === "Delete"){
               msg = (<div className='confMsg'> Your post was deleted. </div>)
+            }
+            else if (variation === "expired"){
+              msg = (<div className='errMsg'>Your session has expired, so you have been logged out.</div>)
             }
             var topBar;
             if (cookies.get("id") && String(cookies.get('id')) === String(userID)){
@@ -2636,7 +2642,7 @@ function App() {
               .then(response=>response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage({origin: "userProfileOptions", userID: userID})
+                  showUserProfile(userID);
                 }
                 else if (data.status === -1){
                   showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
@@ -2667,11 +2673,10 @@ function App() {
               .then(response => response.json())
               .then(data=>{
                 if (data.status === -11){
-                  showExpiredPage({origin: "userProfileOptions", userID: userID})
+                  showUserProfile(userID)
                 }else if (data.status === -1){
                   showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
                 }else{
-                  console.log(data);
                   var privacyText;
                   var hiddenInput;
                   if (!data.userVisibility || data.userVisibility === "public"){
@@ -2718,14 +2723,14 @@ function App() {
               .then(response => response.json())
               .then(data=>{
                 if (data.status === -11){
-                  if (variation === "posts"){
-                    showExpiredPage({origin: "showUserProfilePosts", startPos: startPos, endPos:endPos})
-                  }else if (variation === "comments"){
-                    showExpiredPage({origin: "showUserProfileComments", startPos: startPos, endPos:endPos})
+                  removeCredentials();
+                  if (variation === "comments"){
+                    showComments(data.username,data.comments,startPos,endPos,data.posts,"expired")
                   }else if (variation === "options"){
-                    showExpiredPage({origin: "showUserProfileOptions"})
-                  }else{
-                    showExpiredPage({origin: "showUserProfile", startPos: startPos, endPos: endPos})
+                    showOptions(data.username,data.posts,data.comments,"expired");
+                  }
+                  else{
+                    showPosts(data.username,data.posts,startPos,endPos,data.comments,"expired");
                   }
                 }else if (data.status === -1){
                   if (variation === "posts"){
