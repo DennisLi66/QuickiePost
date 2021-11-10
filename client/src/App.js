@@ -22,6 +22,7 @@ require('dotenv').config();
       // do a fetch with the same details but with no userID and sessionID
 //Look over all exitButton classes
 //add last edit date
+//add getting banned (-69) server statutses
 //Confirmations for deactivating account and changing privacys should take longer.
 //may want to make sure no illegal characters are used in data creation or acccount alteration
 ////////////////////////UTMOST
@@ -334,7 +335,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
+                reloadPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID})
               }else if (String(data.authorID) !== String(cookies.get("id"))){
@@ -371,8 +372,8 @@ function App() {
             .then(response => response.json())
             .then(data => {
               console.log(data.message)
-              if (data.status === -1){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
+              if (data.status === -11){
+                reloadPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID});
               }
               else if (data.status === -1){
                 showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID})
@@ -396,7 +397,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID, commentID: commentID});
+                reloadPage({origin: origin,startPos: startPos,endPos:endPos, postID: postID, commentID: commentID});
               }else if (data.status === -1){
                                 showErrorPage({message: data.message, origin: origin, startPos: startPos,endPos:endPos, postID: postID, commentID: commentID})
               }else if (String(data.commenterID) !== String(cookies.get("id"))){
@@ -434,7 +435,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
+                reloadPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else if (origin === "indepthPost" || origin === "indepthComment"){
@@ -515,7 +516,7 @@ function App() {
             .then(data => {
               console.log(data);
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
               }else if (String(data.authorID) !== String(cookies.get("id"))){
@@ -538,7 +539,7 @@ function App() {
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
             }else{
@@ -617,7 +618,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
+                reloadPage({origin: origin, postID: postID,startPos: startPos,endPos:endPos, commentID: commentID});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, origin: origin, startPos: startPos,endPos:endPos, commentID: commentID})
               }else if (String(cookies.get("id")) !== String(data.commenterID)){
@@ -634,14 +635,13 @@ function App() {
         const requestSetup = {
             method: 'PATCH',
         }
-        console.log(commentID)
         fetch(serverLocation + "/comment?commentID="+ commentID + "&sessionID=" + cookies.get("sessionID") +
         "&userID=" + cookies.get("id") + "&visibility=" + document.getElementById("privacySwitch").value
         + "&comments=" + document.getElementById("commentContent").value,requestSetup)
           .then(response => response.json())
           .then(data => {
             if (data.status === -11){
-                showExpiredPage({origin: origin, commentID: commentID, postID: postID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, commentID: commentID, postID: postID,startPos: startPos,endPos:endPos});
             }else if (data.status === -1){
                 showErrorPage({message: data.message, commentID: commentID, postID: postID, origin: origin, startPos: startPos,endPos:endPos})
             }else if (origin === "indepthComment"){
@@ -670,7 +670,7 @@ function App() {
             .then(response =>response.json())
             .then(data =>{
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }
               else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
@@ -707,7 +707,7 @@ function App() {
             .then(response => response.json())
             .then(data => {
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
@@ -741,7 +741,7 @@ function App() {
             .then(response =>response.json())
             .then(data=>{
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
@@ -772,7 +772,7 @@ function App() {
             .then(data=>{
               console.log(data)
               if (data.status === -11){
-                showExpiredPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
+                reloadPage({origin: origin, postID: postID, commentID: commentID,startPos: startPos,endPos:endPos});
               }else if (data.status === -1){
                 showErrorPage({message: data.message, postID: postID, commentID: commentID, origin: origin, startPos: startPos,endPos:endPos})
               }else{
@@ -1455,14 +1455,14 @@ function App() {
           .then(response => response.json())
           .then(data=>{
             if (data.status === -11){
-              showExpiredPage({origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
+              reloadPage({origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
             }else if (data.status === -1){
               showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
             }else{
               showInDepthPost(postID,0,10,"Add");
             }
           })
-      }
+      } //edit
       function handleVisiToggled(){
         var checked = document.getElementById('privacySwitch').checked;
         if (!checked){
@@ -2099,7 +2099,7 @@ function App() {
                   .then(data =>{
                     // console.log(data);
                     if (data.status === -11){
-                      showExpiredPage({origin: 'userProfileOptions', userID:userID});
+                      showUserProfile(userID);
                     }
                     else if (data.status === -1){
                       showErrorPage({origin: 'userProfileOptions', message: data.message, userID:userID})
@@ -2404,7 +2404,7 @@ function App() {
                   if (data.status === -1){
                     showErrorPage({origin: "userProfileOptions", userID: userID, message:data.message})
                   }else if (data.status === -69){
-                    showExpiredPage({origin: "userProfileOptions", userID: userID})
+                    showUserProfile(userID);
                   }else if (data.status === -87){
                     changeCode(
                       <div>
@@ -3530,7 +3530,7 @@ function App() {
           .then(data => {
             console.log(data);
             if (data.status === -11){
-              showExpiredPage({})
+              reloadPage({}) //FIX THIS
             }else if (data.status === -1){
               showErrorPage({message: data.message, origin: "writePost"})
             }else{
@@ -3607,16 +3607,8 @@ function App() {
         }
       }
       //Error Messages
-      function showExpiredPage(data){
-        cookies.remove("sessionID",{path: '/'});
-        cookies.remove("expireTime",{path:"/"})
-        cookies.remove("name",{path:'/'});
-        cookies.remove("id",{path:'/'});
-        cookies.remove("lightingMode",{path:'/'});
-                            cookies.remove("adminStatus",{path:'/'});
-        changeNavToLoggedOut();
+      function reloadPage(data){
         showOnlyMain();
-        //produce a page and redirect link, or redirect automatically
         var returnButton;
         if (data.origin){
           //the specific unique ones
@@ -3634,30 +3626,21 @@ function App() {
           }else if (origin === "userProfileUnblock"){
             returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
           }else if (origin === "userProfileImViewingList"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileViewingMeList"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileLikedPosts"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileComments"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"comments")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"comments");
           }else if (origin === "userProfilePosts"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"posts")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"posts");
           }else{//origin is a common thing, use cancel
-            returnButton = (<Button onClick={()=>{cancel(data.origin,postID,commentID,userID,startPos,endPos)}}> Return </Button>)
+            cancel(data.origin,postID,commentID,userID,startPos,endPos);
           }
         }else{ // data.origin did not exist, redirect to home
-          returnButton = (<Button onClick={()=>{getHome()}}> Return </Button>)
+          getHome()
         }
-        changeCode(
-          <div>
-            <h1> Session Timed Out </h1>
-            <div> You have been logged out due to inactivity. <br></br>
-            You can click the button below to attempt to return to where you were or use the navigation bar on the top of the page.<br></br>
-            </div>
-            <div> {returnButton} </div>
-          </div>
-        )
       }
       function showErrorPage(data){
         //show error information and redirect link
@@ -3715,6 +3698,7 @@ function App() {
       //Visibility modes
       function toggleLightAndDarkMode(){
         //FIX THIS: Sends you to home page?
+        //needs access to an origin
         if (cookies.get("id") && cookies.get("sessionID")){
           if (lightDarkMode.lightingMode === "light"){
             changeLighting({lightingMode: "dark"})
@@ -3734,7 +3718,7 @@ function App() {
               if (data.status === -1){
                 showErrorPage({message: data.message})
               }else if (data.status === -11){
-                showExpiredPage()
+                reloadPage()
               }else{
                 //do nothing
               }
