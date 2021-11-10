@@ -3104,7 +3104,7 @@ function App() {
         fetch(encodeURI(url + toJoin.join('&')))
         .then(response=>response.json())
         .then(data => {
-          if (data.status === -11){
+          if (data.status === -11 || data.status === -69){
             removeCredentials();
             fetch(encodeURI(url + toJoin.slice(0,-2).join('&')))
               .then(response=>response.json())
@@ -3112,7 +3112,7 @@ function App() {
                 if (data.status === -1){
                     showErrorPage({message: data.message, origin: "searchPage"})
                 }else{
-                  paginateSearchPage(data.contents,0,10,title,content,username,dateIdentification,sDate,beforeDate,afterDate,true);
+                  paginateSearchPage(data.contents,0,10,title,content,username,dateIdentification,sDate,beforeDate,afterDate,data.status);
                 }
               })
           }else if (data.status === -1){
@@ -3152,7 +3152,9 @@ function App() {
             </ul>)
           }
         }
-        var banner = expired ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div></div>);
+        var banner = expired ?
+        (expired === -11 ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div className='errMsg'>You have been banned, so you have been logged out.</div>))
+        : (<div></div>);
         changeCode(
           <div>
           {banner}
@@ -3251,7 +3253,7 @@ function App() {
           .then(data => {
             if (data.status === -1){
               showErrorPage({message:data.message})
-            }else if (data.status === -11){
+            }else if (data.status === -11 || data.status === -69){
               removeCredentials();
               fetch(serverLocation + "/getPostsWithHashtag?hashtag=" + hashtag.slice(1,hashtag.length + 1))
                 .then(response => response.json())
@@ -3259,7 +3261,7 @@ function App() {
                   if (data.status === -1){
                     showErrorPage({message:data.message})
                   }else{
-                    paginateHashtagSearch(hashtag,data.contents,0,10,true)
+                    paginateHashtagSearch(hashtag,data.contents,0,10,data.status)
                   }
                 })
             }else{
@@ -3297,7 +3299,9 @@ function App() {
             </ul>)
           }
         }
-        var banner = expired ? (<div className='errMsg'></div>) : (<div></div>)
+        var banner = expired ?
+        (expired === -11 ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div className='errMsg'>You have been banned, so you have been logged out.</div>))
+          : (<div></div>)
         changeCode(
           <div>
           {banner}
@@ -3465,10 +3469,12 @@ function App() {
         fetch(serverLocation + "/myfeed?userID=" + cookies.get("id") + "&sessionID=" + cookies.get("sessionID"))
           .then(response=>response.json())
           .then(data =>{
-            if (data.status === -11){
+            if (data.status === -11 || data.status === -69){
+              removeCredentials();
+              var banner = data.status === -11 ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div className='errMsg'>You have been banned, so you have been logged out.</div>)
               changeCode(
                 <div>
-                  <div className='errMsg'>Your session has expired, so you have been logged out.</div>
+                  {banner}
                   <Button onClick={getHome()}> Return to Homepage </Button>
                 </div>
               )
@@ -3609,7 +3615,6 @@ function App() {
       //Error Messages
       function reloadPage(data){
         showOnlyMain();
-        var returnButton;
         if (data.origin){
           //the specific unique ones
           var startPos = data.startPos ? data.startPos : 0;
@@ -3618,13 +3623,13 @@ function App() {
           var userID = data.userID;
           var commentID = data.commentID;
           if (origin === "login"){
-            returnButton = (<Button onClick={()=>{getLoginPage(data.origin)}}> Return </Button>)
+            getLoginPage(data.origin);
           }else if (origin === "userprofileOptions"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileBlockList"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileUnblock"){
-            returnButton = (<Button onClick={()=>{showUserProfile(userID,startPos,endPos,"options")}}> Return </Button>)
+            showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileImViewingList"){
             showUserProfile(userID,startPos,endPos,"options");
           }else if (origin === "userProfileViewingMeList"){
@@ -3717,7 +3722,7 @@ function App() {
             .then(data => {
               if (data.status === -1){
                 showErrorPage({message: data.message})
-              }else if (data.status === -11){
+              }else if (data.status === -11 || data.status === -69){
                 reloadPage()
               }else{
                 //do nothing
@@ -3797,7 +3802,7 @@ function App() {
           .then(data => {
             if (data.status === -1){
               showErrorPage({startPos: beginPosition, endPos: endPosition, message: data.message, origin: "home"});
-            }else if (data.status === -11){
+            }else if (data.status === -11 || data.status === -69){
               removeCredentials();
               fetch(serverLocation + "/posts")
                 .then(response => response.json())
@@ -3830,10 +3835,11 @@ function App() {
                         </li>
                       </ul>)
                     }
+                    var loggedOutBanner = data.status === -11 ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div className='errMsg'>You have been banned, so you have been logged out.</div>)
                     changeCode(
                       <div>
                         <h1> QuickiePost </h1>
-                        <div className='errMsg'>Your session has expired, so you have been logged out.</div>
+                        {loggedOutBanner}
                         {paginationBar}
                         {listOfPosts}
                         {paginationBar}
