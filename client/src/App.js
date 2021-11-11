@@ -2796,8 +2796,9 @@ function App() {
         fetch(serverString)
           .then(response => response.json())
           .then(data => {
-            if (data.status === -11){
+            if (data.status === -11 || data.status === -69){
               removeCredentials();
+              var errStatus = data.status;
               fetch(serverString = serverLocation + "/comment?commentID=" + commentID )
                 .then(response => response.json())
                 .then(data => {
@@ -2805,8 +2806,10 @@ function App() {
                     showErrorPage({message: data.message, origin: "indepthComment", commentID: commentID});
                   }else{
                     openInDepthPost();
+                    var banner = errStatus === -11 ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div className='errMsg'>You have been banned, so you have been logged out.</div>);
                     changeInDepthCode(
                       <div>
+                      {banner}
                         Comment Information
                         {simpleComment('simpleComment',Object.assign({},data,{totalLikes: data.totalCommentLikes,userID: data.commenterID,username:data.commenterUsername}),data.commentLiked,'indepthComment')}
                         Associated Post Information
@@ -2831,16 +2834,16 @@ function App() {
             ///FIX THIS: May need more details or beautification
           })}
       function showInDepthPost(postID,commentStart = 0, commentEnd = 10, pact = ""){
-          var detect = cookies.get("sessionID") && cookies.get("id");
           var serverString = serverLocation + "/post?postID=" + postID;
-          if (detect){
+          if (cookies.get("sessionID") && cookies.get("id")){
             serverString = serverLocation + "/post?postID=" + postID + "&sessionID=" + cookies.get('sessionID') + "&userID=" + cookies.get('id')
           }
           fetch(serverString)
             .then(response=>response.json())
             .then(data => {
-              if (data.status === -11){
+              if (data.status === -11 || data.status === -69){
                 removeCredentials();
+                var errStatus = data.status;
                 fetch(serverLocation + "/post?postID=" + postID)
                   .then(response => response.json())
                   .then(data => {
@@ -2866,7 +2869,6 @@ function App() {
                         var paginationSlots = [];
                         for (let i = 0; i < Math.ceil(data.comments.length / 10); i++){
                           paginationSlots.push(
-
                             <li key={i}><div className="dropdown-item" onClick={() => {showInDepthPost(postID,10 * i,Math.min(10*i+10,data.comments.length))}}>{10 * i + 1} through {Math.min(10*i+10,data.comments.length)}</div></li>
                           )
                         }
@@ -2880,9 +2882,10 @@ function App() {
                           </li>
                         </ul>)
                       }
+                      var banner = errStatus === -11 ? (<div className='errMsg'>Your session has expired, so you have been logged out.</div>) : (<div className='errMsg'>You have been banned, so you have been logged out.</div>);
                       changeInDepthCode(
                         <Card>
-                          <div className='errMsg'>Your session has expired, so you have been logged out.</div>
+                          {banner}
                           <Card.Header className='rightAlignHeader'><Button onClick={showOnlyMain}>Close</Button></Card.Header>
                           <Card.Header><h1>{data.title}</h1></Card.Header>
                           {confrimation}
@@ -2938,7 +2941,7 @@ function App() {
                   </ul>)
                 }
                 var writeCommentButton = (<Button onClick={() => {getLoginPage("indepthPost")}}>Add Comment</Button>);
-                if (detect){
+                if (cookies.get("sessionID") && cookies.get("id")){
                   writeCommentButton = (<Button onClick={() => {displayCommentWriter(postID,'indepthPost',commentStart,commentEnd)}}>Add Comment</Button>)
                 }
                 var confrimation = (<div></div>);
