@@ -2503,8 +2503,10 @@ function App() {
             if (variation === "commentDeleted"){
               msg = (<div className='confMsg'> Your comment was deleted. </div>)
             }
-            else if (variation === "expired"){
+            else if (variation === -11){
               msg = (<div className='errMsg'>Your session has expired, so you have been logged out.</div>)
+            }else if (variation === -69){
+              msg = (<div className='errMsg'>You have been banned, so you have been logged out.</div>)
             }
             changeCode(
               <div>
@@ -2554,8 +2556,11 @@ function App() {
             if (variation === "Delete"){
               msg = (<div className='confMsg'> Your post was deleted. </div>)
             }
-            else if (variation === "expired"){
+            else if (variation === -11){
               msg = (<div className='errMsg'>Your session has expired, so you have been logged out.</div>)
+            }
+            else if (variation === -69){
+              msg = (<div className='errMsg'>You have been banned, so you have been logged out.</div>)
             }
             var topBar;
             if (cookies.get("id") && String(cookies.get('id')) === String(userID)){
@@ -2722,15 +2727,15 @@ function App() {
             fetch(serverLocation + "/user?profileID=" + userID + "&userID=" + id + "&sessionID=" + sessionID)
               .then(response => response.json())
               .then(data=>{
-                if (data.status === -11){
+                if (data.status === -11 || data.status === -69){
                   removeCredentials();
                   if (variation === "comments"){
-                    showComments(data.username,data.comments,startPos,endPos,data.posts,"expired")
+                    showComments(data.username,data.comments,startPos,endPos,data.posts,data.status)
                   }else if (variation === "options"){
-                    showOptions(data.username,data.posts,data.comments,"expired");
+                    showOptions(data.username,data.posts,data.comments,data.status);
                   }
                   else{
-                    showPosts(data.username,data.posts,startPos,endPos,data.comments,"expired");
+                    showPosts(data.username,data.posts,startPos,endPos,data.comments,data.status);
                   }
                 }else if (data.status === -1){
                   if (variation === "posts"){
