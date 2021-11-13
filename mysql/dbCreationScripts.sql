@@ -98,4 +98,12 @@ create table editCommentHistory(
     previousText varchar(255),
 	previousVisibility varchar(255),
     editDate datetime NOT NULL
-)
+);
+create table popularHashtags(
+	hashtag varchar(255),
+    postID int,
+    commentID int,
+    hashtagsInTitle int,
+    hashtagsInContents int,
+    UNIQUE KEY IDS (hashtag,postID,commentID)
+);
