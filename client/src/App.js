@@ -2097,7 +2097,6 @@ function App() {
                 fetch(serverLocation + "/relationship?sessionID=" + cookies.get("sessionID") + "&userID=" + cookies.get("id") + "&profileID=" + userID)
                   .then(response=>response.json())
                   .then(data =>{
-                    // console.log(data);
                     if (data.status === -11){
                       showUserProfile(userID);
                     }

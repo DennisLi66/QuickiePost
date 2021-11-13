@@ -104,6 +104,34 @@ function checkSessionQueries(res, userID, sessionID, followUpFunction) {
     }
   })
 }
+function parseForHashtags(message){
+  var toReturn = [];
+  var currentMessage = "";
+  for (let c = 0; c < message.length; c++){
+    if (message[c] === '#'){
+      if (currentMessage.length > 1){
+        toReturn.push(currentMessage);
+      }
+      currentMessage = "";
+      let x = 1;
+      for (x; x + c < message.length; x++){
+        if (!message[x + c].match('[a-zA-Z0-9]')){
+          break;
+        }
+      }
+      if (x <= 1){
+        toReturn.push(currentMessage);
+      }else{
+        const sliced =  message.slice(c,x+c+1);
+        toReturn.push(
+        (sliced)
+      );
+      }
+      c += x - 1;
+    }
+  }
+  return toReturn;
+}
 ///////Actual Endpoints
 // Get All Posts
 app.get("/posts", function(req, res) {
@@ -317,7 +345,7 @@ app.get("/search", function(req, res) {
     toJoinQuery.push(" AND content LIKE ?");
     variables.push('%' + content + '%');
   }
-  if (dateIdentification) { //FIX THIS: test new date routes
+  if (dateIdentification) {
     if (dateIdentification === "before") {
       if (sdate) {
         toJoinQuery.push('AND Date(subDate) <= ?')
@@ -556,7 +584,7 @@ app.route("/post")
               var toPrep = [];
               for (let i = 0; i < results.length; i++) {
                 if (results[i].commentID) {
-                  //FIX THIS: REINSTATE THE BLANK LINES
+                  //FIX THIS: REINSTATE THE BLANK LINES?
                   toPrep.push({
                     commentID: results[i].commentID,
                     commenterID: results[i].commenterID,
@@ -1402,25 +1430,26 @@ app.route("/checkForgottenPassword")
       })
     } else {
       console.log(req.body.fpCode);
-      var sQuery =
+      var sQuery = //FIX THIS: TEST
         `
         SELECT * FROM
         forgottenPasswordCodes
         WHERE email = ? AND fpCode = ?;
+        DELETE FROM forgottenPasswordCodes WHERE fpCode = ? AND email = ?;
         `
-      connection.query(sQuery, [req.body.email, req.body.fpCode], function(err, results, fields) {
+      connection.query(sQuery, [req.body.email, req.body.fpCode,req.body.fpCode,req.body.email], function(err, results, fields) {
+        console.log(results);
         if (err) {
           return res.status(200).json({
             status: -1,
             message: err
           })
-        } else if (results.length === 0) {
+        } else if (results[0].length === 0) {
           return res.status(200).json({
             message: "Invalid Combination.",
             status: -2
           })
         } else {
-          //FIX THIS DELETE THE CODE
           return res.status(200).json({
             status: 0,
             message: "Worked."
@@ -1866,7 +1895,6 @@ app.route("/comment")
       var sessionID = req.query.sessionID;
       var userID = req.query.userID;
       if (!sessionID || !userID) {
-        //can pull not friendly private comments //FIX QUERY - NEEDS LIKE AMOUNT
         var sQuery =
           `
         select comments.commentID as commentID, comments.postID as postID, comments, comments.userID as commenterID, comments.visibility as commentVisibility, comments.submissionDate as commentDate, uzers.username as commenterUsername
@@ -3033,5 +3061,6 @@ app.route("/banUser")
     }
   })
 app.listen(3001, function() {
-  console.log("Server Started.")
+  console.log("Server Started.");
+  console.log(parseForHashtags("Hello there #Test #Davies is a great place."));
 });
