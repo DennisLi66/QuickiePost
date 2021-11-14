@@ -131,7 +131,7 @@ function parseForHashtags(message){
     }
   }
   return toReturn;
-}
+} //edit comments/posts, delete comments,posts add comments
 ///////Actual Endpoints
 // Get All Posts
 app.get("/posts", function(req, res) {
@@ -741,7 +741,6 @@ app.route("/post")
   //Add Single POST
   .put(function(req, res) {
     var visibility = req.body.visibility;
-    console.log(req.query);
     if (!req.body.userID || !req.body.sessionID) {
       console.log("Here we go: " + req.query.userID + " " + req.query.sessionID)
       return res.status(200).json({
@@ -772,11 +771,49 @@ app.route("/post")
                 message: err
               })
             } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Post Added.",
-                postID: results[0].insertId
-              })
+              var insertID = results[0].insertId;
+              var listOfTitleTags = parseMessage(req.body.title);
+              var listOfContentTags = parseMessage(req.body.contents);
+              if (listOfTitleTag.length === 0 && listOfContentTags.length === 0){
+                return res.status(200).json({
+                  status: 0,
+                  message: "Post Added.",
+                  postID: insertID
+                })
+              }
+              else{
+                var variables = [];
+                var extensionHashtagQuery =
+                `
+                INSERT INTO popularHashtags (hashtag,postID) VALUES
+                `;
+                var toAdd = [];
+                for (let i = 0; i < listOfTitleTags.length; i++){
+                  toAdd.push("(?,?)");
+                  variables.push(listOfTitleTags[i],insertID)
+                }
+                for (let i = 0; i < listOfContentTags.length; i++){
+                  toAdd.push("(?,?)");
+                  variables.push(listOfContentTags[i],insertID);
+                }
+                extensionHashtagQuery += "(" + toAdd.join(",") + ")";
+                console.log(extensionHashtagQuery)
+                connection.query(extensionHashtagQuery,variables,function(errr,reslts,fieds){
+                  if (errr){
+                    return res.status(200).json({
+                      status: -1,
+                      message: errr
+                    })
+                  }
+                  else{
+                    return res.status(200).json({
+                      status: 0,
+                      message: "Post Added.",
+                      postID: insertID
+                    })
+                  }
+                })
+              }
             }
           })
         })

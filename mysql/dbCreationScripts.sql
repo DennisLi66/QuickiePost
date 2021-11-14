@@ -102,8 +102,5 @@ create table editCommentHistory(
 create table popularHashtags(
 	hashtag varchar(255),
     postID int,
-    commentID int,
-    hashtagsInTitle int,
-    hashtagsInContents int,
-    UNIQUE KEY IDS (hashtag,postID,commentID)
+    commentID int
 );
