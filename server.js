@@ -131,7 +131,7 @@ function parseForHashtags(message){
     }
   }
   return toReturn;
-} //edit comments/posts, delete comments,posts add comments
+} //edit comments/posts, delete comments,posts
 ///////Actual Endpoints
 // Get All Posts
 app.get("/posts", function(req, res) {
@@ -797,7 +797,7 @@ app.route("/post")
                   variables.push(listOfContentTags[i],insertID);
                 }
                 extensionHashtagQuery += "(" + toAdd.join(",") + ")";
-                console.log(extensionHashtagQuery)
+                console.log(extensionHashtagQuery);
                 connection.query(extensionHashtagQuery,variables,function(errr,reslts,fieds){
                   if (errr){
                     return res.status(200).json({
@@ -2173,7 +2173,7 @@ app.route("/comment")
         }
       })
     })
-  }) //FIX THIS EDIT HISTORY
+  })
   .put(function(req, res) {
     if (!req.query.userID || !req.query.sessionID || !req.query.postID || !req.query.content) {
       return res.status(200).json({
@@ -2183,8 +2183,9 @@ app.route("/comment")
     }
     var privacy = (!req.query.privacy ? 'public' : req.query.privacy);
     var iQuery =
-      `
+    `
     INSERT INTO comments (postID,userID,comments,submissionDate,visibility) VALUES (?,?,?,NOW(),?);
+    SELECT LAST_INSERT_ID();
     `;
     var variables = [req.query.postID, req.query.userID, req.query.content, privacy]
     return checkSessionQueries(res,req.query.userID, req.query.sessionID, function() {
@@ -2195,10 +2196,42 @@ app.route("/comment")
             status: -1
           })
         } else {
-          return res.status(200).json({
-            status: 0,
-            message: "Comment Inserted."
-          })
+          var insertID = results[0].insertId;
+          var listOfContentTags = parseForHashtags(req.query.content);
+          if (listOfContentTags.length === 0){
+            return res.status(200).json({
+              status: 0,
+              message: "Comment Inserted.",
+              commentID: insertID
+            })
+          }else{
+            var toAdd = [];
+            var variables = [];
+            var extensionHashtagQuery =
+            `
+            INSERT INTO popularHashtags (hashtag,commentID) VALUES
+            `;
+            for (let i = 0; i < listOfContentTags.length; i++){
+              toAdd.push("(?,?)");
+              variables.push(listOfContentTags[i],insertID)
+            }
+            extensionHashtagQuery += "(" + toAdd.join(",") + ")";
+            console.log(extensionHashtagQuery);
+            connection.query(extensionHashtagQuery,variables,function(errr,reults,felds){
+              if (errr){
+                return res.status(200).json({
+                  status: -1,
+                  message: errr
+                })
+              }else{
+                return res.status(200).json({
+                  status: 0,
+                  message: "Comment Inserted.",
+                  commentID: insertID
+                })
+              }
+            })
+          }
         }
       })
     })

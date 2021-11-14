@@ -1459,6 +1459,7 @@ function App() {
             }else if (data.status === -1){
               showErrorPage({message: data.message,origin: "indepthPost", postID: postID, startPos: startPos, endPos: endPos});
             }else{
+              //redirect to your new comment FIX THIS
               showInDepthPost(postID,0,10,"Add");
             }
           })
