@@ -133,7 +133,7 @@ function parseForHashtags(message) {
     }
   }
   return toReturn;
-} //edit comments/posts, delete comments
+} //edit comments/posts
 ///////Actual Endpoints
 // Get All Posts
 app.get("/posts", function(req, res) {
@@ -1092,6 +1092,10 @@ app.route("/getPostsWithHashtag")
         })
       }
     }
+  })
+app.route("/popularHashtags")
+  .get(function(req,res){
+    
   })
 // User Info Endpoints
 app.post("/register", function(req, res) {
@@ -2284,9 +2288,22 @@ app.route("/comment")
                 message: err2
               })
             } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Deletion Occured."
+              var deletePopularHashtagsQuery =
+              `
+              DELETE FROM popularHashtags WHERE commentID = ?;
+              `;
+              connection.query(deletePopularHashtagsQuery,req.query.commentID,function(hashtagError,hashtagResults,hashtagFields){
+                if (hashtagError){
+                  return res.status(200).json({
+                    message: hashtagError,
+                    status: -1
+                  })
+                }else{
+                  return res.status(200).json({
+                    status: 0,
+                    message: "Deletion Occured."
+                  })
+                }
               })
             }
           })
