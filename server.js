@@ -133,7 +133,7 @@ function parseForHashtags(message) {
     }
   }
   return toReturn;
-} //edit comments/posts
+} //edit comments
 ///////Actual Endpoints
 // Get All Posts
 app.get("/posts", function(req, res) {
@@ -809,7 +809,7 @@ app.route("/post")
                   toAdd.push("(?,?)");
                   variables.push(listOfContentTags[i], insertID);
                 }
-                extensionHashtagQuery += "(" + toAdd.join(",") + ")";
+                extensionHashtagQuery += toAdd.join(",");
                 console.log(extensionHashtagQuery);
                 connection.query(extensionHashtagQuery, variables, function(errr, reslts, fieds) {
                   if (errr) {
@@ -899,10 +899,60 @@ app.route("/post")
                 message: err
               })
             } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Update Occured."
-              })
+              if (!title && !content){
+                return res.status(200).json({
+                  status: 0,
+                  message: "Update Occured."
+                })
+              }else{
+                var deleteAndInsertHashtagsQuery =
+                `
+                DELETE FROM popularHashtags WHERE postID = ?;
+                `
+                var listOfTitleHashTags = title ? parseForHashtags(title) : [];
+                var listOfContentHashTags = content ? parseForHashtags(content) : [];
+                if (listOfTitleHashTags.length === 0 && listOfContentHashTags.length === 0){
+                  connection.query(deleteAndInsertHashtagsQuery,[postID],function(emptyError,emptyResults,emptyFields){
+                    if (emptyError){
+                      return res.status(200).json({
+                        status: -1,
+                        message: emptyError
+                      })
+                    }else{
+                      return res.status(200).json({
+                        status: 0,
+                        message: "Update Occured."
+                      })
+                    }
+                  })
+                }else{
+                  var toAdd = [];
+                  var variables = [];
+                  for (let i = 0; i < listOfTitleHashTags.length; i++){
+                    toAdd.push("(?,?)");
+                    variables.push(listOfTitleHashTags[i],postID);
+                  }
+                  for (let i = 0; i < listOfContentHashTags.length; i++){
+                    toAdd.push("(?,?)");
+                    variables.push(listOfContentHashTags[i],postID);
+                  }
+                  deleteAndInsertHashtagsQuery += "INSERT INTO popularHashtags (hashtag,postID) VALUES " + toAdd.join(",");
+                  console.log(deleteAndInsertHashtagsQuery);
+                  connection.query(deleteAndInsertHashtagsQuery,variables,function(dandIError,dandIResults,dandIfields){
+                    if (dandIError){
+                      return res.status(200).json({
+                        message: dandIError,
+                        status: -1
+                      })
+                    }else{
+                      return res.status(200).json({
+                        status: 0,
+                        message: 'Updated.'
+                      })
+                    }
+                  })
+                }
+              }
             }
           })
         }
@@ -1095,7 +1145,7 @@ app.route("/getPostsWithHashtag")
   })
 app.route("/popularHashtags")
   .get(function(req,res){
-    
+
   })
 // User Info Endpoints
 app.post("/register", function(req, res) {
