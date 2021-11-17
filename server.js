@@ -70,7 +70,7 @@ SET sessionDate = NOW()
 WHERE sessionID = ?
 ;
 `;
-
+//Helper Functions
 function checkSessionQueries(res, userID, sessionID, followUpFunction) {
   connection.query(cQuery, [userID, sessionID], function(err1, results1, fields1) {
     //console.log(results1)
@@ -105,7 +105,6 @@ function checkSessionQueries(res, userID, sessionID, followUpFunction) {
     }
   })
 }
-
 function parseForHashtags(message) {
   var toReturn = [];
   var currentMessage = "";
@@ -133,9 +132,9 @@ function parseForHashtags(message) {
     }
   }
   return toReturn;
-} //edit comments
+}
 ///////Actual Endpoints
-// Get All Posts
+//Multiple Post Endpoints
 app.get("/posts", function(req, res) {
   var sQuery =
     `
@@ -2228,10 +2227,56 @@ app.route("/comment")
                 message: err
               })
             } else {
-              return res.status(200).json({
-                status: 0,
-                message: "Update Occured."
-              })
+              if (!comments){
+                return res.status(200).json({
+                  status: 0,
+                  message: "Update Occured."
+                })
+              }
+              else{
+                var deleteAndInsertHashtagsQuery =
+                `
+                DELETE FROM popularHashtags WHERE commentID = ?;
+                `;
+                var listOfCommentHashTags = parseForHashtags(comments);
+                if (listOfCommentHashTags.length === 0){
+                  connection.query(deleteAndInsertHashtagsQuery,[commentID],function(emptyError,emptyResults,emptyFields){
+                    if (emptyError){
+                      return res.status(200).json({
+                        message: emptyError,
+                        status: -1
+                      })
+                    }else{
+                      return res.status(200),json({
+                        status: 0,
+                        message: "Updated."
+                      })
+                    }
+                  })
+                }else{
+                  var toAdd = [];
+                  var variables = [];
+                  for (let i = 0; i < listOfCommentHashTags.length; i++){
+                    toAdd.push("(?,?)");
+                    variables.push(listOfCommentHashTags[i],commentID);
+                  }
+                  deleteAndInsertHashtagsQuery += "INSERT INTO popularHashtags (hashtag,commentID) VALUES " + toAdd.join(",");
+                  console.log(deleteAndInsertHashtagsQuery);
+                  connection.query(deleteAndInsertHashtagsQuery,variables,function(hashError,hashResults,hashFields){
+                    if (hashError){
+                      return res.status(200).json({
+                        message: hashError,
+                        status: -1
+                      })
+                    }else{
+                      return res.status(200),json({
+                        status: 0,
+                        message: "Updated."
+                      })
+                    }
+                  })
+                }
+              }
             }
           })
         }
