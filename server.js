@@ -1015,6 +1015,11 @@ app.route("/like")
       })
     })
   })
+//Hashtag Associated Endpoints
+app.route("/getCommentsWithHashtag")
+  .get(function(req,res){
+
+  })
 app.route("/getPostsWithHashtag")
   .get(function(req, res) {
     if (!req.query.hashtag) {
@@ -1144,7 +1149,46 @@ app.route("/getPostsWithHashtag")
   })
 app.route("/popularHashtags")
   .get(function(req,res){
+    if (!req.query.hashtag){
+      return res.status(200).json({
+        status: -1,
+        message: "No hashtag given."
+      })
+    }
+    else if (req.query.userID && req.query.sessionID){
+      checkSessionQueries(res,req.query.userID,req.query.sessionID,function(){
 
+      })
+    }else{
+      var searchQuery =
+      `
+      select hashtag,count(*) as useCount from popularHashtags
+      left join posts ON popularHashtags.postID = posts.postID
+      left join comments on popularHashtags.commentID = comments.commentID
+      WHERE (posts.postID is null OR posts.postID = 'public')
+      AND (comments.commentID is null OR comments.commentID = 'public')
+      group by hashtag;
+      `
+      //FIX THIS: ADD DATE RANGE OPTIONS
+      connection.query(searchQuery,req.query.hashtag,function(searchError,searchResults,searchFields){
+        if (searchError){
+          return res.status(200).json({
+            status: -1,
+            message: searchError
+          })
+        }else{
+          var toReturn = [];
+          for (let i = 0; i < results.length; i++){
+            toReturn.push({hashtag: results[i].hashtag, useCount: results[i].useCount})
+          }
+          return res.status(200).json({
+            message: "Hashtag Information Obtained.",
+            status: 0,
+            hashtags: toReturn
+          })
+        }
+      })
+    }
   })
 // User Info Endpoints
 app.post("/register", function(req, res) {
