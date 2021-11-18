@@ -1157,7 +1157,44 @@ app.route("/popularHashtags")
     }
     else if (req.query.userID && req.query.sessionID){
       checkSessionQueries(res,req.query.userID,req.query.sessionID,function(){
-
+        var searchQuery =
+        `
+        SELECT hashtag, count(*) as useCount from popularHashtags
+        left join posts ON popularHashtags.postID = posts.postID
+        left join (select * from viewers WHERE viewerID = ?) postViewers ON postViewers.posterID = posts.userID
+        left join (select * from blocked WHERE blockedID = ?) postBlocked ON postBlocked.blockerID = posts.userID
+        left join comments on popularHashtags.commentID = comments.commentID
+        left join (select * from viewers WHERE viewerID = ?) commentViewers ON commentViewers.posterID = comments.userID
+        left join (select * from blocked WHERE blockedID = ?) commentBlocked ON commentBlocked.blockerID = comments.userID,
+        select (userID as checkingAdminID, classification from users) as adminStatus WHERE checkingAdminID = ?
+        WHERE
+        adminStatus.classification = 'admin' OR
+        (
+        ((postBlocked.blockedID is null) AND (posts.postID is null OR posts.postID = 'public' OR (postViewers.viewerID != null)))
+        AND
+        ((commentBlocked.blockedID is null) AND (comments.commentID is null OR comments.commentID = 'public' OR (commentViewers.viewerID != null)))
+        )
+        group by hashtag;
+        `;
+        //FIX THIS: ADD DATE RANGE OPTIONS
+        connection.query(searchQuery,[req.query.userID,req.query.userID,req.query.userID,req.query.userID,req.query.userID],function(searchError,searchResults,searchFields){
+          if (searchError){
+            return res.status(200).json({
+              status: -1,
+              message: searchError
+            })
+          }else{
+            var toReturn = [];
+            for (let i = 0; i < results.length; i++){
+              toReturn.push({hashtag: results[i].hashtag, useCount: results[i].useCount})
+            }
+            return res.status(200).json({
+              message: "Hashtag Information Obtained.",
+              status: 0,
+              hashtags: toReturn
+            })
+          }
+        })
       })
     }else{
       var searchQuery =
@@ -1170,7 +1207,7 @@ app.route("/popularHashtags")
       group by hashtag;
       `
       //FIX THIS: ADD DATE RANGE OPTIONS
-      connection.query(searchQuery,req.query.hashtag,function(searchError,searchResults,searchFields){
+      connection.query(searchQuery,[req.query.hashtag],function(searchError,searchResults,searchFields){
         if (searchError){
           return res.status(200).json({
             status: -1,
