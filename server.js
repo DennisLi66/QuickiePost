@@ -123,7 +123,7 @@ function parseForHashtags(message) {
       if (x <= 1) {
         toReturn.push(currentMessage);
       } else {
-        const sliced = message.slice(c, x + c + 1);
+        const sliced = message.slice(c + 1, x + c);
         toReturn.push(
           (sliced)
         );
@@ -1018,13 +1018,57 @@ app.route("/like")
 //Hashtag Associated Endpoints
 app.route("/getCommentsWithHashtag")
   .get(function(req,res){
+    if (!req.query.hashtag){
+      return res.status(200).json({
+        message: "No Hashtag Given.",
+        status: -1
+      })
+    }
+    else{
+      if (req.query.userID && req.query.sessionID){
 
+      }else{
+        var sQuery =
+        `
+        SELECT * FROM comments
+        LEFT JOIN users ON users.userID = comments.userID
+        LEFT JOIN (select ifnull(count(*),0) as totalLikes, commentID from commentLikes group by commentID) totalLikes ON totalLikes.commentID = comments.commentID
+        WHERE comments LIKE ?
+        AND comments.visibility = 'public'
+        AND users.visibility = 'public'
+        order by submissionDate DESC
+        `;
+        connection.query(sQuery,['%#' + req.query.hashtag + '%'],function(err,results,fields){
+          if (err){
+            return res.status(200).json({
+              status: -1,
+              message: err
+            })
+          }else{
+            var toReturn = [];
+            for (let i = 0; i < results.length; i++){
+              toReturn.push({
+                commentID: results[i].commentID,
+                postID: results[i].postID,
+                userID: results[i].userID,
+                comments:results[i].comments,
+                submissionDate: results[i].submissionDate,
+                username: results[i].userName
+              })
+            }
+            return res.status(200).json({
+
+            })
+          }
+        })
+      }
+    }
   })
 app.route("/getPostsWithHashtag")
   .get(function(req, res) {
     if (!req.query.hashtag) {
       return res.status(200).json({
-        message: "Not Enough Information.",
+        message: "No Hashtag Given.",
         status: -1
       })
     } else {
@@ -1111,10 +1155,8 @@ app.route("/getPostsWithHashtag")
           AND comments.visibility = "public" GROUP BY postID
                   ) as totalComments ON totalComments.postID = posts.postID
         WHERE title LIKE ? OR content LIKE ?
-        AND posts.visibility != 'hidden'
-        AND users.visibility != 'hidden'
-        AND (posts.visibility != 'private')
-        AND (users.visibility != 'private')
+        AND posts.visibility = 'public'
+        AND users.visibility = 'public'
         order by subDate DESC
         `;
         connection.query(sQuery, ['%#' + req.query.hashtag + '%', '%#' + req.query.hashtag + '%'], function(err, results, fields) {
@@ -1161,18 +1203,21 @@ app.route("/popularHashtags")
         `
         SELECT hashtag, count(*) as useCount from popularHashtags
         left join posts ON popularHashtags.postID = posts.postID
+        left join users as postUsers on posts.userID = postUsers.userID
         left join (select * from viewers WHERE viewerID = ?) postViewers ON postViewers.posterID = posts.userID
         left join (select * from blocked WHERE blockedID = ?) postBlocked ON postBlocked.blockerID = posts.userID
         left join comments on popularHashtags.commentID = comments.commentID
+        left join users as commentUsers on comments.userID = commentUsers.userID
         left join (select * from viewers WHERE viewerID = ?) commentViewers ON commentViewers.posterID = comments.userID
         left join (select * from blocked WHERE blockedID = ?) commentBlocked ON commentBlocked.blockerID = comments.userID,
         select (userID as checkingAdminID, classification from users) as adminStatus WHERE checkingAdminID = ?
         WHERE
         adminStatus.classification = 'admin' OR
         (
-        ((postBlocked.blockedID is null) AND (posts.postID is null OR posts.postID = 'public' OR (postViewers.viewerID != null)))
-        AND
-        ((commentBlocked.blockedID is null) AND (comments.commentID is null OR comments.commentID = 'public' OR (commentViewers.viewerID != null)))
+        commentUsers.visibility != 'hidden' AND postUsers.visibility != 'hidden'
+        ((postBlocked.blockedID is null) AND (comments.commentID is null AND ((postUsers.visibility = 'public' AND posts.visibility = 'public') OR (postViewers.viewerID != null))))
+        OR
+        ((commentBlocked.blockedID is null) AND (posts.postID is null AND ((commentUsers.visibility = 'public' AND comments.visibility = 'public') OR (commentViewers.viewerID != null))))
         )
         group by hashtag;
         `;
@@ -1201,9 +1246,12 @@ app.route("/popularHashtags")
       `
       select hashtag,count(*) as useCount from popularHashtags
       left join posts ON popularHashtags.postID = posts.postID
+      left join users as postUsers on posts.userID = postUsers.userID
       left join comments on popularHashtags.commentID = comments.commentID
-      WHERE (posts.postID is null OR posts.postID = 'public')
-      AND (comments.commentID is null OR comments.commentID = 'public')
+      left join users as commentUsers on comments.userID = commentUsers.userID
+      WHERE ((comments.commentID is null AND posts.visibility = 'public')
+      AND postUsers.visibility ='public')
+      OR (posts.postID is null AND comments.visibility = 'public' AND commentUsers.visibility = 'public')
       group by hashtag;
       `
       //FIX THIS: ADD DATE RANGE OPTIONS
@@ -3333,5 +3381,5 @@ app.route("/banUser")
   })
 app.listen(3001, function() {
   console.log("Server Started.");
-  console.log(parseForHashtags("Hello there #Test #Davies is a great place."));
+  console.log(parseForHashtags("Hello there #Test #Davies is a great place to #hangout. #Nice"));
 });

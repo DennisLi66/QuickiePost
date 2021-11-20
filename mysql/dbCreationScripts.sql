@@ -28,8 +28,8 @@ create table comments(
 	postID int NOT NULL,
     userID int NOT NULL,
     comments varchar(255) NOT NULL,
-    visibility varchar(255),
-    submissionDate datetime
+    visibility varchar(255) NOT NULL,
+    submissionDate datetime NOT NULL
 );
 create table sessions(
 	sessionID varchar(255) NOT NULL,
