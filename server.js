@@ -155,7 +155,7 @@ function parseForHashtags(message) {
 ///////Actual Endpoints
 //Multiple Post Endpoints
 app.get("/posts", function(req, res) {
-  var sQuery =
+  var sQuery = //DOESNT GET ALL THE POSTS //FIX THIS
     `
   SELECT posts.postID as postID, posts.userID as userID, title, content, username, visibility, uvisibility as userVisibility,
   ifnull(total,0) as totalLikes, ifnull(tComments,0) as totalComments, subDate FROM

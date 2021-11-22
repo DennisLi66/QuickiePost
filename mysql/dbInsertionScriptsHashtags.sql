@@ -20,7 +20,7 @@ INSERT INTO popularHashtags (hashtag,postID) VALUES
 ('FairfurtCA',LAST_INSERT_ID());
 -- 4 
 INSERT INTO posts (userID,title,content,visibility,subDate) VALUES 
-(4, 'Just made the discovery of lifetime in my travels. #EgyptianSecret #Aliens #Illuminati','public',NOW() - interval 33409 second);
+(4, 'BIG DISCOVERY','Just made the discovery of lifetime in my travels. #EgyptianSecret #Aliens #Illuminati','public',NOW() - interval 33409 second);
 INSERT INTO popularHashtags(hashtag,postID) VALUES 
 ('EgyptianSecret',last_insert_id()),
 ('Aliens',last_insert_id()),
