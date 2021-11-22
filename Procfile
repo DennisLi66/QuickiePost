@@ -1,2 +1,1 @@
-web: npm client/start
-api: npm start
+web: npm start
