@@ -21,8 +21,7 @@ var transporter = nodemailer.createTransport({
 const app = express();
 app.use(express.static("public"));
 app.use(cors({
-  origin: 'http://localhost:3000',
-  // credentials: true,
+  origin: process.env.SITELOCATION,
   optionsSuccessStatus: 200
 }));
 app.use(bodyParser.urlencoded({
