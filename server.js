@@ -39,14 +39,33 @@ app.use(function(req, res, next) {
 })
 app.use(bodyParser.json());
 app.use(cookieParser());
-var connection = mysql.createConnection({
+var dbConfigs = {
   host: process.env.HOST,
   user: process.env.USER,
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
   multipleStatements: true
-})
-connection.connect();
+}
+var connection;
+function handleDisconnect() {
+  connection = mysql.createConnection(dbConfigs);
+  connection.connect(function(err) {
+    if(err) {
+      console.log('error when connecting to db:', err);
+      setTimeout(handleDisconnect, 2000);
+    }
+  });
+  connection.on('error', function(err) {
+    console.log('db error', err);
+    if(err.code === 'PROTOCOL_CONNECTION_LOST') {
+      handleDisconnect();
+    } else {
+      throw err;
+    }
+  });
+}
+
+handleDisconnect();
 //Evergreen QUERY
 var cQuery =
   `
