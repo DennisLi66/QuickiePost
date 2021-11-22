@@ -3379,7 +3379,6 @@ app.route("/banUser")
       })
     }
   })
-app.listen(3001, function() {
-  console.log("Server Started.");
-  console.log(parseForHashtags("Hello there #Test #Davies is a great place to #hangout. #Nice"));
+app.listen(process.env.PORT, function() {
+  console.log("Server Started at Port " + process.env.PORT +  ".");
 });
