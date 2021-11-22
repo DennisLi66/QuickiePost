@@ -3398,7 +3398,7 @@ app.route("/banUser")
       })
     }
   })
-app.route("/",function(req,res){
+app.get("/",function(req,res){
   return res.status(200).json({
     message: "Hello! This is not how this site should be accessed."
   })
