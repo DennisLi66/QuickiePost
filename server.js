@@ -3398,6 +3398,11 @@ app.route("/banUser")
       })
     }
   })
+app.route("/",function(req,res){
+  return res.status(200).json({
+    message: "Hello! This is not how this site should be accessed."
+  })
+})
 app.listen(process.env.PORT, function() {
   console.log("Server Started at Port " + process.env.PORT +  ".");
 });
